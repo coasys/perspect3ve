@@ -7,6 +7,8 @@
     import { Network } from 'vis-network/esnext'
     import VisGraph from "./VisGraph";
     import LinkContextMenu from "./LinkContextMenu.svelte";
+    import iconComponentFromString from "./iconComponentFromString";
+    import iconComponentName from "./iconComponentName";
 
     export let perspective: PerspectiveProxy
     export let uuid: string 
@@ -14,6 +16,8 @@
     const ad4m: Ad4mClient = getContext('ad4mClient')
     const zumly = getContext('zumly')
     const dispatch = createEventDispatcher()
+
+    let customIcons = {}
     
 
     if(!perspective && uuid) {
@@ -39,6 +43,52 @@
         await graphFromPerspective(perspective)
         network.setData({nodes: graph.nodes, edges: graph.edges})
         getNodePositions()
+        inferCustomIcons()
+    }
+
+    async function inferCustomIcons() {
+        customIcons = {}
+        let matches = await perspective.infer("customIcon(Expr, IconUrl)")
+        let iconUrls = new Set<string>()
+        for(let m of matches) {
+            iconUrls.add(m.IconUrl)
+        }
+
+        console.log("iconUrls:", iconUrls)
+
+        let iconConstructors = {}
+        for(let i of iconUrls) {
+            iconConstructors[i] = await getComponentConstructor(i)
+        }
+
+        console.log("iconConstructors:", iconConstructors)
+
+        for(let m of matches) {
+            customIcons[m.Expr] = iconConstructors[m.IconUrl]
+        }
+
+        console.log("customIcons:", customIcons)
+    }
+
+    inferCustomIcons()
+
+    async function getComponentConstructor(iconUrl) {
+        let customElementName = iconComponentName(iconUrl)
+        let componentConstructor = customElements.get(customElementName)
+        if(!componentConstructor) {
+            try {
+                const iconExpression = await ad4m.expression.get(iconUrl)
+                const code = JSON.parse(iconExpression.data).bundle
+                console.log("code:")
+                console.log(code)
+                componentConstructor = iconComponentFromString(code, `icon_${iconUrl}`)
+                customElements.define(customElementName, componentConstructor)
+            } catch (e) {
+                console.error(e)
+                componentConstructor = customElements.get(customElementName)
+            }
+        }
+        return componentConstructor
     }
 
     ad4m.perspective.addPerspectiveLinkAddedListener(uuid, () => {
@@ -150,9 +200,11 @@
     function getNodePositions() {
         nodePositions = []
         for(let node of graph.nodes) {
+            const graphPos = network.getPosition(node.id)
             nodePositions.push( {
                 url: node.label,
-                pos: network.canvasToDOM(network.getPosition(node.id)),
+                pos: network.canvasToDOM(graphPos),
+                graphPos,
             })
         }
     }
@@ -258,9 +310,19 @@
                                 data-to="PerspectiveWrapper" 
                                 data-uuid={uuidForNeighbourhood(node.url)}
                                 on:mouseup={(e)=>triggerZumly(e)}
+                                on:click={() => dispatch('perspective-click', uuidForNeighbourhood(node.url))}
                             >
                                 <h1>{node.url}</h1>
                             </div>
+                        {:else if customIcons[node.url]}
+                            <h1>custom</h1>
+                            <ExpressionIcon
+                                componentConstructor={customIcons[node.url]} 
+                                expressionURL={node.url} 
+                                perspectiveUUID={perspective.uuid}
+                                on:context-menu={onExpressionContextMenu} 
+                                rotated={iconStates[node.url] === 'rotated'}
+                            />
                         {:else}
                             <ExpressionIcon 
                                 expressionURL={node.url} 

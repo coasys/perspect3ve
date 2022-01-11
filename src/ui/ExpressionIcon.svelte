@@ -4,12 +4,11 @@
     import iconComponentFromString from "./iconComponentFromString";
     import { getContext, createEventDispatcher } from 'svelte';
     const dispatch = createEventDispatcher();
-    import { gql } from "@apollo/client"
-    import { linkTo2D, coordToPredicate } from './uiUtils';
     import emailValidator from 'email-validator'
     import md5 from 'md5'
     import {Graphic} from '@smui/list';
     import { DoubleBounce } from 'svelte-loading-spinners'
+    import iconComponentName from "./iconComponentName";
 
     export let expressionURL: string
     export let parentLink: Expression
@@ -20,19 +19,24 @@
 
     const ad4m: Ad4mClient = getContext('ad4mClient')
 
+    let error
+
     let expression = null
     let expressionRaw = null
-    let expressionRef = null
     let iconReady = false
-    let childLinks = null
     let loading = true
     let authorName = null
     let authorEmail = null
 
+    let perspectiveProxy
+    let me
+
+    ad4m.agent.me().then(m => me = m)
+    ad4m.perspective.byUUID(perspectiveUUID).then(p => perspectiveProxy = p)
+
     
     $: if(expressionURL && loading) ad4m.expression.get(expressionURL).then(result => {
         expression = result
-        console.log("Expression:", JSON.stringify(expression))
         loading = false
     })
 
@@ -40,12 +44,6 @@
         expressionRaw = result
         loading = false
     })
-    
-    $: if(expressionURL && perspectiveUUID) 
-        ad4m.perspective.queryLinks(perspectiveUUID, { source: expressionURL})
-        .then(result => {
-            childLinks = result
-        })
 
     $: if(expression) ad4m.expression.get(expression.author).then(result => {
         let author = JSON.parse(result.data)
@@ -84,18 +82,6 @@
 
     let container
 
-
-    function iconComponentName(languageAddress: string): string {
-        const onlyLetters = languageAddress
-            .split('')
-            .filter(letter => { return /[a-z]|[A-Z]/.test(letter)})
-            .join('')
-        const short = onlyLetters.substr(onlyLetters.length-10, 10).toLowerCase()
-
-        console.debug(languageAddress, '->', onlyLetters, '->', short)
-        return 'icon-'+short
-    }
-
     async function getComponentConstructor() {
         componentConstructor = customElements.get(customElementName)
         if(!componentConstructor) {
@@ -123,16 +109,26 @@
     }
     
     
-    $: if(container && componentConstructor && !loading) {
+    $: if(container && componentConstructor && !loading && perspectiveProxy && me) {
         iconReady = false
-        const icon = new componentConstructor()
-        //const expression = JSON.parse(JSON.stringify($queryResult))
-        //expression.data = JSON.parse(expression.data)
-        icon.expression = expression
-        while(container.lastChild)
-            container.removeChild(container.lastChild)
-        container.appendChild(icon)
-        iconReady = true
+        //try{
+            const icon = new componentConstructor({target: container})
+            //const expression = JSON.parse(JSON.stringify($queryResult))
+            //expression.data = JSON.parse(expression.data)
+            icon.expression = expression
+            icon.base = expressionURL
+            icon.perspective = perspectiveProxy
+            icon.expressionClient = ad4m.expression
+            icon.me = me
+            icon.includeBase = false
+            while(container.lastChild)
+                container.removeChild(container.lastChild)
+            container.appendChild(icon)
+            iconReady = true
+        //}catch(e) {
+        //    error = e
+        //}
+
     }
 
     let width
@@ -168,7 +164,9 @@
     {#if loading}
         <DoubleBounce size="60" color="#7f81ff" unit="px" duration="1s"></DoubleBounce>
     {:else}
-    <div class="box__face container" class:selected class:invalid="{!expression?.proof?.valid}" bind:this={container}/>
+    <div class="box__face container" class:selected class:invalid="{!expression?.proof?.valid}" bind:this={container}>
+        <span class="error">{error}</span>
+    </div>
     <div class="box__face back" style={`transform:   rotateY(180deg) translateZ(${depth}px); width: ${width}px; height: ${height}px;`}>
         <div class="backside-content">
             <div>
@@ -216,27 +214,7 @@
 </div>
 </div>
 {/if}
-<!--
-{#if childLinks}
-    {JSON.stringify($childLinks)}
-{/if}
 
-{#if childLinks}
-    <ul class="child-plane">
-        {#each childLinks as link}
-            <li class="inline expression-list-container" 
-            style={`position: absolute; transform: translateX(${linkTo2D(link).x}px) translateY(${linkTo2D(link).y}px);`}>
-                <svelte:self 
-                    expressionURL={link.data.target}
-                    parentLink={link}
-                    perspectiveUUID={perspectiveUUID}>
-                </svelte:self>
-            </li>
-        {/each}    
-    </ul>
-    
-{/if}
--->
 <style>
     .container {
         display: inline-block;
@@ -320,4 +298,11 @@
     .broken {
         color: red;
     }
+
+    .error {
+        color: red;
+        background-color: white;
+        width: 100%;
+        height: 400px;
+    } 
 </style>

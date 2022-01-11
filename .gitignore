@@ -22,6 +22,7 @@
 /src/ui/PerspectivesStore.js
 /src/ui/LinksStore.js
 /src/ui/VisGraph.js
+/src/ui/iconComponentName.js
 
 holochain
 lair-keystore
