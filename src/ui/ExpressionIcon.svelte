@@ -111,23 +111,56 @@
     
     $: if(container && componentConstructor && !loading && perspectiveProxy && me) {
         iconReady = false
-        //try{
-            const icon = new componentConstructor({target: container})
+        try{
+            // The following code needs to deal with different styles
+            // of web components.
+            // Normally, properties are set with setters after the object 
+            // was created, like the lines "icon.expression = expression"
+            // and following.
+            // 
+            // Svelte components need to receive properties via 'props'
+            // in the constructor.
+
+            const newViewInner = document.createElement('div')
+            const icon = new componentConstructor({
+                // For Svelte-based web components:
+                target: newViewInner,
+                props: {
+                    expression,
+                    base: expressionURL,
+                    perspective: perspectiveProxy,
+                    expressionClient: ad4m.expression,
+                    me,
+                    inculdeBase: false
+                }
+            })
             //const expression = JSON.parse(JSON.stringify($queryResult))
             //expression.data = JSON.parse(expression.data)
+
+            // For regular web components
             icon.expression = expression
             icon.base = expressionURL
             icon.perspective = perspectiveProxy
             icon.expressionClient = ad4m.expression
             icon.me = me
             icon.includeBase = false
-            while(container.lastChild)
+
+            while(container && container.lastChild)
                 container.removeChild(container.lastChild)
-            container.appendChild(icon)
+            
+            try{
+                // Regular web components are Nodes that can be appended:
+                container.appendChild(icon)
+            }catch(e){
+                // But Svelte components mount themselves into the container
+                // provided in the constructor
+                container.appendChild(newViewInner)  
+            }
+            
             iconReady = true
-        //}catch(e) {
-        //    error = e
-        //}
+        }catch(e) {
+            error = e
+        }
 
     }
 
