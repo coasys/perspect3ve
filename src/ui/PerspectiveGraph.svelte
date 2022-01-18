@@ -315,7 +315,6 @@
                                 <h1>{node.url}</h1>
                             </div>
                         {:else if customIcons[node.url]}
-                            <h1>custom</h1>
                             <ExpressionIcon
                                 componentConstructor={customIcons[node.url]} 
                                 expressionURL={node.url} 

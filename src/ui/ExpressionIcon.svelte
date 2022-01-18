@@ -32,7 +32,7 @@
     let me
 
     ad4m.agent.me().then(m => me = m)
-    ad4m.perspective.byUUID(perspectiveUUID).then(p => perspectiveProxy = p)
+    $: if(perspectiveUUID) ad4m.perspective.byUUID(perspectiveUUID).then(p => perspectiveProxy = p)
 
     
     $: if(expressionURL && loading) ad4m.expression.get(expressionURL).then(result => {
@@ -109,7 +109,7 @@
     }
     
     
-    $: if(container && componentConstructor && !loading && perspectiveProxy && me) {
+    $: if(container && componentConstructor && !loading && me) {
         iconReady = false
         try{
             // The following code needs to deal with different styles
@@ -131,7 +131,7 @@
                     perspective: perspectiveProxy,
                     expressionClient: ad4m.expression,
                     me,
-                    inculdeBase: false
+                    includeBase: true
                 }
             })
             //const expression = JSON.parse(JSON.stringify($queryResult))
@@ -143,7 +143,7 @@
             icon.perspective = perspectiveProxy
             icon.expressionClient = ad4m.expression
             icon.me = me
-            icon.includeBase = false
+            icon.includeBase = true
 
             while(container && container.lastChild)
                 container.removeChild(container.lastChild)
