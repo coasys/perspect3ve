@@ -30,10 +30,18 @@
 
     let selectedExpression
     let customActions = []
+    let perspectiveLanguageName = 'perspective-language'
 
     function openLinkWizard() {
         linkWizard.reset()
         showLinkWizard = true
+    }
+    async function createPerspectiveSnapshot() {
+        let perspectiveSnapshot = perspective.snapshot()
+        let languages = await ad4m.languages.all()
+        let perspectiveLanguageAddress = languages.find(l=>l.name === perspectiveLanguageName).address
+        let perspectiveSnapshotAddress = ad4m.expression.create(perspectiveSnapshot, perspectiveLanguageAddress)
+        // consider doing something with this snapshot address, like linking it to perspective metadata or something like that
     }
 
     let pickMode = false
@@ -293,6 +301,10 @@
                 <Button variant="raised" on:click={openLinkWizard}>
                     <ButtonIcon class="material-icons">add</ButtonIcon>
                     <ButtonLabel>Add Link/Expression</ButtonLabel>
+                </Button>
+                <Button variant="raised" on:click={createPerspectiveSnapshot}>
+                    <ButtonIcon class="material-icons">add</ButtonIcon>
+                    <ButtonLabel>save perspective as snapshot</ButtonLabel>
                 </Button>
                 {#if agentprofile}
                     <Button variant="raised" on:click={publishAsAgentPerspective}>
