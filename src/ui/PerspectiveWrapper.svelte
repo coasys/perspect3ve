@@ -37,6 +37,8 @@
         showLinkWizard = true
     }
     async function createPerspectiveSnapshot() {
+        // only allow perspective snapshot to be made from a non-perspective snapshot
+        // const perspectiveSnapshotAddress = ad4m.perspective.publishSnapshotByUuid(uuid) //publishes perspective object as an immutable perspective expression
         let perspectiveSnapshot = perspective.snapshot()
         let languages = await ad4m.languages.all()
         let perspectiveLanguageAddress = languages.find(l=>l.name === perspectiveLanguageName).address

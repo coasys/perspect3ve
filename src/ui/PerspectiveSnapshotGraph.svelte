@@ -1,55 +1,20 @@
 <script lang="ts">
     import { getContext, createEventDispatcher } from "svelte";
-    import { Ad4mClient, parseExprUrl, PerspectiveProxy } from '@perspect3vism/ad4m'
+    import { Ad4mClient, parseExprUrl } from '@perspect3vism/ad4m'
     import ExpressionIcon from './ExpressionIcon.svelte';
     import ExpressionContextMenu from "./ExpressionContextMenu.svelte";
-    import { linksStoreForPerspective } from "./LinksStore";
     import { Network } from 'vis-network/esnext'
     import VisGraph from "./VisGraph";
     import LinkContextMenu from "./LinkContextMenu.svelte";
+    import { v4 as uuidv4 } from 'uuid'
 
-    export let perspective: PerspectiveProxy
-    export let uuid: string 
+    export let perspectivesnapshot: string
+
 
     const ad4m: Ad4mClient = getContext('ad4mClient')
     const zumly = getContext('zumly')
     const dispatch = createEventDispatcher()
-    
 
-    if(!perspective && uuid) {
-        (async () => {
-            perspective = await ad4m.perspective.byUUID(uuid)
-        })()
-    }
-
-    if(!uuid && perspective) {
-        uuid = perspective.uuid
-    }
-
-    //@ts-ignore
-    ad4m.perspective.addPerspectiveUpdatedListener(async p => {
-        //@ts-ignore
-        if(p.uuid == perspective.uuid || p.uuid == uuid) {
-            //@ts-ignore
-            perspective = await ad4m.perspective.byUUID(perspective.uuid)
-        }
-    })
-
-    async function update() {
-        await graphFromPerspective(perspective)
-        network.setData({nodes: graph.nodes, edges: graph.edges})
-        getNodePositions()
-    }
-
-    ad4m.perspective.addPerspectiveLinkAddedListener(uuid, () => {
-        update()
-        return null
-    })
-
-    ad4m.perspective.addPerspectiveLinkRemovedListener(uuid, () => {
-        update()
-        return null
-    })
 
     let network
     let networkDiv
@@ -57,18 +22,19 @@
     let graph
     let scale = 1
 
-    $: if(perspective && networkDiv) {
+    $: if(networkDiv) {
         init()
     }
 
     async function init() {
-        await graphFromPerspective(perspective)
+        await graphFromPerspective(JSON.parse(perspectivesnapshot))
         await createNetwork(networkDiv)
     }
 
     async function graphFromPerspective(p) {
         graph = new VisGraph(p)
-        await graph.load()
+        // @ts-ignore
+        await graph.loadSnapshotOrPerspectiveLinks(p.links, uuidv4())
     }
 
     async function createNetwork(container) {
@@ -157,16 +123,9 @@
         }
     }
 
-    let linksStore
     let expressionContextMenu
     let linkContextMenu
     let iconStates = {}
-
-
-    $: if(perspective) {
-        linksStore = linksStoreForPerspective(ad4m, perspective)
-    }
-
 
     function onExpressionContextMenu(event) {
         const { expressionURL, mouseEvent, parentLink } = event.detail
@@ -180,21 +139,6 @@
         } else {
             iconStates[expression] = ''
         }
-    }
-
-    function onDeleteExpression(event) {
-        const expression = event.detail
-        $linksStore.forEach(l => {
-            if(l.data.target === expression || l.data.source === expression) {
-                console.log("deleting expression:", l)
-                ad4m.perspective.removeLink(perspective.uuid, l)
-            }
-        })
-    }
-
-    function onDeleteLink(event) {
-        const link = event.detail
-        perspective.remove(link)
     }
 
     function shouldRenderExpressionIcon(label: string|object) {
@@ -224,23 +168,15 @@
         else return null
     }
 
-    // will need to make async and handle that when passing into component
-    function getPerspectiveSnapshot(url) {
+    async function getPerspectiveSnapshot(url) {
         // let perspectiveSnapshot = await ad4m.expression.get(url)
-        let perspectiveSnapshot: object = {
+        let perspectiveSnapshot = {
             links: [{
                 author: 'did:test:user',
                 data: {
                     source: 'root',
                     target: 'target',
                     predicate: 'predicate'
-                }
-            }, {
-                author: 'did:test:user2',
-                data: {
-                    source: 'root2',
-                    target: 'target2',
-                    predicate: 'predicate2'
                 }
             }]
         }
@@ -261,10 +197,6 @@
     on:mousewheel|stopPropagation={noop} 
     on:touchstart|stopPropagation={noop}
 >
-
-{#if !perspective || !perspective.uuid}
-    <h1>Loading...</h1>
-{:else}
 
 <div class="network-wrapper">
     {#if nodePositions}
@@ -287,7 +219,7 @@
                         {:else if node.url.startsWith('perspective://')}
                             <div class="zoom-me ps-zoom"
                                 data-to="PerspectiveSnapshotView"
-                                data-perspectivesnapshot={JSON.stringify(getPerspectiveSnapshot(node.url))}
+                                data-perspectivesnapshot={getPerspectiveSnapshot(node.url)}
                                 on:mouseup={(e)=>triggerZumly(e)}
                             >
                                 click to view perspective snapshot graph
@@ -295,7 +227,6 @@
                         {:else}
                             <ExpressionIcon 
                                 expressionURL={node.url} 
-                                perspectiveUUID={perspective.uuid}
                                 on:context-menu={onExpressionContextMenu} 
                                 rotated={iconStates[node.url] === 'rotated'}
                             />
@@ -311,16 +242,9 @@
 
 <ExpressionContextMenu bind:this={expressionContextMenu}
     on:switch-header-content={onExpressionSwitchHeaderContent}
-    on:delete={onDeleteExpression}
-    on:link={(e)=>{dispatch('link-from-expression', e.detail)}}
-    on:add-child={(e)=>dispatch('create-target-for-expression', e.detail)}
 ></ExpressionContextMenu>
-<LinkContextMenu bind:this={linkContextMenu}
-    on:delete={onDeleteLink}
->
-</LinkContextMenu>
+<LinkContextMenu bind:this={linkContextMenu}></LinkContextMenu>
 
-{/if}
 
 </div>
 <style>

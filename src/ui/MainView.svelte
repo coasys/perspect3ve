@@ -7,6 +7,7 @@
 	import Dialog, { Title as DialogTitle, Content as DialogContent, Actions } from '@smui/dialog';
 	import Button, { Label } from '@smui/button';
 	import PerspectiveWrapper from './PerspectiveWrapper.svelte';
+	import PerspectiveSnapshotView from './PerspectiveSnapshotView.svelte'
 	import LanguagesSettings from './LanguagesSettings.svelte'
 	import type { Ad4mClient } from '@perspect3vism/ad4m'
 	import Zumly from 'zumly'
@@ -29,6 +30,7 @@
 			views: {
 				ZoomRoot,
 				PerspectiveWrapper,
+				PerspectiveSnapshotView,
 			},
 			componentContext: allContexts,
 			// Customize transitions. Object. Optional
