@@ -224,27 +224,47 @@
         else return null
     }
 
-    // will need to make async and handle that when passing into component
-    function getPerspectiveSnapshot(url) {
-        // let perspectiveSnapshot = await ad4m.expression.get(url)
-        let perspectiveSnapshot: object = {
-            links: [{
-                author: 'did:test:user',
-                data: {
-                    source: 'root',
-                    target: 'target',
-                    predicate: 'predicate'
-                }
-            }, {
-                author: 'did:test:user2',
-                data: {
-                    source: 'root2',
-                    target: 'target2',
-                    predicate: 'predicate2'
-                }
-            }]
+    // an object keyed by the expression url
+    let perspectiveSnapshots
+
+    async function getPerspectiveSnapshots() {
+        //check nodes in graph
+        for(let node of graph.nodes) {
+            if (node.label.startsWith('perspective://')) {
+                perspectiveSnapshots[node.label] = await ad4m.expression.get(node.label)
+            }
         }
-        return perspectiveSnapshot
+
+    }
+
+    // call the get snapshots depending on a variable existing, like
+    $: if(graph) {
+        perspectiveSnapshots = getPerspectiveSnapshots()
+    }
+
+    // will need to make async and handle that when passing into component
+    // have this just find the perspective object from the perspectiveSnapshots object
+    function getPerspectiveSnapshot(url) {
+        return perspectiveSnapshots[url]
+        // let perspectiveSnapshot = await ad4m.expression.get(url)
+        // let perspectiveSnapshot: object = {
+        //     links: [{
+        //         author: 'did:test:user',
+        //         data: {
+        //             source: 'root',
+        //             target: 'target',
+        //             predicate: 'predicate'
+        //         }
+        //     }, {
+        //         author: 'did:test:user2',
+        //         data: {
+        //             source: 'root2',
+        //             target: 'target2',
+        //             predicate: 'predicate2'
+        //         }
+        //     }]
+        // }
+        // return perspectiveSnapshot
     }
 
     function noop(){}
@@ -284,7 +304,7 @@
                             >
                                 <h1>{node.url}</h1>
                             </div>
-                        {:else if node.url.startsWith('perspective://')}
+                        {:else if node.url.startsWith('perspective://') && perspectiveSnapshots}
                             <div class="zoom-me ps-zoom"
                                 data-to="PerspectiveSnapshotView"
                                 data-perspectivesnapshot={JSON.stringify(getPerspectiveSnapshot(node.url))}
