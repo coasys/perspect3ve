@@ -41,16 +41,6 @@
         getNodePositions()
     }
 
-    ad4m.perspective.addPerspectiveLinkAddedListener(uuid, () => {
-        update()
-        return null
-    })
-
-    ad4m.perspective.addPerspectiveLinkRemovedListener(uuid, () => {
-        update()
-        return null
-    })
-
     let network
     let networkDiv
     let nodePositions
@@ -164,7 +154,11 @@
 
 
     $: if(perspective) {
-        linksStore = linksStoreForPerspective(ad4m, perspective)
+        linksStoreForPerspective(ad4m, perspective).then(store => {
+            linksStore = store
+        })
+        perspective.addListener('link-added', update)
+        perspective.addListener('link-removed', update)
     }
 
 

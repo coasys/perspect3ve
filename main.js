@@ -38,28 +38,43 @@ app.whenReady().then(() => {
           bundle: bootstrapFixtures.worldLinkLinguageBundle
         },
         {
-          address: 'QmWxQXz8M62TG1Ba7L49uVXMgabzMx4AP4Y56gy3PRvGpW',
+          address: 'QmfDoeJgiG5Hs4DJcwPqDWbwU2Ks8zLSJjv7bR8is84Qt5',
           meta: {
-            author: 'did:key:zQ3shkkuZLvqeFgHdgZgFMUx8VGkgVWsLA83w2oekhZxoCW2n',
-            timestamp: '2021-10-07T21:39:36.607Z',
-            data: {
-              name: 'Social Context',
-              address: 'QmWxQXz8M62TG1Ba7L49uVXMgabzMx4AP4Y56gy3PRvGpW',
-              description: 'Holochain based LinkLanguage. First full implementation of a LinkLanguage, for collaborative Neighbourhoods where every agent can add links. No membrane. Basic template for all custom Neighbourhoods in this first iteration of the Perspect3vism test network.',
-              author: 'did:key:zQ3shkkuZLvqeFgHdgZgFMUx8VGkgVWsLA83w2oekhZxoCW2n',
-              templated: false,
-              templateSourceLanguageAddress: null,
-              templateAppliedParams: null,
-              possibleTemplateParams: [ 'uuid', 'name', 'description' ],
-              sourceCodeLink: "https://github.com/juntofoundation/Social-Context'"
+            "author": "did:key:zQ3shkkuZLvqeFgHdgZgFMUx8VGkgVWsLA83w2oekhZxoCW2n",
+            "timestamp": "2022-01-24T17:44:56.058Z",
+            "data": {
+              "name": "Social Context",
+              "address": "QmfDoeJgiG5Hs4DJcwPqDWbwU2Ks8zLSJjv7bR8is84Qt5",
+              "description": "Holochain based LinkLanguage. First full implementation of a LinkLanguage, for collaborative Neighbourhoods where every agent can add links. No membrane. Basic template for all custom Neighbourhoods in this first iteration of the Perspect3vism test network.",
+              "possibleTemplateParams": ["uuid","name","description"],
+              "sourceCodeLink": "https://github.com/juntofoundation/Social-Context"},
+              "proof": {
+                "signature": "88269fae7990dbd2fdbeb11431333120bc9bd49ae7c7619c19990dce4fca2f054fea4c6da0f331fb14a1be7c6218732c64da24969a551174f603f487290e30ad",
+                "key": "#zQ3shkkuZLvqeFgHdgZgFMUx8VGkgVWsLA83w2oekhZxoCW2n",
+                "valid": true
+              }
             },
-            proof: {
-              signature: "e933e34f88694816ea91361605c8c2553ceeb96e847f8c73b75477cc7d9bacaf11eae34e38c2e3f474897f59d20f5843d6f1d2c493b13552093bc16472b0ac33",
-              key: "#zQ3shkkuZLvqeFgHdgZgFMUx8VGkgVWsLA83w2oekhZxoCW2n",
-              valid: true
+          bundle: fs.readFileSync(path.join('src', 'languages', 'social-context', 'build', 'bundle.js')).toString()
+        },
+        {
+          address: 'QmRENn31FvsZZx99tg8nd8oM52MmGYa1tLUYaDvYdjnJsb',
+          meta: {
+            "author": "did:key:zQ3shkkuZLvqeFgHdgZgFMUx8VGkgVWsLA83w2oekhZxoCW2n",
+            "timestamp":"2022-01-24T17:47:46.855Z",
+            "data":{
+              "name":"Direct Message Language",
+              "address":"QmRENn31FvsZZx99tg8nd8oM52MmGYa1tLUYaDvYdjnJsb",
+              "description":"Template source for personal, per-agent DM languages. Holochain based.",
+              "possibleTemplateParams":["recipient_did","recipient_hc_agent_pubkey"],
+              "sourceCodeLink":"https://github.com/perspect3vism/direct-message-language"
+            },
+            "proof":{
+              "signature":"d5f120f0cd225386499c54addd0bd9e5b0706c448d6211c2cf94333f8c78734612f8a3606e8e188ffb370fca6bd6ae301337384b24809febb1d12c38c6cdebcf",
+              "key":"#zQ3shkkuZLvqeFgHdgZgFMUx8VGkgVWsLA83w2oekhZxoCW2n",
+              "valid":true
             }
           },
-          bundle: fs.readFileSync(path.join('src', 'languages', 'social-context', 'build', 'bundle.js')).toString()
+          bundle: fs.readFileSync(path.join('src', 'languages', 'direct-message-language', 'build', 'bundle.js')).toString()
         }
       ],
       perspectives: [{

@@ -264,7 +264,9 @@
     }
 
     $: if(perspective) {
-        linksStore = linksStoreForPerspective(ad4m, perspective)
+        linksStoreForPerspective(ad4m, perspective).then(store =>{
+            linksStore = store
+        })
     }
 
 
