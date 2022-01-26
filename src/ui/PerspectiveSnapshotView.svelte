@@ -1,9 +1,20 @@
 <script lang="ts">
+    import { getContext } from "svelte";
+    import { Ad4mClient } from "@perspect3vism/ad4m"
     import PerspectiveSnapshotGraph from './PerspectiveSnapshotGraph.svelte'
 
-    export let perspectivesnapshot: string
+    export let perspectiveurl: string
 
+    let perspectiveSnapshot
+    
+    const ad4m: Ad4mClient = getContext('ad4mClient')
     function noop(){}
+     
+    $: if(perspectiveurl) {
+        (async () => {
+            perspectiveSnapshot = await ad4m.expression.get(perspectiveurl) 
+        })()
+    }
 
 </script>
 
@@ -20,12 +31,13 @@
             perspective snapshot view
         </h1>
     </div>
-    <div>
-        <PerspectiveSnapshotGraph
-            perspectivesnapshot={perspectivesnapshot}
-        ></PerspectiveSnapshotGraph>
-    </div>
-
+    {#if perspectiveSnapshot}
+        <div>
+            <PerspectiveSnapshotGraph
+                perspectivesnapshot={perspectiveSnapshot}
+            ></PerspectiveSnapshotGraph>
+        </div>
+    {/if}
 </div>
 
 <style>

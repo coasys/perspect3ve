@@ -30,7 +30,6 @@
 
     let selectedExpression
     let customActions = []
-    let perspectiveLanguageName = 'perspective-language'
 
     function openLinkWizard() {
         linkWizard.reset()
@@ -38,12 +37,8 @@
     }
     async function createPerspectiveSnapshot() {
         // only allow perspective snapshot to be made from a non-perspective snapshot
-        const perspectiveSnapshotAddress = ad4m.perspective.publishSnapshotByUuid(uuid) //publishes perspective object as an immutable perspective expression
-        console.log(perspectiveSnapshotAddress)
-        // let perspectiveSnapshot = perspective.snapshot()
-        // let languages = await ad4m.languages.all()
-        // let perspectiveLanguageAddress = languages.find(l=>l.name === perspectiveLanguageName).address
-        // let perspectiveSnapshotAddress = ad4m.expression.create(perspectiveSnapshot, perspectiveLanguageAddress)
+        const perspectiveSnapshotAddress = await ad4m.perspective.publishSnapshotByUUID(uuid) //publishes perspective object as an immutable perspective expression
+        console.log('perspective snapshot expression address:', perspectiveSnapshotAddress)
         // consider doing something with this snapshot address, like linking it to perspective metadata or something like that
     }
 

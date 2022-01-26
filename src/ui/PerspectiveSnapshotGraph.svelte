@@ -8,7 +8,7 @@
     import LinkContextMenu from "./LinkContextMenu.svelte";
     import { v4 as uuidv4 } from 'uuid'
 
-    export let perspectivesnapshot: string
+    export let perspectivesnapshot: object
 
 
     const ad4m: Ad4mClient = getContext('ad4mClient')
@@ -27,14 +27,15 @@
     }
 
     async function init() {
-        await graphFromPerspective(JSON.parse(perspectivesnapshot))
+        await graphFromPerspective(perspectivesnapshot)
         await createNetwork(networkDiv)
     }
 
     async function graphFromPerspective(p) {
+        console.log('snapshot links:', JSON.parse(p.data))
         graph = new VisGraph(p)
         // @ts-ignore
-        await graph.loadSnapshotOrPerspectiveLinks(p.links, uuidv4())
+        await graph.loadSnapshotOrPerspectiveLinks(JSON.parse(p.data).links, uuidv4())
     }
 
     async function createNetwork(container) {
@@ -168,21 +169,6 @@
         else return null
     }
 
-    async function getPerspectiveSnapshot(url) {
-        // let perspectiveSnapshot = await ad4m.expression.get(url)
-        let perspectiveSnapshot = {
-            links: [{
-                author: 'did:test:user',
-                data: {
-                    source: 'root',
-                    target: 'target',
-                    predicate: 'predicate'
-                }
-            }]
-        }
-        return perspectiveSnapshot
-    }
-
     function noop(){}
 
     function triggerZumly(e) {
@@ -219,7 +205,7 @@
                         {:else if node.url.startsWith('perspective://')}
                             <div class="zoom-me ps-zoom"
                                 data-to="PerspectiveSnapshotView"
-                                data-perspectivesnapshot={getPerspectiveSnapshot(node.url)}
+                                data-perspectiveurl={node.url}
                                 on:mouseup={(e)=>triggerZumly(e)}
                             >
                                 click to view perspective snapshot graph
