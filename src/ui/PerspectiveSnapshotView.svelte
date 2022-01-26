@@ -35,6 +35,7 @@
         <div>
             <PerspectiveSnapshotGraph
                 perspectivesnapshot={perspectiveSnapshot}
+                perspectiveurl={perspectiveurl}
             ></PerspectiveSnapshotGraph>
         </div>
     {/if}

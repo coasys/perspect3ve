@@ -203,6 +203,9 @@ export default class VisGraph {
         } else {
           from = perspective.uuid;
         }
+        this.loadSnapshotOrPerspectiveLinks(links, from)
+    }
+    async loadSnapshotOrPerspectiveLinks(links, from) {
   
         for (const link of links) {
           const linkData = link.data;
@@ -295,11 +298,6 @@ export default class VisGraph {
       } else {
         from = perspective.uuid;
       }
-      this.loadSnapshotOrPerspectiveLinks(links, from)
-    }
-
-    async loadSnapshotOrPerspectiveLinks(links, from) {
-  
         for (const link of links) {
           const linkData = link.data;
           const sourceNode = {

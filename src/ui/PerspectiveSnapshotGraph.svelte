@@ -9,6 +9,7 @@
     import { v4 as uuidv4 } from 'uuid'
 
     export let perspectivesnapshot: object
+    export let perspectiveurl: string
 
 
     const ad4m: Ad4mClient = getContext('ad4mClient')
@@ -35,7 +36,7 @@
         console.log('snapshot links:', JSON.parse(p.data))
         graph = new VisGraph(p)
         // @ts-ignore
-        await graph.loadSnapshotOrPerspectiveLinks(JSON.parse(p.data).links, uuidv4())
+        await graph.loadSnapshotOrPerspectiveLinks(JSON.parse(p.data).links, perspectiveurl)
     }
 
     async function createNetwork(container) {
