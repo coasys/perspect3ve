@@ -7,9 +7,12 @@
     import { Network } from 'vis-network/esnext'
     import VisGraph from "./VisGraph";
     import LinkContextMenu from "./LinkContextMenu.svelte";
+    import { v4 as uuidv4 } from 'uuid'
 
     export let perspective: PerspectiveProxy
     export let uuid: string 
+    export let isSnapshot: boolean
+    export let perspectiveSnapshot: object
 
     const ad4m: Ad4mClient = getContext('ad4mClient')
     const zumly = getContext('zumly')
@@ -26,14 +29,16 @@
         uuid = perspective.uuid
     }
 
-    //@ts-ignore
-    ad4m.perspective.addPerspectiveUpdatedListener(async p => {
+    if(!isSnapshot) {
         //@ts-ignore
-        if(p.uuid == perspective.uuid || p.uuid == uuid) {
+        ad4m.perspective.addPerspectiveUpdatedListener(async p => {
             //@ts-ignore
-            perspective = await ad4m.perspective.byUUID(perspective.uuid)
-        }
-    })
+            if(p.uuid == perspective.uuid || p.uuid == uuid) {
+                //@ts-ignore
+                perspective = await ad4m.perspective.byUUID(perspective.uuid)
+            }
+        })
+    }
 
     async function update() {
         await graphFromPerspective(perspective)
@@ -47,18 +52,20 @@
     let graph
     let scale = 1
 
-    $: if(perspective && networkDiv) {
+    $: if((perspective || isSnapshot) && networkDiv) {
         init()
     }
 
     async function init() {
-        await graphFromPerspective(perspective)
+        if(isSnapshot) await graphFromPerspective(perspectiveSnapshot)
+        else await graphFromPerspective(perspective)
         await createNetwork(networkDiv)
     }
 
     async function graphFromPerspective(p) {
         graph = new VisGraph(p)
-        await graph.load()
+        if(isSnapshot) await graph.loadSnapshotOrPerspectiveLinks(JSON.parse(p.data).links, uuidv4())
+        else await graph.load()
     }
 
     async function createNetwork(container) {
@@ -233,7 +240,7 @@
     on:touchstart|stopPropagation={noop}
 >
 
-{#if !perspective || !perspective.uuid}
+{#if (!perspective || !perspective.uuid) && !isSnapshot}
     <h1>Loading...</h1>
 {:else}
 

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import { Ad4mClient } from "@perspect3vism/ad4m"
-    import PerspectiveSnapshotGraph from './PerspectiveSnapshotGraph.svelte'
+    import PerspectiveGraph from './PerspectiveGraph.svelte'
 
     export let perspectiveurl: string
 
@@ -28,15 +28,15 @@
 >
     <div class="header">
         <h1>
-            perspective snapshot view
+            {perspectiveurl}
         </h1>
     </div>
     {#if perspectiveSnapshot}
         <div>
-            <PerspectiveSnapshotGraph
-                perspectivesnapshot={perspectiveSnapshot}
-                perspectiveurl={perspectiveurl}
-            ></PerspectiveSnapshotGraph>
+            <PerspectiveGraph
+                perspectiveSnapshot={perspectiveSnapshot}
+                isSnapshot={true}
+            ></PerspectiveGraph>
         </div>
     {/if}
 </div>
