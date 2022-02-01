@@ -270,13 +270,21 @@
                             >
                                 click to view perspective snapshot graph
                             </div>
-                        {:else if !node.url.startsWith('perspective://')}
-                            <ExpressionIcon 
-                                expressionURL={node.url} 
-                                perspectiveUUID={perspective.uuid}
-                                on:context-menu={onExpressionContextMenu} 
-                                rotated={iconStates[node.url] === 'rotated'}
-                            />
+                        {:else}
+                            {#if isSnapshot}
+                                <ExpressionIcon 
+                                    expressionURL={node.url} 
+                                    on:context-menu={onExpressionContextMenu} 
+                                    rotated={iconStates[node.url] === 'rotated'}
+                                />
+                            {:else}
+                                <ExpressionIcon 
+                                    expressionURL={node.url} 
+                                    perspectiveUUID={perspective.uuid}
+                                    on:context-menu={onExpressionContextMenu} 
+                                    rotated={iconStates[node.url] === 'rotated'}
+                                />
+                            {/if}
                         {/if}
                     </div>
                 {/if}
