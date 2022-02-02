@@ -4,6 +4,7 @@
     import { createEventDispatcher } from 'svelte';
     import Clipboard from "svelte-clipboard";
 
+    export let isSnapshot: boolean
     const dispatch = createEventDispatcher();
 
     let menu
@@ -36,18 +37,20 @@
                 <Graphic class="material-icons">qr_code</Graphic>
                 <Text>Switch header/content</Text>
             </Item>
-            <Item on:SMUI:action={() => dispatch('add-child', expression)}>
-                <Graphic class="material-icons">add_circle_outline</Graphic>
-                <Text>Create new expression as child</Text>
-            </Item>
-            <Item on:SMUI:action={() => dispatch('link', expression)}>
-                <Graphic class="material-icons">link</Graphic>
-                <Text>Create link to other expression</Text>
-            </Item>
-            <Item on:SMUI:action={() => dispatch('delete', expression)}>
-                <Graphic class="material-icons">delete_forever</Graphic>
-                <Text>Unlink expression</Text>
-            </Item>
+            {#if !isSnapshot}
+                <Item on:SMUI:action={() => dispatch('add-child', expression)}>
+                    <Graphic class="material-icons">add_circle_outline</Graphic>
+                    <Text>Create new expression as child</Text>
+                </Item>
+                <Item on:SMUI:action={() => dispatch('link', expression)}>
+                    <Graphic class="material-icons">link</Graphic>
+                    <Text>Create link to other expression</Text>
+                </Item>
+                <Item on:SMUI:action={() => dispatch('delete', expression)}>
+                    <Graphic class="material-icons">delete_forever</Graphic>
+                    <Text>Unlink expression</Text>
+                </Item>
+            {/if}
         </List>
     </Menu>
 </Clipboard>

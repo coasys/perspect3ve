@@ -300,6 +300,7 @@
     on:delete={onDeleteExpression}
     on:link={(e)=>{dispatch('link-from-expression', e.detail)}}
     on:add-child={(e)=>dispatch('create-target-for-expression', e.detail)}
+    isSnapshot={isSnapshot}
 ></ExpressionContextMenu>
 <LinkContextMenu bind:this={linkContextMenu}
     on:delete={onDeleteLink}
