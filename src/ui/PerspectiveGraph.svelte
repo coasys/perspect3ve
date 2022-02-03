@@ -17,7 +17,7 @@
     const ad4m: Ad4mClient = getContext('ad4mClient')
     const zumly = getContext('zumly')
     const dispatch = createEventDispatcher()
-    
+    let zumlyDiv = {}
 
     if(!perspective && uuid) {
         (async () => {
@@ -228,9 +228,18 @@
     function noop(){}
 
     function triggerZumly(e) {
-
         //@ts-ignore
         zumly.onZoom(e)
+    }
+    function zoomIn(el) {
+        console.log('zoom element:', el)
+        //@ts-ignore
+        zumly.zoomIn(el)
+    }
+
+    function zoomFromContext(e) {
+        const expressionURL = e.detail
+        zoomIn(zumlyDiv[expressionURL])
     }
 
 </script>
@@ -263,12 +272,17 @@
                                 <h1>{node.url}</h1>
                             </div>
                         {:else if node.url.startsWith('perspective://')}
-                            <div class="zoom-me ps-zoom"
+                            <div
+                                bind:this={zumlyDiv[node.url]}
+                                class="zoom-me ps-zoom"
                                 data-to="PerspectiveSnapshotView"
                                 data-perspectiveurl={node.url}
-                                on:mouseup={(e)=>triggerZumly(e)}
                             >
-                                click to view perspective snapshot graph
+                                <ExpressionIcon
+                                    on:context-menu={onExpressionContextMenu}
+                                    expressionURL={node.url}
+                                    rotated={iconStates[node.url] === 'rotated'}
+                                />
                             </div>
                         {:else}
                             {#if isSnapshot}
@@ -300,6 +314,7 @@
     on:delete={onDeleteExpression}
     on:link={(e)=>{dispatch('link-from-expression', e.detail)}}
     on:add-child={(e)=>dispatch('create-target-for-expression', e.detail)}
+    on:zoom-graph={zoomFromContext}
     isSnapshot={isSnapshot}
 ></ExpressionContextMenu>
 <LinkContextMenu bind:this={linkContextMenu}
@@ -345,9 +360,9 @@
     }
 
     .ps-zoom {
-        width: 300px;
-        height: 200px;
-        background-color: blue;
+        width: 100%;
+        height: 100%;
+        background-color: transparent;
         z-index: 1;
     }
 </style>
