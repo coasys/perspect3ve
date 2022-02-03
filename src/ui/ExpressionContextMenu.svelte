@@ -50,7 +50,7 @@
                     <Text>Unlink expression</Text>
                 </Item>
             {/if}
-            {#if expression && expression.startsWith('perspective://')}
+            {#if expression && (expression.startsWith('perspective://') || expression.startsWith('neighbourhood://'))}
                 <Item on:SMUI:action={() => dispatch('zoom-graph', expression)}>
                     <Graphic class="material-icons">qr_code</Graphic>
                     <Text>View Expression As Graph</Text>

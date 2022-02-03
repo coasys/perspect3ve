@@ -264,7 +264,9 @@
                         transform: scale(${scale*0.8});
                         `}>
                         {#if node.url.startsWith('neighbourhood://') && uuidForNeighbourhood(node.url)}
-                            <div class="zoom-me nh-zoom" 
+                            <div 
+                                bind:this={zumlyDiv[node.url]}    
+                                class="zoom-me nh-zoom" 
                                 data-to="PerspectiveWrapper" 
                                 data-uuid={uuidForNeighbourhood(node.url)}
                                 on:mouseup={(e)=>triggerZumly(e)}
