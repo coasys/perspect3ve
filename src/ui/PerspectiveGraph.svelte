@@ -232,7 +232,6 @@
         zumly.onZoom(e)
     }
     function zoomIn(el) {
-        console.log('zoom element:', el)
         //@ts-ignore
         zumly.zoomIn(el)
     }

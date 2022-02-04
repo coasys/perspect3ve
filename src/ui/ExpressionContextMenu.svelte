@@ -16,7 +16,8 @@
     let parentLink
 
     export function open(x, y, e, p) {
-        expression = e
+        expression = ''
+        setTimeout(() => {expression = e}, 50)
         parentLink = p
         anchorX = x
         anchorY = y
@@ -26,8 +27,14 @@
 
 <div class="anchor" bind:this={anchor} style={`position: absolute; left: ${anchorX}px; top: ${anchorY}px;`}>
     <Clipboard text={expression} let:copy>
-    <Menu bind:this={menu} bind:anchorElement={anchor}>
-        <List>
+        <Menu bind:this={menu} bind:anchorElement={anchor}>
+            <List>
+            {#if expression && (expression.startsWith('perspective://') || expression.startsWith('neighbourhood://'))}
+                <Item on:SMUI:action={() => dispatch('zoom-graph', expression)}>
+                    <Graphic class="material-icons">qr_code</Graphic>
+                    <Text>View Expression As Graph</Text>
+                </Item>
+            {/if}
             <Item on:SMUI:action={copy}>
                 <Graphic class="material-icons">content_copy</Graphic>
                 <Text>Copy URL</Text>
@@ -48,12 +55,6 @@
                 <Item on:SMUI:action={() => dispatch('delete', expression)}>
                     <Graphic class="material-icons">delete_forever</Graphic>
                     <Text>Unlink expression</Text>
-                </Item>
-            {/if}
-            {#if expression && (expression.startsWith('perspective://') || expression.startsWith('neighbourhood://'))}
-                <Item on:SMUI:action={() => dispatch('zoom-graph', expression)}>
-                    <Graphic class="material-icons">qr_code</Graphic>
-                    <Text>View Expression As Graph</Text>
                 </Item>
             {/if}
         </List>
