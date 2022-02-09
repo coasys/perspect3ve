@@ -8,6 +8,8 @@
     import VisGraph from "./VisGraph";
     import LinkContextMenu from "./LinkContextMenu.svelte";
     import { v4 as uuidv4 } from 'uuid'
+    import md5 from 'md5'
+    import { not_equal } from "svelte/internal";
 
     export let perspective: PerspectiveProxy
     export let uuid: string 
@@ -113,6 +115,7 @@
 
         network.on('zoom', (params) => {
             scale = params.scale
+            console.log('scale:', scale)
             getNodePositions()
         })
 
@@ -241,6 +244,14 @@
         zoomIn(zumlyDiv[expressionURL])
     }
 
+    function isZoomablePerspective(url) {
+        return url.startsWith('neighbourhood://') && uuidForNeighbourhood(url)
+    }
+    function isZoomableSnapshot(url) {
+        // TODO: check any kind of expression, if contains links field, make it zoomable
+        return url.startsWith('perspective://')
+    }
+
 </script>
 
 <div 
@@ -263,28 +274,7 @@
                         transform: scale(${scale*0.8});
                         `}>
                         {#if node.url.startsWith('neighbourhood://') && uuidForNeighbourhood(node.url)}
-                            <div 
-                                bind:this={zumlyDiv[node.url]}    
-                                class="zoom-me nh-zoom" 
-                                data-to="PerspectiveWrapper" 
-                                data-uuid={uuidForNeighbourhood(node.url)}
-                                on:mouseup={(e)=>triggerZumly(e)}
-                            >
-                                <h1>{node.url}</h1>
-                            </div>
-                        {:else if node.url.startsWith('perspective://')}
-                            <div
-                                bind:this={zumlyDiv[node.url]}
-                                class="zoom-me ps-zoom"
-                                data-to="PerspectiveSnapshotView"
-                                data-perspectiveurl={node.url}
-                            >
-                                <ExpressionIcon
-                                    on:context-menu={onExpressionContextMenu}
-                                    expressionURL={node.url}
-                                    rotated={iconStates[node.url] === 'rotated'}
-                                />
-                            </div>
+                            <div></div>
                         {:else}
                             {#if isSnapshot}
                                 <ExpressionIcon 
@@ -302,6 +292,34 @@
                             {/if}
                         {/if}
                     </div>
+                    {#if isZoomableSnapshot(node.url)}
+                        <div class="graph-zoom-wrapper" style={
+                            `top: ${node.pos.y-15-(40*scale)}px; 
+                            left: ${node.pos.x-15+(100*scale)}px;
+                            transform: scale(${scale*2});`
+                        }>
+                            <div bind:this={zumlyDiv[node.url]} 
+                                class="zoom-handle material-icons zoom-me" 
+                                data-to="PerspectiveSnapshotView"
+                                data-perspectiveurl={node.url}
+                                on:mouseup={(e)=>triggerZumly(e)}
+                            >fullscreen</div>
+                        </div>
+                    {:else if isZoomablePerspective(node.url)}
+                        <div class="graph-zoom-wrapper" style={
+                            `top: ${node.pos.y-15-(40*scale)}px; 
+                            left: ${node.pos.x-15+(100*scale)}px;
+                            transform: scale(${scale*2});`
+                        }>
+                            <div bind:this={zumlyDiv[node.url]} 
+                                class="zoom-handle material-icons zoom-me" 
+                                data-to="PerspectiveWrapper"
+                                data-uuid={uuidForNeighbourhood(node.url)}
+                                on:mouseup={(e)=>triggerZumly(e)}
+                            >fullscreen</div>
+                        </div>
+                    {/if}
+
                 {/if}
             {/each}
         </div>
@@ -327,6 +345,14 @@
 
 </div>
 <style>
+    .graph-zoom-wrapper {
+        position: absolute;
+        z-index: 2;
+    }
+    .zoom-handle {
+        font-size: 30px;
+        background-color: #00ffff73;
+    }
     .network-wrapper {
         position: absolute;
         top: 30px;
@@ -351,19 +377,5 @@
     .expression-icon-wrapper {
         position: absolute;
         z-index: 2;
-    }
-
-    .nh-zoom {
-        width: 300px;
-        height: 200px;
-        background-color: red;
-        z-index: 1;
-    }
-
-    .ps-zoom {
-        width: 100%;
-        height: 100%;
-        background-color: transparent;
-        z-index: 1;
     }
 </style>
