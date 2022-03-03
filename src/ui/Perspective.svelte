@@ -55,6 +55,7 @@
     let dropMove = false
     let dropMoveTarget
 
+
     $: if(content && zoom!=undefined && translateX!=undefined && translateY!=undefined) {
         console.debug("SET TRANSFORM:", zoom)
         content.setAttribute("style", calcPerspectiveContentStyle())

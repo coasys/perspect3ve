@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Expression } from "@perspect3vism/ad4m"
+    import { Agent, Expression, Link, PerspectiveProxy } from "@perspect3vism/ad4m"
     import { Literal, parseExprUrl, Perspective } from "@perspect3vism/ad4m"
     import iconComponentFromString from "./iconComponentFromString";
     import { getContext, createEventDispatcher } from 'svelte';
@@ -10,6 +10,7 @@
     import md5 from 'md5'
     import {Graphic} from '@smui/list';
     import { DoubleBounce } from 'svelte-loading-spinners'
+import LanguagesSettings from "./LanguagesSettings.svelte";
 
     export let expressionURL: string
     export let parentLink: Expression
@@ -28,6 +29,31 @@
     let loading = true
     let authorName = null
     let authorEmail = null
+    let language = null
+
+    let agentPerspective: PerspectiveProxy|undefined
+    let me: Agent
+    const AGENT_PERSPECTIVE_NAME = '__agent_public_perspective'
+
+    
+    async function getLanguageDetails() {
+        language = await ad4m.languages.byAddress(expressionURL.split('://')[0])
+    }
+    getLanguageDetails()
+    //------------------------------------------------
+    // Init temp agent perspective for modifications
+    //------------------------------------------------
+    async function initAgentPerspective() {
+        me = await ad4m.agent.me()
+        const allPerspectives = await ad4m.perspective.all()
+        agentPerspective = allPerspectives.find(p => p.name === AGENT_PERSPECTIVE_NAME)
+        if(!agentPerspective) {
+            agentPerspective = await ad4m.perspective.add(AGENT_PERSPECTIVE_NAME)
+            if(me.perspective)
+                agentPerspective.loadSnapshot(me.perspective)
+        }
+    }
+    initAgentPerspective()
 
     
     $: if(expressionURL && loading) ad4m.expression.get(expressionURL).then(result => {
@@ -47,7 +73,7 @@
             childLinks = result
         })
 
-    $: if(expression) ad4m.expression.get(expression.author).then(result => {
+    $: if(expression && expression.author.startsWith("did:")) ad4m.expression.get(expression.author).then(result => {
         let author = JSON.parse(result.data)
         console.log("Expression author:", author)
 
@@ -123,7 +149,7 @@
     }
     
     
-    $: if(container && componentConstructor && !loading) {
+    $: if(container && componentConstructor && !loading && agentPerspective) {
         iconReady = false
         const icon = new componentConstructor()
         //const expression = JSON.parse(JSON.stringify($queryResult))
@@ -133,6 +159,25 @@
             container.removeChild(container.lastChild)
         container.appendChild(icon)
         iconReady = true
+        if(language.name === 'clutter') {
+            icon.createExpression = async (content) => {
+                commitMewExpression(language, content)
+            }
+        }
+    }
+
+    async function commitMewExpression(lang, content) {
+        const mewURL = await ad4m.expression.create(content, lang.address)
+        console.log("Created new Mew expression:", mewURL)
+        // ad4m.perspective.addLink(perspective.uuid, new Link({source: 'root', target: mewURL}))
+
+        await agentPerspective!.add(new Link({
+            source: me.did,
+            predicate: 'clutter://haz_mew',
+            target: mewURL
+        }))
+
+        let agent = await ad4m.agent.updatePublicPerspective(await agentPerspective!.snapshot())
     }
 
     let width
