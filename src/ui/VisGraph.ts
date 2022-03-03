@@ -9,8 +9,10 @@ export default class VisGraph {
     connectLinkElements: boolean
     hidden: string[]
 
-    constructor(perspective: PerspectiveProxy) {
-        this.#perspective = perspective
+    constructor(perspective: PerspectiveProxy | object) {
+        if (perspective instanceof PerspectiveProxy){
+          this.#perspective = perspective
+        }
         this.connectLinkElements = true
         this.nodes = []
         this.edges = []
@@ -201,6 +203,9 @@ export default class VisGraph {
         } else {
           from = perspective.uuid;
         }
+        this.loadSnapshotOrPerspectiveLinks(links, from)
+    }
+    async loadSnapshotOrPerspectiveLinks(links, from) {
   
         for (const link of links) {
           const linkData = link.data;
@@ -284,16 +289,15 @@ export default class VisGraph {
     }
 
     async loadLinks(perspective, isNeighbourhood) {
-        const linkLanguageLinksNode = this.loadLinkLanguageNode(perspective, isNeighbourhood);
-        const links = await perspective.get(new LinkQuery({}));
-        
-        let from;
-        if (isNeighbourhood) {
-          from = linkLanguageLinksNode.id
-        } else {
-          from = perspective.uuid;
-        }
-  
+      const linkLanguageLinksNode = this.loadLinkLanguageNode(perspective, isNeighbourhood);
+      const links = await perspective.get(new LinkQuery({}));
+      
+      let from;
+      if (isNeighbourhood) {
+        from = linkLanguageLinksNode.id
+      } else {
+        from = perspective.uuid;
+      }
         for (const link of links) {
           const linkData = link.data;
           const sourceNode = {

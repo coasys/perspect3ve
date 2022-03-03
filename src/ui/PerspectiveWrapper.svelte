@@ -35,6 +35,12 @@
         linkWizard.reset()
         showLinkWizard = true
     }
+    async function createPerspectiveSnapshot() {
+        // only allow perspective snapshot to be made from a non-perspective snapshot
+        const perspectiveSnapshotAddress = await ad4m.perspective.publishSnapshotByUUID(uuid) //publishes perspective object as an immutable perspective expression
+        console.log('perspective snapshot expression address:', perspectiveSnapshotAddress)
+        // consider doing something with this snapshot address, like linking it to perspective metadata or something like that
+    }
 
     let pickMode = false
     let pickTarget = ''
@@ -293,6 +299,10 @@
                 <Button variant="raised" on:click={openLinkWizard}>
                     <ButtonIcon class="material-icons">add</ButtonIcon>
                     <ButtonLabel>Add Link/Expression</ButtonLabel>
+                </Button>
+                <Button variant="raised" on:click={createPerspectiveSnapshot}>
+                    <ButtonIcon class="material-icons">add</ButtonIcon>
+                    <ButtonLabel>save perspective as snapshot</ButtonLabel>
                 </Button>
                 {#if agentprofile}
                     <Button variant="raised" on:click={publishAsAgentPerspective}>

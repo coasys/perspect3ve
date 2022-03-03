@@ -33,6 +33,9 @@ const languages = {
   },
   "virtual-icons": {
     bundle: "https://github.com/perspect3vism/virtual-icon-language/releases/download/v0.0.1/bundle.js"
+  },
+  "perspective-language": {
+    bundle: "https://github.com/perspect3vism/perspective-language/releases/download/0.0.1/bundle.js"
   }
 };
 

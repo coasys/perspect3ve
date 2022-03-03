@@ -7,14 +7,19 @@
     import { Network } from 'vis-network/esnext'
     import VisGraph from "./VisGraph";
     import LinkContextMenu from "./LinkContextMenu.svelte";
+    import { v4 as uuidv4 } from 'uuid'
+    import md5 from 'md5'
+    import { not_equal } from "svelte/internal";
 
     export let perspective: PerspectiveProxy
     export let uuid: string 
+    export let isSnapshot: boolean
+    export let perspectiveSnapshot: object
 
     const ad4m: Ad4mClient = getContext('ad4mClient')
     const zumly = getContext('zumly')
     const dispatch = createEventDispatcher()
-    
+    let zumlyDiv = {}
 
     if(!perspective && uuid) {
         (async () => {
@@ -26,14 +31,16 @@
         uuid = perspective.uuid
     }
 
-    //@ts-ignore
-    ad4m.perspective.addPerspectiveUpdatedListener(async p => {
+    if(!isSnapshot) {
         //@ts-ignore
-        if(p.uuid == perspective.uuid || p.uuid == uuid) {
+        ad4m.perspective.addPerspectiveUpdatedListener(async p => {
             //@ts-ignore
-            perspective = await ad4m.perspective.byUUID(perspective.uuid)
-        }
-    })
+            if(p.uuid == perspective.uuid || p.uuid == uuid) {
+                //@ts-ignore
+                perspective = await ad4m.perspective.byUUID(perspective.uuid)
+            }
+        })
+    }
 
     async function update() {
         await graphFromPerspective(perspective)
@@ -47,18 +54,20 @@
     let graph
     let scale = 1
 
-    $: if(perspective && networkDiv) {
+    $: if((perspective || isSnapshot) && networkDiv) {
         init()
     }
 
     async function init() {
-        await graphFromPerspective(perspective)
+        if(isSnapshot) await graphFromPerspective(perspectiveSnapshot)
+        else await graphFromPerspective(perspective)
         await createNetwork(networkDiv)
     }
 
     async function graphFromPerspective(p) {
         graph = new VisGraph(p)
-        await graph.load()
+        if(isSnapshot) await graph.loadSnapshotOrPerspectiveLinks(JSON.parse(p.data).links, uuidv4())
+        else await graph.load()
     }
 
     async function createNetwork(container) {
@@ -106,6 +115,7 @@
 
         network.on('zoom', (params) => {
             scale = params.scale
+            console.log('scale:', scale)
             getNodePositions()
         })
 
@@ -221,9 +231,25 @@
     function noop(){}
 
     function triggerZumly(e) {
-
         //@ts-ignore
         zumly.onZoom(e)
+    }
+    function zoomIn(el) {
+        //@ts-ignore
+        zumly.zoomIn(el)
+    }
+
+    function zoomFromContext(e) {
+        const expressionURL = e.detail
+        zoomIn(zumlyDiv[expressionURL])
+    }
+
+    function isZoomablePerspective(url) {
+        return url.startsWith('neighbourhood://') && uuidForNeighbourhood(url)
+    }
+    function isZoomableSnapshot(url) {
+        // TODO: check any kind of expression, if contains links field, make it zoomable
+        return url.startsWith('perspective://')
     }
 
 </script>
@@ -233,7 +259,7 @@
     on:touchstart|stopPropagation={noop}
 >
 
-{#if !perspective || !perspective.uuid}
+{#if (!perspective || !perspective.uuid) && !isSnapshot}
     <h1>Loading...</h1>
 {:else}
 
@@ -248,22 +274,52 @@
                         transform: scale(${scale*0.8});
                         `}>
                         {#if node.url.startsWith('neighbourhood://') && uuidForNeighbourhood(node.url)}
-                            <div class="zoom-me nh-zoom" 
-                                data-to="PerspectiveWrapper" 
-                                data-uuid={uuidForNeighbourhood(node.url)}
-                                on:mouseup={(e)=>triggerZumly(e)}
-                            >
-                                <h1>{node.url}</h1>
-                            </div>
+                            <div></div>
                         {:else}
-                            <ExpressionIcon 
-                                expressionURL={node.url} 
-                                perspectiveUUID={perspective.uuid}
-                                on:context-menu={onExpressionContextMenu} 
-                                rotated={iconStates[node.url] === 'rotated'}
-                            />
+                            {#if isSnapshot}
+                                <ExpressionIcon 
+                                    expressionURL={node.url} 
+                                    on:context-menu={onExpressionContextMenu} 
+                                    rotated={iconStates[node.url] === 'rotated'}
+                                />
+                            {:else}
+                                <ExpressionIcon 
+                                    expressionURL={node.url} 
+                                    perspectiveUUID={perspective.uuid}
+                                    on:context-menu={onExpressionContextMenu} 
+                                    rotated={iconStates[node.url] === 'rotated'}
+                                />
+                            {/if}
                         {/if}
                     </div>
+                    {#if isZoomableSnapshot(node.url)}
+                        <div class="graph-zoom-wrapper" style={
+                            `top: ${node.pos.y-15-(40*scale)}px; 
+                            left: ${node.pos.x-15+(100*scale)}px;
+                            transform: scale(${scale*2});`
+                        }>
+                            <div bind:this={zumlyDiv[node.url]} 
+                                class="zoom-handle material-icons zoom-me" 
+                                data-to="PerspectiveSnapshotView"
+                                data-perspectiveurl={node.url}
+                                on:mouseup={(e)=>triggerZumly(e)}
+                            >fullscreen</div>
+                        </div>
+                    {:else if isZoomablePerspective(node.url)}
+                        <div class="graph-zoom-wrapper" style={
+                            `top: ${node.pos.y-15-(40*scale)}px; 
+                            left: ${node.pos.x-15+(100*scale)}px;
+                            transform: scale(${scale*2});`
+                        }>
+                            <div bind:this={zumlyDiv[node.url]} 
+                                class="zoom-handle material-icons zoom-me" 
+                                data-to="PerspectiveWrapper"
+                                data-uuid={uuidForNeighbourhood(node.url)}
+                                on:mouseup={(e)=>triggerZumly(e)}
+                            >fullscreen</div>
+                        </div>
+                    {/if}
+
                 {/if}
             {/each}
         </div>
@@ -277,6 +333,8 @@
     on:delete={onDeleteExpression}
     on:link={(e)=>{dispatch('link-from-expression', e.detail)}}
     on:add-child={(e)=>dispatch('create-target-for-expression', e.detail)}
+    on:zoom-graph={zoomFromContext}
+    isSnapshot={isSnapshot}
 ></ExpressionContextMenu>
 <LinkContextMenu bind:this={linkContextMenu}
     on:delete={onDeleteLink}
@@ -287,6 +345,14 @@
 
 </div>
 <style>
+    .graph-zoom-wrapper {
+        position: absolute;
+        z-index: 2;
+    }
+    .zoom-handle {
+        font-size: 30px;
+        background-color: #00ffff73;
+    }
     .network-wrapper {
         position: absolute;
         top: 30px;
@@ -311,12 +377,5 @@
     .expression-icon-wrapper {
         position: absolute;
         z-index: 2;
-    }
-
-    .nh-zoom {
-        width: 300px;
-        height: 200px;
-        background-color: red;
-        z-index: 1;
     }
 </style>
