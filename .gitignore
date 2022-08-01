@@ -37,3 +37,4 @@ ad4m
 swipl
 
 out/
+src/ui/executeCustomAction.js

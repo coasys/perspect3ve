@@ -15,6 +15,8 @@
     import PrologExpressionView from "./PrologExpressionView.svelte";
     import ActionsView from "./ActionsView.svelte";
     import { debounce } from "./uiUtils"
+    import ConstructionPalette from "./ConstructionPalette.svelte";
+    import { executeCustomAction } from "./executeCustomAction";
 
     export let uuid: string
     export let settings: string
@@ -148,32 +150,6 @@
             }
         }
     }
-
-    async function executeCustomAction(action) {
-        console.log("execute:", action.code)
-
-        const replaceThis = (input: string|undefined) => {
-            if(input)
-                return input.replace('this', selectedExpression)
-            else
-                return undefined
-        }
-
-        for(let command of action.code) {
-            switch(command.action) {
-                case 'addLink':
-                    await perspective.add(new Link({
-                        source: replaceThis(command.source),
-                        predicate: replaceThis(command.predicate),
-                        target: replaceThis(command.target)
-                    }))
-                    break;
-                case 'removeLink':
-                    await perspective.remove(command.linkExpression)
-                    break;
-            }
-        }
-    }
     
 
     if(typeof settings === 'string')
@@ -259,6 +235,11 @@
         <h2>Loading...</h2>
     {/if}
 
+    {#if perspective}
+    <div class="palette">
+        <ConstructionPalette perspective={perspective}></ConstructionPalette>
+    </div>
+    {/if}
     
 
     <div class="side-panel" style={`width: ${showSidePanel ? '400px' : '0'};`}>
@@ -361,7 +342,7 @@
             </span>
             <span class="tool-buttons">
                 {#each customActions as action}
-                    <Button variant="raised" on:click={()=>executeCustomAction(action)}>
+                    <Button variant="raised" on:click={()=>executeCustomAction(action.code, selectedExpression, perspective)}>
                         <ButtonLabel>{action.name}</ButtonLabel>
                     </Button>    
                 {/each}
@@ -496,6 +477,8 @@
 
     .side-content {
         position: relative;
+        overflow: scroll;
+        height: 80%;
     }
 
     .picker {
@@ -509,4 +492,12 @@
     .visible {
         display: block;
     }
+
+    .palette {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translate(0, -50%);
+        z-index: 10;
+    } 
 </style>
