@@ -23,9 +23,9 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Install Windows build-tools through npm
-      if: matrix.platform == 'windows-latest'
-      run: npm install -g windows-build-tools
+    # - name: Install Windows build-tools through npm
+    #   if: matrix.platform == 'windows-latest'
+    #   run: npm install -g windows-build-tools
     - name: Install dependencies
       run: npm install
     - name: Build
