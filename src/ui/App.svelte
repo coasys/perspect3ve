@@ -1,31 +1,27 @@
 <script lang="ts">
-	import { ApolloClient, ApolloLink, InMemoryCache } from "@apollo/client";
-	import { WebSocketLink } from '@apollo/client/link/ws';
+	import { ApolloClient, InMemoryCache } from "@apollo/client/core";
+	import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+    import { createClient } from 'graphql-ws';
 	import { getContext, setContext } from "svelte"
 	import { Ad4mClient } from "@perspect3vism/ad4m"
 	import MainView from "./MainView.svelte";
 	import { setClient } from "svelte-apollo"
-	import { removeTypenameFromMutationLink } from 'apollo-remove-typename-mutation-link';
 	import World from "./world";
 
 	const { ipcRenderer } = require('electron')
-	const { executorUrl, capToken } = ipcRenderer.sendSync('connection-request', '')
-	const wsLink = new WebSocketLink({
-		uri: executorUrl,
-		options: {
-			reconnect: true,
-			connectionParams: async () => {
-				return {
-					headers: {
-						authorization: capToken
-					}
-				}
-			}
-		},
-	});
+	const { executorUrl, capToken }: {executorUrl: string, capToken: string} = ipcRenderer.sendSync('connection-request', '')
+	const wsLink = new GraphQLWsLink(
+        createClient({
+            url: executorUrl,
+            connectionParams: () => {
+                return {
+                    headers: { authorization: capToken }
+                }
+            },
+        }));
 	
 	const client = new ApolloClient({
-		link: ApolloLink.from([removeTypenameFromMutationLink, wsLink]) ,
+		link: wsLink,
 		cache: new InMemoryCache(),
 		defaultOptions: {
 			watchQuery: {
