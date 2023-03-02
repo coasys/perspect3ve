@@ -31,5 +31,13 @@
 		"vite": "^4.0.0",
 		"vitest": "^0.25.3"
 	},
-	"type": "module"
+	"type": "module",
+	"dependencies": {
+		"@pixi/app": "^7.1.4",
+		"@pixi/core": "^7.1.4",
+		"@pixi/interaction": "^6.5.9",
+		"@pixi/math-extras": "^7.1.4",
+		"pixi.js": "^7.1.4",
+		"pixijs": "^7.1.3"
+	}
 }
