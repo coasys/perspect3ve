@@ -1,3 +1,0 @@
-[submodule "src/languages/agent-profiles/hc-dna/profiles"]
-	path = src/languages/agent-profiles/hc-dna/profiles
-	url = git@github.com:jdeepee/profiles.git

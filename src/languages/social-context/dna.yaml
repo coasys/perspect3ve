@@ -1,0 +1,14 @@
+---
+manifest_version: "1"
+name: social-context
+uid: 00000000-0000-0000-0000-000000000000
+properties:
+  enforce_spam_limit: 20
+  max_chunk_interval: 43200000
+  active_agent_duration_s: 300
+  enable_signals: true
+  enable_time_index: true
+zomes:
+  - name: social_context
+    hash: ~
+    bundled: "../target/wasm32-unknown-unknown/release/social_context.wasm"
