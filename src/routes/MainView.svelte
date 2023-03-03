@@ -9,101 +9,207 @@
   let container: PIXI.Container|undefined;
   let canvas
 
-  const NODE_RADIUS = 50;
+  const LEVEL_SCALE = 0.24
 
-let pixiContainer;
-let rootNode;
+  let children = new Map<string, string[]>()
+  let coords = new Map<string, {x: number, y: number}>()
 
-function createNodeCircle(node) {
-  const circle = new PIXI.Graphics();
-  circle.beginFill(0xff00ff);
-  circle.lineStyle(2, 0x000000);
-  circle.drawCircle(0, 0, NODE_RADIUS);
-  circle.endFill();
-  circle.interactive = true;
-  circle.buttonMode = true;
-  circle.node = node;
-  circle.on('pointerdown', onNodeClick);
-  return circle;
-}
-
-function createTextNode(node) {
-  const text = new PIXI.Text(node.name, {
-    fontSize: 16,
-    fill: 0x000000,
-    align: 'center',
-  });
-  text.anchor.set(0.5);
-  return text;
-}
-
-function createNodeDisplay(node) {
-  const display = new PIXI.Container();
-  const circle = createNodeCircle(node);
-  const text = createTextNode(node);
-  display.addChild(circle, text);
-  display.node = node;
-  return display;
-}
-
-function renderNodeDisplay(node, parentDisplay) {
-  console.log("renderNodeDisplay:", node)
-  const display = createNodeDisplay(node);
-  console.log("display:", display)
-  if (parentDisplay) {
-    console.log("parentDisplay:", parentDisplay)
-    display.x = NODE_RADIUS * 2;
-    parentDisplay.addChild(display);
-  } else {
-    console.log("root node")
-    display.x = app.renderer.width / 2;
-    display.y = app.renderer.height / 2;
-    app.stage.addChild(display);
+  function updateCoords(expr: string) {
+    return _upateCoords(expr, treeData)
   }
-  if (node.children) {
-    for (const child of node.children) {
-      renderNodeDisplay(child, display);
+
+  function updateChildren(expr: string) {
+    return _updateChildren(expr, treeData)
+  }
+
+  function _upateCoords(expr: string, currentTreeItem: any) {
+    if(currentTreeItem.id === expr) {
+      coords.set(expr, {x: currentTreeItem.x, y: currentTreeItem.y})
+      return true
     }
+    if(currentTreeItem.children) {
+      for(let child of currentTreeItem.children) {
+        if(_upateCoords(expr, child)) {
+          return true
+        }
+      }
+    }
+    return false
   }
-}
 
-function onNodeClick() {
-  const node = this.node;
-  const parentDisplay = this.parent;
-  const newRoot = createNodeDisplay(node);
-  newRoot.x = app.renderer.width / 2;
-  newRoot.y = app.renderer.height / 2;
-  app.stage.removeChildren();
-  app.stage.addChild(newRoot);
-  renderNodeDisplay(node, newRoot);
-  rootNode = node;
-}
+  function _updateChildren(expr: string, currentTreeItem: any) {
+    if(currentTreeItem.id === expr) {
+      if(currentTreeItem.children) {
+        children.set(expr, currentTreeItem.children.map((child) => child.id))
+      }
+      return true
+    }
+    if(currentTreeItem.children) {
+      for(let child of currentTreeItem.children) {
+        if(_updateChildren(expr, child)) {
+          return true
+        }
+      }
+    }
+    return false
+  }
 
-    // Define the tree data structure
-    const treeData = {
+  const treeData = {
       id: 'A',
+      x: 0,
+      y: 0,
       children: [
           {
               id: 'B',
+              x: 100,
+              y: 0,
               children: [
                   {
-                      id: 'C'
+                      id: 'C',
+                      x: 200,
+                      y: 100,
                   },
                   {
-                      id: 'D'
+                      id: 'Dee',
+                      x: -100,
+                      y: -300,
                   }
               ]
           },
           {
-              id: 'E'
+              id: 'E',
+              x: -30,
+              y: -50,
           }
       ]
   };
-      
 
-  // Define the circle size and spacing
-  const circleRadius = 30;
-  const circleSpacing = 80;
+  function renderExpressionLayer(expression: string, layer: PIXI.Container, renderChildren: boolean = false) {
+    console.log("renderExpressionLayer", expression)
+    updateCoords(expression)
+    let point = coords.get(expression)
+    if(!point) {
+      console.error("no point for expression:", expression)
+      return
+    }
+    layer.addChild(createExpressionCircle(), createTextNode(expression))
+    if(renderChildren) renderChildrenLayers(expression, layer)
+  }
+  
+  function renderChildrenCircles(expression: string, layer: PIXI.Container) {
+    console.log("renderChildrenCircles", expression)
+    updateChildren(expression)
+    console.log("children:", children.get(expression))
+    children.get(expression)?.forEach((child) => {
+      let point = coords.get(child)
+      if(!point) {
+        updateCoords(child)
+      }
+      point = coords.get(child)
+
+      if(!point) {
+        console.error("no point for child:", child)
+        return
+      }
+
+      console.log("adding child:", child, "at", point)
+      let childLayer = new PIXI.Container()
+      childLayer.position.set(point.x, point.y)
+      childLayer.scale.set(LEVEL_SCALE)
+      childLayer.addChild(createExpressionCircle(child, point), createTextNode(child))
+      layer.addChild(childLayer)
+    })
+  }
+
+  const zoomIn = (node, parentLayer, childLayer) => {
+    console.log("zooming in to", node)
+    const startScale = 1;
+    const endScale = 1/childLayer.scale.x;
+    let elapsed = 0;
+    const animateZoom = delta => {
+      function lerp(start, end, t) {
+        return start * (1 - t) + end * t;
+      }
+      elapsed += delta;
+      const progress = Math.min(elapsed / zoomDuration, 1);
+      //console.log("progress:", progress)
+      const newScale = lerp(startScale, endScale, progress);
+      parentLayer.scale.set(newScale);
+      const newX = lerp(canvas.clientWidth/2, canvas.clientWidth/2-childLayer.position.x*endScale, progress);
+      const newY = lerp(canvas.clientHeight/2, canvas.clientHeight/2-childLayer.position.y*endScale, progress);
+      parentLayer.position.set(newX, newY)
+      if (progress >= 1) {
+        app.ticker.remove(animateZoom);
+        app.stage.removeChildren();
+        setupLayers(node)
+      }
+    };
+    app.ticker.add(animateZoom);
+  };
+          
+
+function renderChildrenLayers(expression: string, layer: PIXI.Container) {
+  console.log("renderChildrenLayers", expression)
+  updateChildren(expression)
+  console.log("children:", children.get(expression))
+  children.get(expression)?.forEach((child) => {
+    let point = coords.get(child)
+    if(!point) {
+      updateCoords(child)
+    }
+    point = coords.get(child)
+
+    if(!point) {
+      console.error("no point for child:", child)
+      return
+    }
+
+    let childLayer = new PIXI.Container()
+    childLayer.position.set(point.x, point.y)
+    childLayer.scale.set(LEVEL_SCALE)
+    console.log("adding child layer:", child, "at", point)
+    renderExpressionLayer(child, childLayer)
+    renderChildrenCircles(child, childLayer)
+    childLayer.interactive = true;
+    //childLayer.buttonMode = true;
+    childLayer.hitArea = new PIXI.Rectangle(0, 0, childLayer.width, childLayer.height);
+    let dblclickInterval = 
+    childLayer.on('pointerdown', () => {
+      zoomIn(child, layer, childLayer);
+    });
+    childLayer.on('pointermove', () => {
+      console.log(child)
+    });
+    childLayer.on('dblclick', () => {
+      console.log("dblclick -> zooming in")
+      zoomIn(child, layer, childLayer);
+    });
+    
+    layer.addChild(childLayer)
+  })
+}
+
+function createExpressionCircle() {
+  const circle = new PIXI.Graphics();
+  //circle.beginFill(0xff00ff);
+  circle.lineStyle(5, 0xffff0f);
+  circle.drawCircle(0, 0, canvas.clientWidth / 2.5);
+  //circle.endFill();
+  circle.interactive = true;
+  circle.buttonMode = true;
+  //circle.on('pointerdown', onNodeClick);
+  return circle;
+}
+
+function createTextNode(name) {
+  const text = new PIXI.Text(name, {
+    fontSize: 36,
+    fill: 0x0000ff,
+    align: 'center',
+  });
+  text.anchor.set(0.5, 0.5);
+  return text;
+}
 
   // Define the zooming animation duration
   const zoomDuration = 50;
@@ -113,107 +219,25 @@ function onNodeClick() {
   const panBounds = new PIXI.Rectangle(-1000, -1000, 2000, 2000);
 
   
+  function setupLayers(expr: string) {
+    app!.stage.children.forEach((child) => {
+      app!.stage.removeChild(child);
+    })
+    const layer = new PIXI.Container();
+    renderExpressionLayer(expr, layer, true)
+    //renderChildrenCircles(expr, layer)
+    //renderChildrenLayers(expr, layer)
+    layer.position.set(canvas.clientWidth/2, canvas.clientHeight/2)
+    app?.stage.addChild(layer);
+  }
 
-  // Define a recursive function to create the circles and add them to the container
-  const createCircles = (node: any, x: number, y: number, depth: number) => {
-    console.log("createCircles:", node)
-    // Create the circle
-    const circle = new PIXI.Graphics();
-    circle.beginFill(0x0000ff);
-    circle.drawCircle(x, y, circleRadius);
-    circle.endFill();
-    //circle.x = x;
-    //circle.y = y;
-    circle.interactive = true;
-    circle.on('pointerdown', () => {
-      console.log("click cicrle")
-      console.log(node)
-        if (node.children) {
-          console.log("click cicrle 2")
-          // Zoom in to show the children circles
-          const containerScale = container.scale.x;
-          const zoomIn = () => {
-            const startScale = container.scale.x;
-            const endScale = startScale * 2;
-            let elapsed = 0;
-            const animateZoom = delta => {
-              function lerp(start, end, t) {
-                return start * (1 - t) + end * t;
-              }
-              elapsed += delta;
-              const progress = Math.min(elapsed / zoomDuration, 1);
-              console.log("progress:", progress)
-              const newScale = lerp(startScale, endScale, progress);
-              container.scale.set(newScale);
-              const newPosition = new PIXI.Point(-x + renderer.width / 2, -y + renderer.height / 2);
-              const deltaPosition = newPosition.clone().subtract(container.position);
-              const distance = deltaPosition.magnitude()
-              const speed = Math.min(distance / zoomDuration, panSpeed);
-              deltaPosition.normalize().multiplyScalar(speed);
-              container.position.add(deltaPosition);
-              if (progress >= 1) {
-                app.ticker.remove(animateZoom);
-                app.stage.removeChildren();
-                container.removeChildren();
-                createCircles(node, 0, 0, 0);
-                container.position.set(x, y);
-                node.children.forEach((child, index) => {
-                  const angle = (index / node.children.length) * Math.PI * 2;
-                  const childX = (circleRadius + circleSpacing) * Math.cos(angle);
-                  const childY = (circleRadius + circleSpacing) * Math.sin(angle);
-                  createCircles(child, childX, childY, depth + 1);
-                });
-              }
-            };
-            app.ticker.add(animateZoom);
-          };
-          zoomIn();
-        }
-    });
-    console.log("adding circle:", circle)
-    container.addChild(circle);
-
-
-    // Add the circle label
-    const label = new PIXI.Text(node.id, {
-      fontSize: 20,
-      fill: 0xff0000,
-      align: 'center'
-    });
-    label.anchor.set(0.5);
-    label.x = x;
-    label.y = y + circleRadius + 10;
-    console.log("label:", label)
-    container.addChild(label);
-
-    console.log("recursively adding children", node.children)
-    // Add the children circles recursively
-    if (node.children) {
-      node.children.forEach((child, index) => {
-        const angle = (index / node.children.length) * Math.PI * 2;
-        const childX = (circleRadius + circleSpacing) * Math.cos(angle);
-        const childY = (circleRadius + circleSpacing) * Math.sin(angle);
-        createCircles(child, childX, childY, depth + 1);
-      });
-    }
-  };
+  
                   
 
 
   onMount(() => {
-
-    pixiContainer = new PIXI.Container();
-
-    app = new PIXI.Application({
-      width: pixiContainer.clientWidth,
-      height: pixiContainer.clientHeight,
-      antialias: true,
-    });
-/*
     const width = canvas.clientWidth
     const height = canvas.clientHeight
-    console.log("width:", width)
-    console.log("height:", height)
     
     // Create a PixiJS application
     app = new PIXI.Application({
@@ -224,11 +248,7 @@ function onNodeClick() {
 
     // Add the PixiJS view to the DOM
     canvas.appendChild(app.view);
-    // Create a container for the circles and labels
-    container = new PIXI.Container();
-    app.stage.addChild(container);
-    container.position.set(300, 300);
-
+    
     // Create a PixiJS renderer
     renderer = PIXI.autoDetectRenderer({
       width,
@@ -242,6 +262,12 @@ function onNodeClick() {
       renderer.resize(canvas.clientWidth, canvas.clientHeight);
     });
 
+    setupLayers('A')
+/*
+    // Create a container for the circles and labels
+    container = new PIXI.Container();
+    app.stage.addChild(container);
+    container.position.set(300, 300);
     const background = new PIXI.Graphics()
       .beginFill(0x050505)
       .drawRect(-renderer.width*5, -renderer.height*5, renderer.width*10, renderer.height*10)
@@ -272,6 +298,8 @@ function onNodeClick() {
     container.height = height;
     container.interactive = true
     */
+
+/*
     app.stage.on('pointerdown', event => {
       console.log("start dragging")
       isDragging = true;
@@ -298,17 +326,21 @@ function onNodeClick() {
       isDragging = false;
     });
     
-
+*/
     
 
     
-    app.stage.addChild(pixiContainer);
-    pixiContainer.position.set(300, 300);
+    //app.stage.addChild(pixiContainer);
+    //pixiContainer.position.set(300, 300);
+
+    
 
 
-    rootNode = treeData;
-    renderNodeDisplay(treeData, null);
+    //rootNode = treeData;
+    //renderNodeDisplay(treeData, null);
   });
+
+
 
   onDestroy(() => {
     // Clean up the PixiJS application and renderer
