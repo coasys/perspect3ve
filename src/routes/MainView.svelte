@@ -3,6 +3,7 @@
   import * as PIXI from 'pixi.js';
   import '@pixi/math-extras'
   import '@pixi/interaction'
+	import { HistoryElement } from './History';
 
   let app: PIXI.Application|undefined;
   let renderer: PIXI.Renderer|undefined;
@@ -11,6 +12,7 @@
 
   const LEVEL_SCALE = 0.24
 
+  let history: HistoryElement[] = []
   let children = new Map<string, string[]>()
   let coords = new Map<string, {x: number, y: number}>()
 
@@ -121,7 +123,7 @@
     })
   }
 
-  const zoomIn = (node, parentLayer, childLayer) => {
+  const zoomIn = (node, parentLayer, childLayer, parentNode) => {
     console.log("zooming in to", node)
     const startScale = 1;
     const endScale = 1/childLayer.scale.x;
@@ -141,6 +143,7 @@
       if (progress >= 1) {
         app.ticker.remove(animateZoom);
         app.stage.removeChildren();
+        history.push({ expression: parentNode, x: parentLayer.position.x, y: parentLayer.position.y })
         setupLayers(node)
       }
     };
@@ -173,29 +176,44 @@ function renderChildrenLayers(expression: string, layer: PIXI.Container) {
     childLayer.interactive = true;
     //childLayer.buttonMode = true;
     //childLayer.hitArea = new PIXI.Rectangle(-2*childLayer.width, -2*childLayer.height, 2*childLayer.width, 2*childLayer.height);
+    let isDragging = false;
+    let dragStart = new PIXI.Point();
     let oneClick = false;
     let twoClicks = false;
-    childLayer.on('pointerdown', () => {
+    childLayer.on('pointerdown', (event) => {
       //zoomIn(child, layer, childLayer);
       if(oneClick) {
         twoClicks = true;
         setTimeout(() => {
           twoClicks = false;
         }, 200);
-      }
+      } 
+
+      isDragging = true;
+      console.log(event.data.global)
+      dragStart.copyFrom(event.data.global);
+    
       oneClick = true;
       setTimeout(() => {
         oneClick = false;
       }, 200);
     });
     childLayer.on('pointerup', () => {
+      isDragging = false;
       if(twoClicks) {
         console.log("dblclick -> zooming in")
-        zoomIn(child, layer, childLayer);
+        zoomIn(child, layer, childLayer, expression);
       }
     });
-    childLayer.on('pointermove', () => {
-      console.log(child)
+    childLayer.on('pointermove', (event) => {
+      if (isDragging) {
+          const currentPoint = event.data.global;
+          childLayer.position.x += currentPoint.x - dragStart.x
+          childLayer.position.y += currentPoint.y - dragStart.y;
+          //container.position.x = PIXI.utils.clamp(container.position.x, panBounds.x, panBounds.x + panBounds.width);
+          //container.position.y = PIXI.utils.clamp(container.position.y, panBounds.y, panBounds.y + panBounds.height);
+          dragStart.copyFrom(event.data.global);
+        }
     });
     childLayer.on('dblclick', () => {
       console.log("dblclick -> zooming in")
@@ -240,11 +258,62 @@ function createTextNode(name) {
       app!.stage.removeChild(child);
     })
     const layer = new PIXI.Container();
+    let parent = history[history.length-1]
+    //debugger
+    if(parent) {
+      const parentLayer = new PIXI.Container();
+      parentLayer.position.set(parent.x, parent.y)
+      parentLayer.scale.set(1/LEVEL_SCALE)
+      renderExpressionLayer(parent.expression, parentLayer)
+      //parentLayer.interactive = true;
+      //parentLayer.buttonMode = true;
+      
+      app?.stage.addChild(parentLayer);
+
+      const zoomOut = (node, parentLayer, childLayer) => {
+        console.log("zooming in to", node)
+        const startScale = 1/LEVEL_SCALE;
+        const endScale = 1
+        const startScaleInner = 1;
+        const endScaleInner = LEVEL_SCALE;
+        let elapsed = 0;
+
+        const animateZoom = delta => {
+          function lerp(start, end, t) {
+            return start * (1 - t) + end * t;
+          }
+          elapsed += delta;
+          const progress = Math.min(elapsed / zoomDuration, 1);
+          //console.log("progress:", progress)
+          const newScale = lerp(startScale, endScale, progress);
+          const newScaleInner = lerp(startScaleInner, endScaleInner, progress);
+          parentLayer.scale.set(newScale);
+          layer.scale.set(newScaleInner);
+          const newX = lerp(parent.x, canvas.clientWidth/2, progress);
+          const newY = lerp(parent.y, canvas.clientHeight/2, progress);
+          parentLayer.position.set(newX, newY)
+          if (progress >= 1) {
+            app.ticker.remove(animateZoom);
+            app.stage.removeChildren();
+            history.pop()
+            setupLayers(parent?.expression)
+          }
+        };
+        app.ticker.add(animateZoom);
+      };
+      parentLayer.on('pointerdown', (event) => {
+        console.log("zooming out")
+        zoomOut(parent, parentLayer)
+      })
+    }
+    app?.stage.addChild(layer);
+    layer.position.set(canvas.clientWidth/2, canvas.clientHeight/2) 
     renderExpressionLayer(expr, layer, true)
+    
     //renderChildrenCircles(expr, layer)
     //renderChildrenLayers(expr, layer)
-    layer.position.set(canvas.clientWidth/2, canvas.clientHeight/2)
-    app?.stage.addChild(layer);
+    
+    
   }
 
   
