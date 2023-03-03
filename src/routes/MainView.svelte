@@ -172,10 +172,27 @@ function renderChildrenLayers(expression: string, layer: PIXI.Container) {
     renderChildrenCircles(child, childLayer)
     childLayer.interactive = true;
     //childLayer.buttonMode = true;
-    childLayer.hitArea = new PIXI.Rectangle(0, 0, childLayer.width, childLayer.height);
-    let dblclickInterval = 
+    //childLayer.hitArea = new PIXI.Rectangle(-2*childLayer.width, -2*childLayer.height, 2*childLayer.width, 2*childLayer.height);
+    let oneClick = false;
+    let twoClicks = false;
     childLayer.on('pointerdown', () => {
-      zoomIn(child, layer, childLayer);
+      //zoomIn(child, layer, childLayer);
+      if(oneClick) {
+        twoClicks = true;
+        setTimeout(() => {
+          twoClicks = false;
+        }, 200);
+      }
+      oneClick = true;
+      setTimeout(() => {
+        oneClick = false;
+      }, 200);
+    });
+    childLayer.on('pointerup', () => {
+      if(twoClicks) {
+        console.log("dblclick -> zooming in")
+        zoomIn(child, layer, childLayer);
+      }
     });
     childLayer.on('pointermove', () => {
       console.log(child)
@@ -191,13 +208,12 @@ function renderChildrenLayers(expression: string, layer: PIXI.Container) {
 
 function createExpressionCircle() {
   const circle = new PIXI.Graphics();
-  //circle.beginFill(0xff00ff);
-  circle.lineStyle(5, 0xffff0f);
+  circle.beginFill(0xff00ff, 0.2);
+  circle.lineStyle(5, 0x5a5a5a);
   circle.drawCircle(0, 0, canvas.clientWidth / 2.5);
-  //circle.endFill();
+  circle.endFill();
   circle.interactive = true;
   circle.buttonMode = true;
-  //circle.on('pointerdown', onNodeClick);
   return circle;
 }
 
