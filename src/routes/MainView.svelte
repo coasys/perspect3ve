@@ -263,6 +263,8 @@
   const panBounds = new PIXI.Rectangle(-1000, -1000, 2000, 2000);
 
   function setupLayers(expr: string) {
+    coords.clear();
+
     app!.stage.children.forEach((child) => {
       app!.stage.removeChild(child);
     });
