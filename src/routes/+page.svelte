@@ -1,83 +1,81 @@
 <script>
-  import Ad4mConnectUI from "@perspect3vism/ad4m-connect";
-  import { getAd4mClient } from "@perspect3vism/ad4m-connect";
-  import Nav from './Nav.svelte';
-  import MainView from './MainView.svelte';
-  import PropertiesBrowser from './PropertiesBrowser.svelte';
-	import { onMount, setContext } from "svelte";
+	import Ad4mConnectUI from '@perspect3vism/ad4m-connect';
+	import { getAd4mClient } from '@perspect3vism/ad4m-connect';
+	import Nav from './Nav.svelte';
+	import MainView from './MainView.svelte';
+	import PropertiesBrowser from './PropertiesBrowser.svelte';
+	import { onMount, setContext } from 'svelte';
 
-  let selected = 'home'; // default selected nav item
+	let selected = 'home'; // default selected nav item
 
-  function handleSelect(event) {
-    console.log("handleSelect", event.detail);
-    selected = event.detail;
-  }
+	function handleSelect(event) {
+		console.log('handleSelect', event.detail);
+		selected = event.detail;
+	}
 
-  let connected = false
+	let connected = false;
 
-  const ui = Ad4mConnectUI({
-    appName: "Perspect3ve",
-    appDesc: "Browser for AD4M Perspectives",
-    appDomain: "dev.ad4m.perspect3ve",
-    appUrl: "https://perspect3ve.app",
+	const ui = Ad4mConnectUI({
+		appName: 'Perspect3ve',
+		appDesc: 'Browser for AD4M Perspectives',
+		appDomain: 'dev.ad4m.perspect3ve',
+		appUrl: 'https://perspect3ve.app',
 
-    appIconPath: "./pub/Perspect3veLogo.png",
-    capabilities: [ 
-      {
-        with: { domain: "*", pointers: ["*"] },
-        can: ["*"],
-      },
-    ],
-  });
+		appIconPath: './pub/Perspect3veLogo.png',
+		capabilities: [
+			{
+				with: { domain: '*', pointers: ['*'] },
+				can: ['*']
+			}
+		]
+	});
 
-  onMount(() => {
-    ui.connect()
-  });
+	onMount(() => {
+		ui.connect();
+	});
 
-  ui.addEventListener("authstatechange", async (e) => {
-    console.log("authstatechange", e);
-    if (e.detail === "authenticated") {
-      connected = true
-    }
-  });
+	ui.addEventListener('authstatechange', async (e) => {
+		console.log('authstatechange', e);
+		if (e.detail === 'authenticated') {
+			connected = true;
+		}
+	});
 </script>
 
 {#if connected}
-  <div class="container">
-    <div class="nav">
-      <Nav selected={selected} on:select={handleSelect} />
-    </div>
-    <main>
-      <MainView perspectiveID={selected}/>
-    </main>
-      
-    <div class="properties-browser">
-      <PropertiesBrowser />
-    </div>
-  </div>
+	<div class="container">
+		<div class="nav">
+			<Nav {selected} on:select={handleSelect} />
+		</div>
+		<main>
+			<MainView perspectiveID={selected} />
+		</main>
+
+		<div class="properties-browser">
+			<PropertiesBrowser />
+		</div>
+	</div>
 {/if}
 
 <style>
-  .container {
-    display: grid;
-    grid-template-columns: 120px 1fr 340px;
-    grid-template-rows: 1fr;
-    height: 100vh;
+	.container {
+		display: grid;
+		grid-template-columns: 120px 1fr 340px;
+		grid-template-rows: 1fr;
+		height: 100vh;
+	}
 
-  }
+	.nav {
+		flex: 0 0 40px;
+	}
 
-  .nav {
-    flex: 0 0 40px;
-  }
+	.properties-browser {
+		flex: 0 0 100px;
+	}
 
-  .properties-browser {
-    flex: 0 0 100px;
-  }
-
-  main {
-    height: 100%;
-    width: 100%-460px;
-    background-color: #ffffff;
-  }
-
+	main {
+		height: 100%;
+		width: 100%-460px;
+		background-color: #ffffff;
+	}
 </style>
