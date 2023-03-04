@@ -47,22 +47,6 @@
 	update()
   }
 
-  const item = {
-    title: 'Sample Item',
-    description: 'This is a sample item.',
-    author: 'John Doe',
-    timestamp: 'March 1, 2023'
-  };
-  
-  const properties = [
-    { name: 'Property 1', value: 'Value 1' },
-    { name: 'Property 2', value: 'Value 2' },
-    { name: 'Property 3', value: 'Value 3' }
-  ];
-
-  function handleEditName() {
-    isEditingPerspectiveName = true;
-  }
 
   async function handleSaveName() {
     isEditingPerspectiveName = false;
