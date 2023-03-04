@@ -2,35 +2,35 @@
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
 
-    let refs
+  let refs
 
-    let ad4m;
-    let perspectives = []
+  let ad4m;
+  let perspectives = []
 
-    const navItems = [
-      { id: 'home', label: 'Home' },
-      { id: 'about', label: 'About' },
-      { id: 'contact', label: 'Contact' }
-    ];
-    
-    let selected = navItems[0].id;
-    
-    const dispatch = createEventDispatcher();
-
-    function handleSelect(id) {
-      selected = id;
-      dispatch('select', id);
-    }
-    
-    let navHeight = 0;
+  const navItems = [
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About' },
+    { id: 'contact', label: 'Contact' }
+  ];
   
-    onMount(async () => {
-      // Set the height of the nav container to match the height of the nav items
-      navHeight = refs.offsetHeight;
-      ad4m = await getAd4mClient();
-      perspectives = await ad4m.perspective.all()
-      console.log(perspectives)
-    });
+  let selected = navItems[0].id;
+  
+  const dispatch = createEventDispatcher();
+
+  function handleSelect(id) {
+    selected = id;
+    dispatch('select', id);
+  }
+  
+  let navHeight = 0;
+
+  onMount(async () => {
+    // Set the height of the nav container to match the height of the nav items
+    navHeight = refs.offsetHeight;
+    ad4m = await getAd4mClient();
+    perspectives = await ad4m.perspective.all()
+    console.log(perspectives)
+  });
 </script>
   
 <div class="nav-container" >
