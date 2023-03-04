@@ -34,6 +34,7 @@
   "type": "module",
   "dependencies": {
     "@junto-foundation/junto-elements": "^0.4.5",
+    "@perspect3vism/ad4m": "^0.2.16",
     "@perspect3vism/ad4m-connect": "^0.2.16",
     "@pixi/app": "^7.1.4",
     "@pixi/core": "^7.1.4",

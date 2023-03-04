@@ -5,6 +5,7 @@
   import '@pixi/interaction';
   import { HistoryElement } from './History';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
+  import { PerspectiveProxy, LinkExpression } from '@perspect3vism/ad4m';
 
   export let perspectiveID: string;
 
@@ -13,7 +14,7 @@
   let container: PIXI.Container | undefined;
   let canvas;
 
-  let perspective;
+  let perspective: PerspectiveProxy | undefined;
 
   const LEVEL_SCALE = 0.24;
 
@@ -21,25 +22,40 @@
   let children = new Map<string, string[]>();
   let coords = new Map<string, { x: number; y: number }>();
 
+  async function findCoordsLink(expr: string, parent: string): Promise<LinkExpression | null> {
+    const results = await perspective.get({ source: parent, target: expr })
+    return results.find((link) => link.data.predicate.startsWith("p3://child_coords_2d"))
+  }
+
   async function getCoords(expr: string, parent: string): Promise<{ x: number; y: number }> {
     const key = `${parent} -> ${expr}`;
+
     if (!coords.has(key)) {
-      const results = await perspective.get({ source: parent, target: expr })
-      for(let link of results) {
-        if(link.data.predicate.startsWith("p3://child_coords_2d")) {
-          const payload = link.data.predicate.substring("p3://child_coords_2d".length)
-          const point = JSON.parse(payload)
-          coords.set(key, { x: point.x, y: point.y })
-        }
+      const link = await findCoordsLink(expr, parent)
+      if(link) {
+        const payload = link.data.predicate.substring("p3://child_coords_2d".length)
+        const point = JSON.parse(payload)
+        coords.set(key, { x: point.x, y: point.y })
+        console.log('found coords for:', key, point)
+        return point
       }
     }
+    console.warn('no coords found for:', key)
+    return { x: 0, y: 0 }
+    
+  }
 
-    if(!coords.has(key)) {
-      console.warn('no coords found for:', key)
-      return { x: 0, y: 0 }
-    } else {
-      return coords.get(key)!
+  async function updateCoords(expr: string, parent: string, point: { x: number; y: number }) {
+    const key = `${parent} -> ${expr}`;
+    coords.set(key, point);
+    let link = await findCoordsLink(expr, parent)
+    while(link) {
+      await perspective.remove(link)
+      link = await findCoordsLink(expr, parent)
     }
+    const payload = JSON.stringify({x: point.x, y: point.y})
+    const predicate = `p3://child_coords_2d${payload}`
+    await perspective.add({ source: parent, target: expr, predicate })
   }
 
   async function updateChildren(expr: string) {
@@ -146,20 +162,22 @@
   };
 
   function renderChildrenLayers(expression: string, layer: PIXI.Container) {
-    console.log('renderChildrenLayers', expression);
+    //console.log('renderChildrenLayers', expression);
     updateChildren(expression);
-    console.log('children:', children.get(expression));
+    //console.log('children:', children.get(expression));
     children.get(expression)?.forEach(async (child) => {
-      let point = getCoords(child, expression);
+      let point = await getCoords(child, expression);
+      //console.log("COORS:",expression, point)
       if (!point) {
         console.error('no point for child:', child);
         return;
       }
 
       let childLayer = new PIXI.Container();
-      childLayer.position.set(point.x, point.y);
       childLayer.scale.set(LEVEL_SCALE);
-      console.log('adding child layer:', child, 'at', point);
+      childLayer.position.set(point.x, point.y);
+      
+      //console.log('adding child layer:', child, 'at', point);
       renderExpressionLayer(child, childLayer);
       renderChildrenCircles(child, childLayer);
       childLayer.interactive = true;
@@ -192,6 +210,8 @@
         if (twoClicks) {
           console.log('dblclick -> zooming in');
           zoomIn(child, layer, childLayer, expression);
+        } else {
+          updateCoords(child, expression, childLayer.position);
         }
       });
       childLayer.on('pointermove', (event) => {
