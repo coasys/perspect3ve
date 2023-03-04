@@ -5,6 +5,7 @@
 	import '@pixi/interaction';
 	import { HistoryElement } from './History';
 	import { getAd4mClient } from '@perspect3vism/ad4m-connect';
+	import Page from './+page.svelte';
 
 	export let perspectiveID: string;
 
@@ -21,7 +22,7 @@
 	let children = new Map<string, string[]>();
 	let coords = new Map<string, { x: number; y: number }>();
 
-	function updateCoords(expr: string) {
+	async function updateCoords(expr: string) {
 		if (expr === 'ad4m://self') {
 			coords.set(expr, { x: 0, y: 0 });
 			return;
@@ -29,16 +30,18 @@
 		return _upateCoords(expr, treeData);
 	}
 
-	function updateChildren(expr: string) {
-		perspective.get({ source: expr }).then((result) => {
-			console.log('perspective.get result:', result);
-			if (result) {
-				children.set(
-					expr,
-					result.map((child) => child.target)
-				);
-			}
-		});
+	async function updateChildren(expr: string) {
+    //debugger
+    if(perspective) {
+      const result = await perspective.get({ source: expr })
+      if (result) {
+        const childerList = result.map((link) => link.data.target)
+        children.set(expr, childerList);
+        console.log('updated children for:', expr);
+      }
+    } else {
+      console.warn('updateChildren called before perspective was set')
+    }
 	}
 
 	function _upateCoords(expr: string, currentTreeItem: any) {
@@ -112,19 +115,13 @@
 		renderChildren: boolean = false
 	) {
 		console.log('renderExpressionLayer', expression);
-		updateCoords(expression);
-		let point = coords.get(expression);
-		if (!point) {
-			console.error('no point for expression:', expression);
-			return;
-		}
 		layer.addChild(createExpressionCircle(), createTextNode(expression));
 		if (renderChildren) renderChildrenLayers(expression, layer);
 	}
 
 	function renderChildrenCircles(expression: string, layer: PIXI.Container) {
 		console.log('renderChildrenCircles', expression);
-		updateChildren(expression);
+		//updateChildren(expression);
 		console.log('children:', children.get(expression));
 		children.get(expression)?.forEach((child) => {
 			let point = coords.get(child);
@@ -351,9 +348,13 @@
 	$: if (perspectiveID) update();
 
 	async function update() {
-		debugger;
 		const ad4m = await getAd4mClient();
 		perspective = await ad4m.perspective.byUUID(perspectiveID);
+    children.clear()
+    coords.clear()
+    await updateChildren('ad4m://self')
+    await updateCoords('ad4m://self')
+    //debugger
 		setupLayers('ad4m://self');
 	}
 
@@ -384,7 +385,7 @@
 			renderer.resize(canvas.clientWidth, canvas.clientHeight);
 		});
 
-		setupLayers('ad4m://self');
+		//setupLayers('ad4m://self');
 		/*
     // Create a container for the circles and labels
     container = new PIXI.Container();
