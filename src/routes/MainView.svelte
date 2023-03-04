@@ -5,7 +5,6 @@
   import '@pixi/interaction';
   import { HistoryElement } from './History';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
-  import Page from './+page.svelte';
 
   export let perspectiveID: string;
 
@@ -22,12 +21,25 @@
   let children = new Map<string, string[]>();
   let coords = new Map<string, { x: number; y: number }>();
 
-  async function updateCoords(expr: string) {
-    if (expr === 'ad4m://self') {
-      coords.set(expr, { x: 0, y: 0 });
-      return;
+  async function getCoords(expr: string, parent: string): Promise<{ x: number; y: number }> {
+    const key = `${parent} -> ${expr}`;
+    if (!coords.has(key)) {
+      const results = await perspective.get({ source: parent, target: expr })
+      for(let link of results) {
+        if(link.data.predicate.startsWith("p3://child_coords_2d")) {
+          const payload = link.data.predicate.substring("p3://child_coords_2d".length)
+          const point = JSON.parse(payload)
+          coords.set(key, { x: point.x, y: point.y })
+        }
+      }
     }
-    return _upateCoords(expr, treeData);
+
+    if(!coords.has(key)) {
+      console.warn('no coords found for:', key)
+      return { x: 0, y: 0 }
+    } else {
+      return coords.get(key)!
+    }
   }
 
   async function updateChildren(expr: string) {
@@ -42,21 +54,6 @@
     } else {
       console.warn('updateChildren called before perspective was set');
     }
-  }
-
-  function _upateCoords(expr: string, currentTreeItem: any) {
-    if (currentTreeItem.id === expr) {
-      coords.set(expr, { x: currentTreeItem.x, y: currentTreeItem.y });
-      return true;
-    }
-    if (currentTreeItem.children) {
-      for (let child of currentTreeItem.children) {
-        if (_upateCoords(expr, child)) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   function _updateChildren(expr: string, currentTreeItem: any) {
@@ -79,36 +76,6 @@
     return false;
   }
 
-  const treeData = {
-    id: 'A',
-    x: 0,
-    y: 0,
-    children: [
-      {
-        id: 'B',
-        x: 100,
-        y: 0,
-        children: [
-          {
-            id: 'C',
-            x: 200,
-            y: 100
-          },
-          {
-            id: 'Dee',
-            x: -100,
-            y: -300
-          }
-        ]
-      },
-      {
-        id: 'E',
-        x: -30,
-        y: -50
-      }
-    ]
-  };
-
   function renderExpressionLayer(
     expression: string,
     layer: PIXI.Container,
@@ -123,13 +90,8 @@
     console.log('renderChildrenCircles', expression);
     //updateChildren(expression);
     console.log('children:', children.get(expression));
-    children.get(expression)?.forEach((child) => {
-      let point = coords.get(child);
-      if (!point) {
-        updateCoords(child);
-      }
-      point = coords.get(child);
-
+    children.get(expression)?.forEach(async (child) => {
+      let point = await getCoords(child, expression)
       if (!point) {
         console.error('no point for child:', child);
         return;
@@ -187,13 +149,8 @@
     console.log('renderChildrenLayers', expression);
     updateChildren(expression);
     console.log('children:', children.get(expression));
-    children.get(expression)?.forEach((child) => {
-      let point = coords.get(child);
-      if (!point) {
-        updateCoords(child);
-      }
-      point = coords.get(child);
-
+    children.get(expression)?.forEach(async (child) => {
+      let point = getCoords(child, expression);
       if (!point) {
         console.error('no point for child:', child);
         return;
@@ -354,7 +311,7 @@
       children.clear();
       coords.clear();
       await updateChildren('ad4m://self');
-      await updateCoords('ad4m://self');
+      //await updateCoords('ad4m://self');
       //debugger
       setupLayers('ad4m://self');
     } else {
