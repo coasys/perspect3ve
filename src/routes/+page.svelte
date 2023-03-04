@@ -6,11 +6,11 @@
   import PropertiesBrowser from './PropertiesBrowser.svelte';
   import { onMount, setContext } from 'svelte';
 
-  let selected = 'home'; // default selected nav item
+  let selectedPerspective = null;
 
-  function handleSelect(event) {
+  function setPerspective(event) {
     console.log('handleSelect', event.detail);
-    selected = event.detail;
+    selectedPerspective = event.detail;
   }
 
   let connected = false;
@@ -45,14 +45,14 @@
 {#if connected}
   <div class="container">
     <div class="nav">
-      <Nav {selected} on:select={handleSelect} />
+      <Nav {selectedPerspective} on:select={setPerspective} />
     </div>
     <main>
-      <MainView perspectiveID={selected} />
+      <MainView perspectiveID={selectedPerspective} />
     </main>
 
     <div class="properties-browser">
-      <PropertiesBrowser />
+      <PropertiesBrowser perspectiveID={selectedPerspective} expression="ad4m://self"/>
     </div>
   </div>
 {/if}

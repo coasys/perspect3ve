@@ -28,7 +28,15 @@
     // Set the height of the nav container to match the height of the nav items
     navHeight = refs.offsetHeight;
     ad4m = await getAd4mClient();
-    perspectives = await ad4m.perspective.all();
+    async function update() {
+      perspectives = await ad4m.perspective.all();
+    }
+    
+    ad4m.perspective.addPerspectiveUpdatedListener(update)
+    ad4m.perspective.addPerspectiveAddedListener(update)
+    ad4m.perspective.addPerspectiveRemovedListener(update)
+
+    update()
     console.log(perspectives);
   });
 </script>
