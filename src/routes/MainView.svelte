@@ -19,7 +19,7 @@
   const LEVEL_SCALE = 0.24;
 
   let history: HistoryElement[] = [];
-  let children = new Map<string, string[]>();
+  let children = new Map<string, Set<string>>();
   let coords = new Map<string, { x: number; y: number }>();
 
   async function findCoordsLink(expr: string, parent: string): Promise<LinkExpression | null> {
@@ -63,9 +63,10 @@
     if (perspective) {
       const result = await perspective.get({ source: expr });
       if (result) {
-        const childerList = result.map((link) => link.data.target);
-        children.set(expr, childerList);
-        console.log('updated children for:', expr);
+        const childrenArray = result.map((link) => link.data.target);
+        const childrenSet = new Set(childrenArray);
+        children.set(expr, childrenSet);
+       //console.log('updated children for:', expr);
       }
     } else {
       console.warn('updateChildren called before perspective was set');
