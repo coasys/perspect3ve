@@ -1,6 +1,10 @@
 <script>
+	import { getAd4mClient } from '@perspect3vism/ad4m-connect';
     import { onMount } from 'svelte';
     let refs
+
+    let ad4m;
+    let perspectives = []
 
     const navItems = [
       { id: 'home', label: 'Home' },
@@ -22,21 +26,24 @@
     
     let navHeight = 0;
   
-    onMount(() => {
+    onMount(async () => {
       // Set the height of the nav container to match the height of the nav items
       navHeight = refs.offsetHeight;
+      ad4m = await getAd4mClient();
+      perspectives = await ad4m.perspective.all()
+      console.log(perspectives)
     });
   </script>
   
-  <div class="nav-container" style="height: {navHeight}px;">
+  <div class="nav-container" >
     <ul bind:this={refs} class="nav">
-      {#each navItems as { id, label }}
+      {#each perspectives as p}
         <li
-          class="nav-item {id === selected ? 'selected' : ''}"
-          on:click={() => handleSelect(id)}
+          class="nav-item {p.uuid === selected ? 'selected' : ''}"
+          on:click={() => handleSelect(p.uuid)}
         >
           <div class="nav-circle"></div>
-          <div class="nav-label">{label}</div>
+          <div class="nav-label">{p.name}</div>
         </li>
       {/each}
     </ul>
@@ -46,8 +53,8 @@
     .nav-container {
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      overflow: scroll;
       width: 80px;
       padding: 20px;
       background-color: #2c2f33;
