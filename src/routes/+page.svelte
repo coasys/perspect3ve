@@ -60,17 +60,19 @@
 <style>
 	.container {
 		display: grid;
-		grid-template-columns: 120px 1fr 340px;
+		grid-template-columns: 120px 1fr 300px;
 		grid-template-rows: 1fr;
 		height: 100vh;
+    max-height: 100vh;
 	}
 
 	.nav {
 		flex: 0 0 40px;
+    overflow: scroll;
 	}
 
 	.properties-browser {
-		flex: 0 0 100px;
+		flex: 0 0 60px;
 	}
 
 	main {
