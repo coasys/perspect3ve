@@ -345,17 +345,21 @@
     //renderChildrenLayers(expr, layer)
   }
 
-  $: if (perspectiveID) update();
+  $: if (perspectiveID || !perspectiveID) update();
 
   async function update() {
-    const ad4m = await getAd4mClient();
-    perspective = await ad4m.perspective.byUUID(perspectiveID);
-    children.clear();
-    coords.clear();
-    await updateChildren('ad4m://self');
-    await updateCoords('ad4m://self');
-    //debugger
-    setupLayers('ad4m://self');
+    if(perspectiveID) {
+      const ad4m = await getAd4mClient();
+      perspective = await ad4m.perspective.byUUID(perspectiveID);
+      children.clear();
+      coords.clear();
+      await updateChildren('ad4m://self');
+      await updateCoords('ad4m://self');
+      //debugger
+      setupLayers('ad4m://self');
+    } else {
+      setupLayers('')
+    }
   }
 
   onMount(async () => {

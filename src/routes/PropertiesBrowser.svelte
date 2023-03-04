@@ -2,7 +2,7 @@
   import '@junto-foundation/junto-elements';
   import '@junto-foundation/junto-elements/dist/main.css';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
-  import { onMount } from 'svelte';
+  import { onMount, createEventDispatcher } from 'svelte';
 
   export let perspectiveID
   export let expression
@@ -11,9 +11,10 @@
   let perspective
 
   let isEditingPerspectiveName = false
-  let editName
   let nameInput
   let linkLanguageMeta
+
+  const dispatch = createEventDispatcher();
 
   async function ensuerAd4mClient() {
 	if (!ad4m) {
@@ -22,16 +23,18 @@
   }
 
   async function update() {
-	console.log("update settings", perspectiveID)
 	await ensuerAd4mClient()
-	perspective = await ad4m.perspective.byUUID(perspectiveID)
-	editName = perspective.name
-
-	if(perspective.sharedUrl) {
-		let nh = await ad4m.expression.get(perspective.sharedUrl)
-		nh = JSON.parse(nh.data)
-		linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
+	if(perspectiveID) {
+		perspective = await ad4m.perspective.byUUID(perspectiveID)
+		if(perspective.sharedUrl) {
+			let nh = await ad4m.expression.get(perspective.sharedUrl)
+			nh = JSON.parse(nh.data)
+			linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
+		} else {
+			linkLanguageMeta = null
+		}
 	} else {
+		perspective = null
 		linkLanguageMeta = null
 	}
   }
@@ -40,7 +43,7 @@
 	update()
   })
 
-  $: if (perspectiveID) {
+  $: if (perspectiveID || !perspectiveID) {
 	update()
   }
 
@@ -81,6 +84,7 @@
 					<j-input
 						type="text"
 						full="true"
+						value={perspective.name}
 						bind:this={nameInput}
 						on:keydown={(event) => {
 							if(event.key === 'Enter') {
@@ -138,6 +142,19 @@
 				{/if}
 			{/if}
 		
+		</j-box>
+
+		<j-box pt="300">
+			<j-button color="red" variant="transparent" size="xs"
+				on:click={() => {
+					if(window.confirm("Are you sure you want to delete this perspective?")) {
+						ad4m.perspective.remove(perspective.uuid)
+						dispatch('perspectiveDeleted', perspective.uuid)
+					}
+				}}
+			>
+				Delete Perspective
+			</j-button>
 		</j-box>
 	{:else}
 		<div class="header">

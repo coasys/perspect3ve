@@ -13,6 +13,13 @@
     selectedPerspective = event.detail;
   }
 
+  function perspectiveDeleted(event) {
+    console.log('perspectiveDeleted', event.detail);
+    if(event.detail === selectedPerspective) {
+      selectedPerspective = null;
+    }
+  }
+
   let connected = false;
 
   const ui = Ad4mConnectUI({
@@ -52,7 +59,7 @@
     </main>
 
     <div class="properties-browser">
-      <PropertiesBrowser perspectiveID={selectedPerspective} expression="ad4m://self"/>
+      <PropertiesBrowser perspectiveID={selectedPerspective} expression="ad4m://self" on:perspectiveDeleted={perspectiveDeleted}/>
     </div>
   </div>
 {/if}
