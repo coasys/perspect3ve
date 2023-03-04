@@ -15,43 +15,43 @@ jobs:
         node-version: [16.x]
 
     runs-on: ${{ matrix.platform }}
-    
+
     steps:
-    - name: Fetch source code
-      uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: Install Windows build-tools through npm
-      if: matrix.platform == 'windows-latest'
-      run: npm install -g windows-build-tools
-    - name: Install dependencies
-      run: npm install
-    - name: Build
-      run: npm run build
-    - name: Create deployment packages
-      run: npm run make
-    - name: List make output
-      run: ls out/make
-    - name: Upload the binary (macos-latest)
-      if: matrix.platform == 'macos-latest'
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: "out/make/**/*"
-        token: ${{ secrets.GITHUB_TOKEN }}
-        allowUpdates: true
-    - name: Upload the binary (linux-latest)
-      if: matrix.platform == 'ubuntu-latest'
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: "out/make/**/*"
-        token: ${{ secrets.GITHUB_TOKEN }}
-        allowUpdates: true
-    - name: Upload the binary (windows-latest)
-      if: matrix.platform == 'windows-latest'
-      uses: ncipollo/release-action@v1
-      with:
-        artifacts: "out/make/**/*"
-        token: ${{ secrets.GITHUB_TOKEN }}
-        allowUpdates: true
+      - name: Fetch source code
+        uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install Windows build-tools through npm
+        if: matrix.platform == 'windows-latest'
+        run: npm install -g windows-build-tools
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: Create deployment packages
+        run: npm run make
+      - name: List make output
+        run: ls out/make
+      - name: Upload the binary (macos-latest)
+        if: matrix.platform == 'macos-latest'
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'out/make/**/*'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+      - name: Upload the binary (linux-latest)
+        if: matrix.platform == 'ubuntu-latest'
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'out/make/**/*'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+      - name: Upload the binary (windows-latest)
+        if: matrix.platform == 'windows-latest'
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'out/make/**/*'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
