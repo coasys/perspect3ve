@@ -4,11 +4,16 @@
   import '@pixi/math-extras'
   import '@pixi/interaction'
 	import { HistoryElement } from './History';
+	import { getAd4mClient } from '@perspect3vism/ad4m-connect';
+
+  export let perspectiveID: string;
 
   let app: PIXI.Application|undefined;
   let renderer: PIXI.Renderer|undefined;
   let container: PIXI.Container|undefined;
   let canvas
+
+  let perspective
 
   const LEVEL_SCALE = 0.24
 
@@ -17,11 +22,20 @@
   let coords = new Map<string, {x: number, y: number}>()
 
   function updateCoords(expr: string) {
+    if(expr === "ad4m://self") {
+      coords.set(expr, {x: 0, y: 0})
+      return
+    }
     return _upateCoords(expr, treeData)
   }
 
   function updateChildren(expr: string) {
-    return _updateChildren(expr, treeData)
+    perspective.get({source: expr}).then((result) => {
+      console.log("perspective.get result:", result)
+      if(result) {
+        children.set(expr, result.map((child) => child.target))
+      }
+    })
   }
 
   function _upateCoords(expr: string, currentTreeItem: any) {
@@ -316,13 +330,21 @@ function createTextNode(name) {
     
   }
 
-  
+  $: if(perspectiveID)
+    update()
+
+  async function update() {debugger
+    const ad4m = await getAd4mClient()
+    perspective = await ad4m.perspective.byUUID(perspectiveID)
+    setupLayers("ad4m://self")
+  }
                   
 
 
-  onMount(() => {
+  onMount(async () => {
     const width = canvas.clientWidth
     const height = canvas.clientHeight
+    
     
     // Create a PixiJS application
     app = new PIXI.Application({
@@ -347,7 +369,7 @@ function createTextNode(name) {
       renderer.resize(canvas.clientWidth, canvas.clientHeight);
     });
 
-    setupLayers('A')
+    setupLayers('ad4m://self')
 /*
     // Create a container for the circles and labels
     container = new PIXI.Container();

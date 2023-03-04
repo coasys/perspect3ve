@@ -9,6 +9,7 @@
   let selected = 'home'; // default selected nav item
 
   function handleSelect(event) {
+    console.log("handleSelect", event.detail);
     selected = event.detail;
   }
 
@@ -44,10 +45,10 @@
 {#if connected}
   <div class="container">
     <div class="nav">
-      <Nav selected={selected} onSelect={handleSelect} />
+      <Nav selected={selected} on:select={handleSelect} />
     </div>
     <main>
-      <MainView />
+      <MainView perspectiveID={selected}/>
     </main>
       
     <div class="properties-browser">
