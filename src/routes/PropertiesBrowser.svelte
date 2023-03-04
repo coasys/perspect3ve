@@ -31,6 +31,8 @@
 		let nh = await ad4m.expression.get(perspective.sharedUrl)
 		nh = JSON.parse(nh.data)
 		linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
+	} else {
+		linkLanguageMeta = null
 	}
   }
 
