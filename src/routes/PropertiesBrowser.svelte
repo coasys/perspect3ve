@@ -13,6 +13,7 @@
   let isEditingPerspectiveName = false
   let editName
   let nameInput
+  let linkLanguageMeta
 
   async function ensuerAd4mClient() {
 	if (!ad4m) {
@@ -25,6 +26,12 @@
 	await ensuerAd4mClient()
 	perspective = await ad4m.perspective.byUUID(perspectiveID)
 	editName = perspective.name
+
+	if(perspective.sharedUrl) {
+		let nh = await ad4m.expression.get(perspective.sharedUrl)
+		nh = JSON.parse(nh.data)
+		linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
+	}
   }
 
   onMount(async () => {
@@ -64,37 +71,72 @@
 <div class="properties-container">
   {#if perspective}
 	{#if expression == "ad4m://self"}
-		<div class="header">
-			<j-text variant="heading" size="800" weight="bold">Perspective settings</j-text>
-			<j-text variant="label">Name:</j-text>
-			{#if isEditingPerspectiveName}
-				<j-input
-					type="text"
-					full="true"
-					bind:this={nameInput}
-					on:keydown={(event) => {
-						if(event.key === 'Enter') {
-							handleSaveName()
-						}
-						event.stopPropagation()
-					}}
-					on:blur={() => isEditingPerspectiveName = false}
-				/>
-			{:else}
-				<j-flex>
-					<j-text>{perspective.name || '<not set>'}</j-text>
-						<j-button size="xs" variant="link" circle="true"
-							on:click={() => isEditingPerspectiveName = true} 
-						>
-							<j-icon name="pencil" size="small" />
-						</j-button>
-				</j-flex>
-				
-			{/if}
+		<j-box pb="800">
+			<j-text variant="heading" size="600" weight="bold">Perspective settings</j-text>
+			<j-flex gap="200" j="start" a="end">
+				<j-text variant="label">Name: </j-text>
+				{#if isEditingPerspectiveName}
+					<j-input
+						type="text"
+						full="true"
+						bind:this={nameInput}
+						on:keydown={(event) => {
+							if(event.key === 'Enter') {
+								handleSaveName()
+							}
+							event.stopPropagation()
+						}}
+						on:blur={() => isEditingPerspectiveName = false}
+					/>
+				{:else}
+					<j-text variant="label" weight="bold">{perspective.name || '<not set>'}</j-text>
+					<j-button size="xs" variant="link" style="padding-bottom: 3px"
+						on:click={() => isEditingPerspectiveName = true} 
+					>
+						<j-icon name="pencil" size="xs" />
+					</j-button>
+				{/if}
+			</j-flex>
+		</j-box>
 			
-			<div class="author">{item.author}</div>
-			<div class="timestamp">{item.timestamp}</div>
-		</div>
+
+		<j-box>
+			<j-text variant="heading-sm" size="400">Sharing / Neighbourhood</j-text>
+			
+				<j-text variant="label">URL:</j-text>
+				<j-text variant="label" weight="bold">{perspective.sharedUrl || '<not shared>'}</j-text>
+			
+
+			{#if linkLanguageMeta}
+				<j-box pt="400" pb="400">
+					<j-text variant="heading-sm" size="400">Link Language:</j-text>
+					<j-text variant="label" weight="bold">{linkLanguageMeta.name}</j-text>
+					<j-text variant="label" weight="bold">{linkLanguageMeta.address}</j-text>
+					<j-flex gap="200" j="start" a="end">
+						<j-text variant="label">Description:</j-text>
+						<j-text variant="label" weight="bold">{linkLanguageMeta.description}</j-text>
+					</j-flex>
+				</j-box>
+				
+			
+				{#if linkLanguageMeta.templated}
+					<j-box pb="400">
+						<j-text variant="heading-sm" size="400">Templated</j-text>
+						<j-text variant="label">Source:</j-text>
+						<j-text variant="label" weight="bold">{linkLanguageMeta.templateSourceLanguageAddress}</j-text>
+						<j-text variant="label">Template parameters:</j-text>
+						<j-text variant="label" weight="bold">{linkLanguageMeta.templateAppliedParams}</j-text>
+					</j-box>
+				{/if}
+				{#if linkLanguageMeta.sourceCodeLink}
+					<j-flex gap="200" j="start" a="end">
+						<j-text variant="label">Source code link:</j-text>
+						<j-text variant="label" weight="bold">{linkLanguageMeta.sourceCodeLink}</j-text>
+					</j-flex>
+				{/if}
+			{/if}
+		
+		</j-box>
 	{:else}
 		<div class="header">
 			<j-text variant="heading" size="800" weight="bold">{item.title}</j-text>
@@ -120,7 +162,7 @@
   .properties-container {
     display: flex;
     flex-direction: column;
-    width: 300px;
+    width: 250px;
     background-color: #f5f5f5;
     padding: 20px;
   }
@@ -128,14 +170,9 @@
   .header {
     display: flex;
     flex-direction: column;
-    margin-bottom: 20px;
+    margin-bottom: 50px;
   }
   
-  .title {
-    font-size: 24px;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
   
   .description {
     font-size: 14px;
