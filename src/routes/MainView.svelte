@@ -5,7 +5,7 @@
   import '@pixi/interaction';
   import { HistoryElement } from './History';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
-  import { PerspectiveProxy, LinkExpression } from '@perspect3vism/ad4m';
+  import { PerspectiveProxy, LinkExpression, Literal } from '@perspect3vism/ad4m';
 
   export let perspectiveID: string;
 
@@ -245,13 +245,26 @@
     return circle;
   }
 
-  function createTextNode(name) {
-    const text = new PIXI.Text(name, {
+  function createTextNode(str) {
+    let align = 'center';
+    let yAnchor = 0.5;
+
+    try {
+      str = Literal.fromUrl(str).get()
+    } catch(e) {}
+
+    if (typeof str == 'object'){
+      str = JSON.stringify(str, null, 2)
+      align = 'left'
+      yAnchor = 1
+    } 
+
+    const text = new PIXI.Text(str, {
       fontSize: 36,
       fill: 0x0000ff,
-      align: 'center'
+      align
     });
-    text.anchor.set(0.5, 0.5);
+    text.anchor.set(0.5, yAnchor);
     return text;
   }
 
