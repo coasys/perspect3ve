@@ -5,13 +5,14 @@
   import '@pixi/interaction';
   import { HistoryElement } from './History';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
-  import { PerspectiveProxy, LinkExpression, Literal } from '@perspect3vism/ad4m';
+  import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';
+
+  const COORDS_PRED_PREFIX = "p3://child_coords_2d"
 
   export let perspectiveID: string;
 
   let app: PIXI.Application | undefined;
   let renderer: PIXI.Renderer | undefined;
-  let container: PIXI.Container | undefined;
   let canvas;
 
   let perspective: PerspectiveProxy | undefined;
@@ -33,7 +34,7 @@
     if (!coords.has(key)) {
       const link = await findCoordsLink(expr, parent)
       if(link) {
-        const payload = link.data.predicate.substring("p3://child_coords_2d".length)
+        const payload = link.data.predicate.substring(COORDS_PRED_PREFIX.length)
         const point = JSON.parse(payload)
         coords.set(key, { x: point.x, y: point.y })
         console.log('found coords for:', key, point)
@@ -54,7 +55,7 @@
       link = await findCoordsLink(expr, parent)
     }
     const payload = JSON.stringify({x: point.x, y: point.y})
-    const predicate = `p3://child_coords_2d${payload}`
+    const predicate = `${COORDS_PRED_PREFIX}${payload}`
     await perspective.add({ source: parent, target: expr, predicate })
   }
 
@@ -281,6 +282,10 @@
     app!.stage.children.forEach((child) => {
       app!.stage.removeChild(child);
     });
+
+    currentExpression = expr
+
+    app?.stage.addChild(createToolbar())
     const layer = new PIXI.Container();
     let parent = history[history.length - 1];
     //debugger
@@ -353,6 +358,68 @@
     } else {
       setupLayers('')
     }
+  }
+
+  function createToolbar(): PIXI.Container {
+    // Create a new PIXI.Container object for the toolbar
+    const toolbar = new PIXI.Container();
+    toolbar.width = renderer.width;
+    toolbar.height = 50;
+    app.stage.addChild(toolbar);
+
+    // Create a new PIXI.Graphics object for the circle
+    const circle = new PIXI.Graphics();
+    circle.beginFill(0xff0000);
+    circle.drawCircle(0, 0, 25);
+    circle.endFill();
+    circle.interactive = true;
+    circle.buttonMode = true;
+    circle.home = {x: 30, y: 30};
+    circle.position = circle.home;
+
+    // Add event listeners for the pointer events
+    circle.on('pointerdown', async () => {
+      // create new smart literal
+      const literal = await SmartLiteral.create(perspective, "New Expression")
+
+      perspective?.add(new Link({
+        source: currentExpression,
+        predicate: `${COORDS_PRED_PREFIX}{"x": 0, "y": 0}`,
+        target: literal.base
+      }))
+    })
+          //.on('pointerup', onDragEnd)
+          //.on('pointerupoutside', onDragEnd)
+          //.on('pointermove', onDragMove);
+
+    // Add the circle to the toolbar
+    toolbar.addChild(circle);
+/*
+    // Define the event listeners for the pointer events
+    function onDragStart(event) {
+      console.log("drag start:", event)
+      this.data = event.data;
+      this.alpha = 0.5;
+      this.dragging = true;
+    }
+
+    function onDragEnd() {
+      this.alpha = 1;
+      this.dragging = false;
+      this.data = null;
+      this.position = this.home;
+    }
+
+    function onDragMove(event) {
+      console.log(event)
+      if (this.dragging) {
+        console.log(this)
+        this.position.x = event.globalX;
+        this.position.y = event.globalY;
+      }
+    }
+*/
+    return toolbar
   }
 
   onMount(async () => {
