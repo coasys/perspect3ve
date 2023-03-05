@@ -1,6 +1,8 @@
 <script>
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
+  import '@junto-foundation/junto-elements';
+  import '@junto-foundation/junto-elements/dist/main.css';
 
   let refs;
 
@@ -20,6 +22,10 @@
   function handleSelect(id) {
     selected = id;
     dispatch('select', id);
+  }
+
+  function addNewPerspective() {
+    ad4m.perspective.add("New Perspective")
   }
 
   let navHeight = 0;
@@ -59,6 +65,15 @@
       </button>
     {/each}
   </ul>
+  <div class="nav-controls">
+    <j-button 
+      variant="transparent" 
+      style="padding-bottom: 3px"
+			on:click={addNewPerspective} 
+		>
+      <j-icon name="plus" />
+    </j-button>
+  </div>
 </div>
 
 <style>
@@ -68,6 +83,7 @@
     align-items: center;
     overflow: scroll;
     width: 80px;
+    height: 100%;
     padding: 20px;
     background-color: #2c2f33;
   }
