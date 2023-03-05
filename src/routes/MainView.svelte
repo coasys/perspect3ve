@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import * as PIXI from 'pixi.js';
   import '@pixi/math-extras';
   import '@pixi/interaction';
@@ -22,6 +22,11 @@
   let history: HistoryElement[] = [];
   let children = new Map<string, Set<string>>();
   let coords = new Map<string, { x: number; y: number }>();
+  let containers = new Map<string, PIXI.Container>();
+  let currentExpression: string | null = null;
+
+  let selectedExpression = null
+  const dispatch = createEventDispatcher();
 
   async function findCoordsLink(expr: string, parent: string): Promise<LinkExpression | null> {
     const results = await perspective.get({ source: parent, target: expr })
@@ -99,9 +104,22 @@
     layer: PIXI.Container,
     renderChildren: boolean = false
   ) {
-    console.log('renderExpressionLayer', expression);
-    layer.addChild(createExpressionCircle(), createTextNode(expression));
-    if (renderChildren) renderChildrenLayers(expression, layer);
+    containers.set(expression, layer);
+    layer.addChild(createExpressionCircle(expression == selectedExpression), createTextNode(expression));
+    if (renderChildren) 
+      renderChildrenLayers(expression, layer)
+    else
+      renderChildrenCircles(expression, layer)
+  }
+
+  function updateExpressionLayer(expression: string) {
+    let layer = containers.get(expression)
+    if(layer) {
+      layer.children.forEach(child => {
+        layer?.removeChild(child)
+      })
+      renderExpressionLayer(expression, layer, false)
+    }
   }
 
   function renderChildrenCircles(expression: string, layer: PIXI.Container) {
@@ -119,7 +137,7 @@
       let childLayer = new PIXI.Container();
       childLayer.position.set(point.x, point.y);
       childLayer.scale.set(LEVEL_SCALE);
-      childLayer.addChild(createExpressionCircle(child, point), createTextNode(child));
+      childLayer.addChild(createExpressionCircle(), createTextNode(child));
       layer.addChild(childLayer);
     });
   }
@@ -181,11 +199,12 @@
       
       //console.log('adding child layer:', child, 'at', point);
       renderExpressionLayer(child, childLayer);
-      renderChildrenCircles(child, childLayer);
+      //renderChildrenCircles(child, childLayer);
       childLayer.interactive = true;
       //childLayer.buttonMode = true;
       //childLayer.hitArea = new PIXI.Rectangle(-2*childLayer.width, -2*childLayer.height, 2*childLayer.width, 2*childLayer.height);
       let isDragging = false;
+      let isPointerDown = false;
       let dragStart = new PIXI.Point();
       let oneClick = false;
       let twoClicks = false;
@@ -198,7 +217,8 @@
           }, 200);
         }
 
-        isDragging = true;
+        isPointerDown = true;
+        isDragging = false;
         console.log(event.data.global);
         dragStart.copyFrom(event.data.global);
 
@@ -208,16 +228,29 @@
         }, 200);
       });
       childLayer.on('pointerup', () => {
-        isDragging = false;
         if (twoClicks) {
           console.log('dblclick -> zooming in');
           zoomIn(child, layer, childLayer, expression);
         } else {
-          updateCoords(child, expression, childLayer.position);
+          if(isDragging)
+            updateCoords(child, expression, childLayer.position);
+          
+          if(selectedExpression != child) {
+            let old = selectedExpression
+            selectedExpression = null
+            updateExpressionLayer(old)
+          }
+            
+          selectedExpression = child
+          updateExpressionLayer(selectedExpression)
+          dispatch('selectExpression', child)
         }
+        isDragging = false;
+        isPointerDown = false;
       });
       childLayer.on('pointermove', (event) => {
-        if (isDragging) {
+        if (isPointerDown) {
+          isDragging = true;
           const currentPoint = event.data.global;
           childLayer.position.x += currentPoint.x - dragStart.x;
           childLayer.position.y += currentPoint.y - dragStart.y;
@@ -235,10 +268,13 @@
     });
   }
 
-  function createExpressionCircle() {
+  function createExpressionCircle(selected) {
     const circle = new PIXI.Graphics();
-    circle.beginFill(0xff00ff, 0.2);
-    circle.lineStyle(5, 0x5a5a5a);
+    circle.beginFill(0xff00ff, selected ? 0.5 : 0.2);
+    if(selected)
+      circle.lineStyle(8, 0xffffff);
+    else
+      circle.lineStyle(5, 0x5a5a5a);
     circle.drawCircle(0, 0, canvas.clientWidth / 2.5);
     circle.endFill();
     circle.interactive = true;
