@@ -114,6 +114,30 @@ export class ExpressionWidget {
         this.#canvasSize = canvasSize
         this.addGraphAndText()
 
+        this.#perspective.addListener('link-added', async (link) => {
+            if(link.data.source == this.#base) {
+                if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
+                    const payload = link.data.predicate.substring(COORDS_PRED_PREFIX.length)
+                    const point = JSON.parse(payload)
+                    this.#childrenCoords.set(link.data.target, point)
+                    let widget = this.#childrenWidgets.get(link.data.target)
+                    let layer
+                    if(!widget) {
+                        const { childWidget, childLayer } = this.addChild(link.data.target, point)
+                        widget = childWidget
+                        layer = childLayer
+
+                        widget.addChildrenLeafs()
+
+                        this.#makeChildInteractive(widget, layer)
+                    } else {
+                        layer = widget.#container
+                    }
+                    layer.position.set(point.x, point.y)
+                }
+            }
+        })
+
         this.#container.on('pointerup', (event) => {
             //console.log('pointerup', event.target)
             if(event.target == this.#graphic) {
@@ -178,68 +202,75 @@ export class ExpressionWidget {
             const { childWidget, childLayer } = this.addChild(child, point)
 
             childWidget.addChildrenLeafs()
-          
-          
-          childLayer.interactive = true;
-          let isDragging = false;
-          let isPointerDown = false;
-          let dragStart = new PIXI.Point();
-          let oneClick = false;
-          let twoClicks = false;
-          childLayer.on('pointerdown', (event) => {
+            this.#makeChildInteractive(childWidget, childLayer)
+    
+            this.#container.addChild(childLayer);
+        });
+    }
+
+    #makeChildInteractive(childWidget: ExpressionWidget, childLayer: PIXI.Container) {
+        childLayer.interactive = true;
+        let isDragging = false;
+        let isPointerDown = false;
+        let dragStart = new PIXI.Point();
+        let oneClick = false;
+        let twoClicks = false;
+
+        childLayer.on('pointerdown', (event) => {
             //zoomIn(child, layer, childLayer);
             if (oneClick) {
-              twoClicks = true;
-              setTimeout(() => {
-                twoClicks = false;
-              }, 200);
+                twoClicks = true;
+                setTimeout(() => {
+                    twoClicks = false;
+                }, 200);
             }
-    
+
             isPointerDown = true;
             isDragging = false;
             console.log(event.data.global);
             dragStart.copyFrom(event.data.global);
-    
+
             oneClick = true;
             setTimeout(() => {
-              oneClick = false;
+                oneClick = false;
             }, 200);
-          });
-          childLayer.on('pointerup', () => {
+        });
+
+        childLayer.on('pointerup', () => {
             if (twoClicks) {
-                console.log('dblclick -> zooming in');
-                zoomIn(child, this.#container, childLayer, this.#base);
+                this.#doubleClickCallbacks.forEach(callback => callback(childWidget.#base))
+                //console.log('dblclick -> zooming in');
+                //zoomIn(child, this.#container, childLayer, this.#base);
             } else {
                 if(isDragging) {
-                    this.#updateChildCoords(child, childLayer.position)
+                    this.#updateChildCoords(childWidget.#base, childLayer.position)
                     isDragging = false;
                 } 
 
                 childWidget.setSelected(true)
                 this.#childrenWidgets.forEach((widget, key) => {
-                    if(key !== child) {
+                    if(key !== childWidget.#base) {
                         widget.setSelected(false)
                     }
                 })
                 this.setSelected(false)
-                this.#selectedCallbacks.forEach(callback => callback(child))
+                this.#selectedCallbacks.forEach(callback => callback(childWidget.#base))
                 
                 isPointerDown = false;
             }
-          });
-          childLayer.on('pointermove', (event) => {
-            if (isPointerDown) {
-              isDragging = true;
-              const currentPoint = event.data.global;
-              childLayer.position.x += currentPoint.x - dragStart.x;
-              childLayer.position.y += currentPoint.y - dragStart.y;
-              dragStart.copyFrom(event.data.global);
-            }
-          });
-    
-          this.#container.addChild(childLayer);
         });
-      }
+
+        childLayer.on('pointermove', (event) => {
+            if (isPointerDown) {
+                isDragging = true;
+                const currentPoint = event.data.global;
+                childLayer.position.x += currentPoint.x - dragStart.x;
+                childLayer.position.y += currentPoint.y - dragStart.y;
+                dragStart.copyFrom(event.data.global);
+            }
+        });
+    }
+
 
 
     setSelected(selected: boolean) {
