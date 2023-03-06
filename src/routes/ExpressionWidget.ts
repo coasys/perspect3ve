@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import '@pixi/math-extras';
 import '@pixi/interaction';
-import type { LinkExpression, PerspectiveProxy } from '@perspect3vism/ad4m';
+import { LinkQuery, type LinkExpression, type PerspectiveProxy } from '@perspect3vism/ad4m';
 
 const COORDS_PRED_PREFIX = "p3://child_coords_2d"
 const LEVEL_SCALE = 0.24;
@@ -187,21 +187,12 @@ export class ExpressionWidget {
               console.log('dblclick -> zooming in');
               zoomIn(child, layer, childLayer, expression);
             } else {
-              if(isDragging)
-                updateCoords(child, expression, childLayer.position);
-              
-              if(selectedExpression != child) {
-                let old = selectedExpression
-                selectedExpression = null
-                updateExpressionLayer(old)
+              if(isDragging) {
+                this.#updateChildCoords(child, childLayer.position)
+                isDragging = false;
               }
-                
-              selectedExpression = child
-              updateExpressionLayer(selectedExpression)
-              dispatch('selectExpression', child)
+                isPointerDown = false;
             }
-            isDragging = false;
-            isPointerDown = false;
           });
           childLayer.on('pointermove', (event) => {
             if (isPointerDown) {
@@ -216,6 +207,27 @@ export class ExpressionWidget {
           this.#container.addChild(childLayer);
         });
       }
+
+    async #updateChildCoords(child: string, point: { x: number; y: number }) {
+        this.#childrenCoords.set(child, point)
+        let link = await this.#findCoordsLink(child)
+        while(link) {
+          await this.#perspective.remove(link)
+          link = await this.#findCoordsLink(child)
+        }
+        await this.#writeCoordsLink(child, point)
+    }
+
+    async #findCoordsLink(expr: string): Promise<LinkExpression | undefined> {
+        const results = await this.#perspective.get(new LinkQuery({ source: this.#base, target: expr }))
+        return results.find((link) => link.data.predicate.startsWith(COORDS_PRED_PREFIX))
+    }
+
+    async #writeCoordsLink(expr: string, point: {x: number, y: number}) {
+        const payload = JSON.stringify({x: point.x, y: point.y})
+        const predicate = `${COORDS_PRED_PREFIX}${payload}`
+        await this.#perspective.add({ source: this.#base, target: expr, predicate })
+    }
 
     
 
