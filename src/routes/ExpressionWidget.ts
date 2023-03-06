@@ -5,7 +5,7 @@ import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal } from '
 import { Graphics } from 'pixi.js';
 
 export const COORDS_PRED_PREFIX = "p3://child_coords_2d"
-export const LEVEL_SCALE = 0.24;
+export const LEVEL_SCALE = 0.16;
 
 const OUTLINE_COLOR = 0x5a5a5a;
 const OUTLINE_COLOR_SELCTED = 0xffffff;
@@ -272,9 +272,10 @@ export class ExpressionWidget {
         graphic.drawRoundedRect(
             -this.#canvasSize.width/2.2,
             -this.#canvasSize.height/2.2, 
-            this.#canvasSize.width*0.8,
-            this.#canvasSize.height*0.8, 
-            this.#canvasSize.width/10);
+            this.#canvasSize.width*0.9,
+            this.#canvasSize.height*0.9, 
+            this.#canvasSize.width/10
+        );
         graphic.endFill();
     }
 
@@ -303,7 +304,7 @@ export class ExpressionWidget {
         } 
 
         const text = new PIXI.Text(str, {
-            fontSize: 36,
+            fontSize: 126,
             fill: 0x0000ff,
             //@ts-ignores
             align,
