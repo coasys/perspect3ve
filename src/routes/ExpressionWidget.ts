@@ -4,90 +4,13 @@ import '@pixi/interaction';
 import { LinkQuery, type LinkExpression, type PerspectiveProxy } from '@perspect3vism/ad4m';
 import { Graphics } from 'pixi.js';
 
-const COORDS_PRED_PREFIX = "p3://child_coords_2d"
-const LEVEL_SCALE = 0.24;
+export const COORDS_PRED_PREFIX = "p3://child_coords_2d"
+export const LEVEL_SCALE = 0.24;
 
 const OUTLINE_COLOR = 0x5a5a5a;
 const OUTLINE_COLOR_SELCTED = 0xffffff;
 const OUTLINE_WIDTH = 5;
 const OUTLINE_WIDTH_SELECTED = 8;
-
-
-
-
-const zoomIn = (node, parentLayer, childLayer, parentNode) => {
-    console.log('zooming in to', node);
-    const startScale = 1;
-    const endScale = 1 / childLayer.scale.x;
-    let elapsed = 0;
-    const animateZoom = (delta) => {
-        function lerp(start, end, t) {
-        return start * (1 - t) + end * t;
-        }
-        elapsed += delta;
-        const progress = Math.min(elapsed / zoomDuration, 1);
-        //console.log("progress:", progress)
-        const newScale = lerp(startScale, endScale, progress);
-        parentLayer.scale.set(newScale);
-        const newX = lerp(
-        canvas.clientWidth / 2,
-        canvas.clientWidth / 2 - childLayer.position.x * endScale,
-        progress
-        );
-        const newY = lerp(
-        canvas.clientHeight / 2,
-        canvas.clientHeight / 2 - childLayer.position.y * endScale,
-        progress
-        );
-        parentLayer.position.set(newX, newY);
-        if (progress >= 1) {
-        app.ticker.remove(animateZoom);
-        app.stage.removeChildren();
-        history.push({
-            expression: parentNode,
-            x: parentLayer.position.x,
-            y: parentLayer.position.y
-        });
-        setupLayers(node);
-        }
-    };
-    app.ticker.add(animateZoom);
-};
-
-const zoomOut = (node, parentLayer, childLayer) => {
-    console.log('zooming in to', node);
-    const startScale = 1 / LEVEL_SCALE;
-    const endScale = 1;
-    const startScaleInner = 1;
-    const endScaleInner = LEVEL_SCALE;
-    let elapsed = 0;
-
-    const animateZoom = (delta) => {
-      function lerp(start, end, t) {
-        return start * (1 - t) + end * t;
-      }
-      elapsed += delta;
-      const progress = Math.min(elapsed / zoomDuration, 1);
-      //console.log("progress:", progress)
-      const newScale = lerp(startScale, endScale, progress);
-      const newScaleInner = lerp(startScaleInner, endScaleInner, progress);
-      parentLayer.scale.set(newScale);
-      layer.scale.set(newScaleInner);
-      const newX = lerp(parent.x, canvas.clientWidth / 2, progress);
-      const newY = lerp(parent.y, canvas.clientHeight / 2, progress);
-      parentLayer.position.set(newX, newY);
-      if (progress >= 1) {
-        app.ticker.remove(animateZoom);
-        app.stage.removeChildren();
-        history.pop();
-        setupLayers(parent?.expression);
-      }
-    };
-    app.ticker.add(animateZoom);
-};
-
-
-
 
 export class ExpressionWidget {
     #base: string
@@ -101,6 +24,7 @@ export class ExpressionWidget {
     #canvasSize: {width: number, height: number} = {width: 0, height: 0}
 
     #selectedCallbacks: Array<(expr: string) => void> = []
+    #doubleClickCallbacks: Array<(widget: ExpressionWidget) => void> = []
 
     constructor(
         expression: string, 
@@ -114,7 +38,7 @@ export class ExpressionWidget {
         this.#canvasSize = canvasSize
         this.addGraphAndText()
 
-        this.#perspective.addListener('link-added', async (link) => {
+        this.#perspective.addListener('link-added', (link) => {
             if(link.data.source == this.#base) {
                 if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
                     const payload = link.data.predicate.substring(COORDS_PRED_PREFIX.length)
@@ -136,6 +60,7 @@ export class ExpressionWidget {
                     layer.position.set(point.x, point.y)
                 }
             }
+            return null
         })
 
         this.#container.on('pointerup', (event) => {
@@ -148,8 +73,20 @@ export class ExpressionWidget {
         })
     }
 
+    get base() {
+        return this.#base
+    }
+
+    get container() {
+        return this.#container
+    }
+
     onSelectionChanged(callback: (expr: string) => void) {
         this.#selectedCallbacks.push(callback)
+    }
+
+    onDoubleClick(callback: (widget: ExpressionWidget) => void) {
+        this.#doubleClickCallbacks.push(callback)
     }
 
     addGraphAndText() {
@@ -159,7 +96,7 @@ export class ExpressionWidget {
     }
 
     async updateChildrenCoords() {
-        const result: LinkExpression[] = await this.#perspective.get({ source: this.#base });        
+        const result: LinkExpression[] = await this.#perspective.get(new LinkQuery({ source: this.#base }));        
         for(const link of result) {
             const child = link.data.target  
             if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
@@ -238,7 +175,7 @@ export class ExpressionWidget {
 
         childLayer.on('pointerup', () => {
             if (twoClicks) {
-                this.#doubleClickCallbacks.forEach(callback => callback(childWidget.#base))
+                this.#doubleClickCallbacks.forEach(callback => callback(childWidget))
                 //console.log('dblclick -> zooming in');
                 //zoomIn(child, this.#container, childLayer, this.#base);
             } else {
@@ -255,9 +192,9 @@ export class ExpressionWidget {
                 })
                 this.setSelected(false)
                 this.#selectedCallbacks.forEach(callback => callback(childWidget.#base))
-                
-                isPointerDown = false;
             }
+            isPointerDown = false;
+            isDragging = false;
         });
 
         childLayer.on('pointermove', (event) => {

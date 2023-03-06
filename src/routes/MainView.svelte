@@ -6,9 +6,11 @@
   import { HistoryElement } from './History';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';  
-  import { ExpressionWidget } from './ExpressionWidget';
+  import { COORDS_PRED_PREFIX, ExpressionWidget, LEVEL_SCALE } from './ExpressionWidget';
 
   export let perspectiveID: string;
+
+  const ZOOM_DURATION = 30
 
   let app: PIXI.Application | undefined;
   let renderer: PIXI.Renderer | undefined;
@@ -33,7 +35,15 @@
     currentExpression = expr
 
     app?.stage.addChild(createToolbar())
+
     const layer = new PIXI.Container();
+    const widget = new ExpressionWidget(
+      expr, 
+      perspective, 
+      layer,
+      { width: canvas.clientWidth, height: canvas.clientHeight}
+    )
+
     let parent = history[history.length - 1];
     //debugger
     if (parent) {
@@ -50,21 +60,19 @@
 
       parentLayer.on('pointerdown', (event) => {
         console.log('zooming out');
-        zoomOut(parent, parentLayer);
+        zoomOut(parentWidget, widget);
       });
     }
     app?.stage.addChild(layer);
     layer.position.set(canvas.clientWidth / 2, canvas.clientHeight / 2);
-    const widget = new ExpressionWidget(
-      expr, 
-      perspective, 
-      layer,
-      { width: canvas.clientWidth, height: canvas.clientHeight}
-    )
+    
     widget.addChildrenInteractive()
     widget.onSelectionChanged((expr) => {
       selectedExpression = expr
       dispatch('selectionChanged', expr)
+    })
+    widget.onDoubleClick((child) => {
+      zoomIn(widget, child);
     })
   }
 
@@ -150,6 +158,90 @@
     app?.destroy(true);
     renderer?.destroy(true);
   });
+
+  const zoomIn = (parent: ExpressionWidget, child: ExpressionWidget) => {
+    const parentLayer = parent.container
+    const childLayer = child.container
+
+    console.log('zooming in to', child.base);
+    const startScale = 1;
+    const endScale = 1 / childLayer.scale.x;
+    let elapsed = 0;
+    const animateZoom = (delta) => {
+      function lerp(start, end, t) {
+        return start * (1 - t) + end * t;
+      }
+      elapsed += delta;
+      const progress = Math.min(elapsed / ZOOM_DURATION, 1);
+      //console.log("progress:", progress)
+      const newScale = lerp(startScale, endScale, progress);
+      parentLayer.scale.set(newScale);
+      const newX = lerp(
+        canvas.clientWidth / 2,
+        canvas.clientWidth / 2 - childLayer.position.x * endScale,
+        progress
+      );
+      const newY = lerp(
+        canvas.clientHeight / 2,
+        canvas.clientHeight / 2 - childLayer.position.y * endScale,
+        progress
+      );
+      parentLayer.position.set(newX, newY);
+      if (progress >= 1) {
+      app.ticker.remove(animateZoom);
+      app.stage.removeChildren();
+      history.push({
+          expression: parent.base,
+          x: parentLayer.position.x,
+          y: parentLayer.position.y
+      });
+      setupLayers(child.base);
+    }
+  };
+  app.ticker.add(animateZoom);
+};
+
+const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) => {
+    console.log('zooming out to', parentWidget.base);
+    const startScale = 1 / LEVEL_SCALE;
+    const endScale = 1;
+    const startScaleInner = 1;
+    const endScaleInner = LEVEL_SCALE;
+    let elapsed = 0;
+
+    const parentStartPos = parentWidget.container.position.clone();
+
+    parentWidget.addChildrenInteractive()
+    childWidget.container.removeChildren()
+
+    const animateZoom = (delta) => {
+      function lerp(start, end, t) {
+        return start * (1 - t) + end * t;
+      }
+      elapsed += delta;
+      const progress = Math.min(elapsed / ZOOM_DURATION, 1);
+      //console.log("progress:", progress)
+      const newScale = lerp(startScale, endScale, progress);
+      const newScaleInner = lerp(startScaleInner, endScaleInner, progress);
+      console.log('newScale', newScale)
+      parentWidget.container.scale.set(newScale);
+      childWidget.container.scale.set(newScaleInner);
+      
+      const newX = lerp(parentStartPos.x, canvas.clientWidth / 2, progress);
+      const newY = lerp(parentStartPos.y, canvas.clientHeight / 2, progress);
+      parentWidget.container.position.set(newX, newY);
+      console.log('newX', newX, 'newY', newY)
+      if (progress >= 1) {
+        app.ticker.remove(animateZoom);
+        app.stage.removeChildren();
+        history.pop();
+        setupLayers(parentWidget.base);
+      }
+    };
+    app.ticker.add(animateZoom);
+};
+
+
 </script>
 
 <div bind:this={canvas} class="canvas" />
