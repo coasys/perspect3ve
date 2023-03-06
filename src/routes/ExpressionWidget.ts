@@ -91,8 +91,11 @@ export class ExpressionWidget {
 
     addGraphAndText() {
         this.#graphic = this.#createExpressionGraphic()
-        this.#text = this.#createTextNode(this.#base)
-        this.#container.addChild(this.#graphic, this.#text)
+        this.#container.addChild(this.#graphic)
+        if(this.#base != "ad4m://self") {
+            this.#text = this.#createTextNode(this.#base)
+            this.#container.addChild(this.#text)
+        }
     }
 
     async updateChildrenCoords() {
