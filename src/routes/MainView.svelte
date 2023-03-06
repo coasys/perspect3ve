@@ -258,6 +258,6 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
     display: block;
     height: 100%;
     width: 100%;
-    border: 2px red solid;
+    margin-left: -6px;
   }
 </style>

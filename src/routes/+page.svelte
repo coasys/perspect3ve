@@ -80,7 +80,7 @@
   }
 
   .nav {
-    flex: 0 0 40px;
+
     overflow: scroll;
   }
 
