@@ -1,14 +1,20 @@
-<script>
+<script lang="ts">
   import '@junto-foundation/junto-elements';
   import '@junto-foundation/junto-elements/dist/main.css';
+  import type { Ad4mClient, PerspectiveProxy } from '@perspect3vism/ad4m';
+  import { Literal, LinkQuery } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
 
   export let perspectiveID
   export let expression
 
-  let ad4m
-  let perspective
+  let ad4m: Ad4mClient
+  let perspective: PerspectiveProxy
+  let expressionData
+  let expressionAuthor: string
+  let expressionTimestamp: string
+  let properties = []
 
   let isEditingPerspectiveName = false
   let nameInput
@@ -24,18 +30,43 @@
 
   async function update() {
 	await ensuerAd4mClient()
-	if(perspectiveID) {
-		perspective = await ad4m.perspective.byUUID(perspectiveID)
-		if(perspective.sharedUrl) {
-			let nh = await ad4m.expression.get(perspective.sharedUrl)
-			nh = JSON.parse(nh.data)
-			linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
-		} else {
-			linkLanguageMeta = null
-		}
-	} else {
+	console.log("properties browser update", perspectiveID, expression)
+	if(!perspectiveID) {
 		perspective = null
 		linkLanguageMeta = null
+		return 
+	}
+
+	perspective = await ad4m.perspective.byUUID(perspectiveID)
+
+	if(perspective.sharedUrl) {
+		let nh = await ad4m.expression.get(perspective.sharedUrl)
+		nh = JSON.parse(nh.data)
+		linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
+	} else {
+		linkLanguageMeta = null
+	}
+	
+	if(expression && expression != "ad4m://self") {
+		expressionData = null
+		// First trying to handle expression as Literal
+		try {
+			console.log("trying to get literal from url", expression)
+			expressionData = Literal.fromUrl(expression).get()
+			const links = await perspective.get(new LinkQuery({target: expression}))
+			console.log("expression links:", links)
+			if(links.length) {
+				expressionAuthor = links[0].author
+				expressionTimestamp = links[0].timestamp
+			}
+		} catch(e) {
+			console.error(e)
+			const { author, timestamp, data } = await ad4m.expression.get(expression)
+			expressionAuthor = author
+			expressionTimestamp = timestamp
+			expressionData = data
+		}
+		
 	}
   }
 
@@ -43,9 +74,11 @@
 	update()
   })
 
-  $: if (perspectiveID || !perspectiveID) {
+  $: if (perspectiveID || !perspectiveID || expression) {
 	update()
   }
+
+
 
 
   async function handleSaveName() {
@@ -142,10 +175,15 @@
 		</j-box>
 	{:else}
 		<div class="header">
-			<j-text variant="heading" size="800" weight="bold">{item.title}</j-text>
-			<j-text class="description">{item.description}</j-text>
-			<div class="author">{item.author}</div>
-			<div class="timestamp">{item.timestamp}</div>
+			{#if typeof expressionData == 'string'}
+				<j-text variant="heading" size="800" weight="bold">{expressionData}</j-text>
+			{:else if typeof expressionData == 'object' && expressionData.name}
+				<j-text variant="heading" size="800" weight="bold">{expressionData.name}</j-text>
+			{:else}
+				<j-text variant="heading" size="800" weight="bold">{expression}</j-text>
+			{/if}
+			<div class="author">{expressionAuthor}</div>
+			<div class="timestamp">{expressionTimestamp}</div>
 		</div>
 		<div class="properties">
 			{#each properties as { name, value }}

@@ -7,10 +7,16 @@
   import { onMount, setContext } from 'svelte';
 
   let selectedPerspective = null;
+  let selectedExpression = "ad4m://self";
 
   function setPerspective(event) {
     console.log('handleSelect', event.detail);
     selectedPerspective = event.detail;
+  }
+
+  function setExpression(event) {
+    console.log('handleSelect', event.detail);
+    selectedExpression = event.detail;
   }
 
   function perspectiveDeleted(event) {
@@ -55,11 +61,11 @@
       <Nav {selectedPerspective} on:select={setPerspective} />
     </div>
     <main>
-      <MainView perspectiveID={selectedPerspective} />
+      <MainView perspectiveID={selectedPerspective} on:selectionChanged={setExpression} />
     </main>
 
     <div class="properties-browser">
-      <PropertiesBrowser perspectiveID={selectedPerspective} expression="ad4m://self" on:perspectiveDeleted={perspectiveDeleted}/>
+      <PropertiesBrowser perspectiveID={selectedPerspective} expression={selectedExpression} on:perspectiveDeleted={perspectiveDeleted}/>
     </div>
   </div>
 {/if}

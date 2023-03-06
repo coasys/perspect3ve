@@ -5,10 +5,8 @@
   import '@pixi/interaction';
   import { HistoryElement } from './History';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
-  import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';
-    import { ExpressionWidget } from './ExpressionWidget';
-
-  
+  import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';  
+  import { ExpressionWidget } from './ExpressionWidget';
 
   export let perspectiveID: string;
 
@@ -64,6 +62,10 @@
       { width: canvas.clientWidth, height: canvas.clientHeight}
     )
     widget.addChildrenInteractive()
+    widget.onSelectionChanged((expr) => {
+      selectedExpression = expr
+      dispatch('selectionChanged', expr)
+    })
   }
 
   $: if (perspectiveID || !perspectiveID) update();

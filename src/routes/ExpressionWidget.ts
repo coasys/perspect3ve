@@ -100,6 +100,8 @@ export class ExpressionWidget {
     #childrenWidgets: Map<string, ExpressionWidget> = new Map()
     #canvasSize: {width: number, height: number} = {width: 0, height: 0}
 
+    #selectedCallbacks: Array<(expr: string) => void> = []
+
     constructor(
         expression: string, 
         perspective: PerspectiveProxy, 
@@ -111,6 +113,19 @@ export class ExpressionWidget {
         this.#container = container
         this.#canvasSize = canvasSize
         this.addGraphAndText()
+
+        this.#container.on('pointerup', (event) => {
+            //console.log('pointerup', event.target)
+            if(event.target == this.#graphic) {
+                this.setSelected(true)
+                this.#childrenWidgets.forEach(child => child.setSelected(false))
+                this.#selectedCallbacks.forEach(callback => callback(this.#base))
+            }
+        })
+    }
+
+    onSelectionChanged(callback: (expr: string) => void) {
+        this.#selectedCallbacks.push(callback)
     }
 
     addGraphAndText() {
@@ -193,7 +208,7 @@ export class ExpressionWidget {
           childLayer.on('pointerup', () => {
             if (twoClicks) {
                 console.log('dblclick -> zooming in');
-                zoomIn(child, layer, childLayer, expression);
+                zoomIn(child, this.#container, childLayer, this.#base);
             } else {
                 if(isDragging) {
                     this.#updateChildCoords(child, childLayer.position)
@@ -206,6 +221,8 @@ export class ExpressionWidget {
                         widget.setSelected(false)
                     }
                 })
+                this.setSelected(false)
+                this.#selectedCallbacks.forEach(callback => callback(child))
                 
                 isPointerDown = false;
             }
