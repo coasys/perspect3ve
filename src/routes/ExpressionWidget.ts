@@ -198,16 +198,15 @@ export class ExpressionWidget {
                 if(isDragging) {
                     this.#updateChildCoords(child, childLayer.position)
                     isDragging = false;
-                } else {
-                    console.log('select', child);
-                    childWidget.setSelected(true)
-                    this.#childrenWidgets.forEach((widget, key) => {
-                        if(key !== child) {
-                            widget.setSelected(false)
-                        }
-                    })
+                } 
 
-                }
+                childWidget.setSelected(true)
+                this.#childrenWidgets.forEach((widget, key) => {
+                    if(key !== child) {
+                        widget.setSelected(false)
+                    }
+                })
+                
                 isPointerDown = false;
             }
           });
@@ -231,7 +230,7 @@ export class ExpressionWidget {
 
         this.#selected = selected
         this.#graphic!.clear()
-        this.#drawExpressionCircle(this.#graphic)
+        this.#drawExpressionCircle(this.#graphic!)
     }
 
     async #updateChildCoords(child: string, point: { x: number; y: number }) {
