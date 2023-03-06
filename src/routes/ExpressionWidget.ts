@@ -6,6 +6,13 @@ import { LinkQuery, type LinkExpression, type PerspectiveProxy } from '@perspect
 const COORDS_PRED_PREFIX = "p3://child_coords_2d"
 const LEVEL_SCALE = 0.24;
 
+const OUTLINE_COLOR = 0x5a5a5a;
+const OUTLINE_COLOR_SELCTED = 0xffffff;
+const OUTLINE_WIDTH = 5;
+const OUTLINE_WIDTH_SELECTED = 8;
+
+
+
 
 const zoomIn = (node, parentLayer, childLayer, parentNode) => {
     console.log('zooming in to', node);
@@ -184,13 +191,22 @@ export class ExpressionWidget {
           });
           childLayer.on('pointerup', () => {
             if (twoClicks) {
-              console.log('dblclick -> zooming in');
-              zoomIn(child, layer, childLayer, expression);
+                console.log('dblclick -> zooming in');
+                zoomIn(child, layer, childLayer, expression);
             } else {
-              if(isDragging) {
-                this.#updateChildCoords(child, childLayer.position)
-                isDragging = false;
-              }
+                if(isDragging) {
+                    this.#updateChildCoords(child, childLayer.position)
+                    isDragging = false;
+                } else {
+                    console.log('select', child);
+                    childWidget.setSelected(true)
+                    this.#childrenWidgets.forEach((widget, key) => {
+                        if(key !== child) {
+                            widget.setSelected(false)
+                        }
+                    })
+
+                }
                 isPointerDown = false;
             }
           });
@@ -207,6 +223,17 @@ export class ExpressionWidget {
           this.#container.addChild(childLayer);
         });
       }
+
+
+    setSelected(selected: boolean) {
+        this.#selected = selected
+        if(this.#selected)
+            this.#graphic!.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
+        else
+            this.#graphic!.lineStyle(OUTLINE_WIDTH, OUTLINE_COLOR);
+
+        this.#graphic!.drawCircle(0, 0, this.#canvasSize.width / 2.5);
+    }
 
     async #updateChildCoords(child: string, point: { x: number; y: number }) {
         this.#childrenCoords.set(child, point)
@@ -235,9 +262,9 @@ export class ExpressionWidget {
         const circle = new PIXI.Graphics();
         circle.beginFill(0xff00ff, this.#selected ? 0.5 : 0.2);
         if(this.#selected)
-            circle.lineStyle(8, 0xffffff);
+            circle.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
         else
-            circle.lineStyle(5, 0x5a5a5a);
+            circle.lineStyle(OUTLINE_WIDTH, OUTLINE_COLOR);
         circle.drawCircle(0, 0, this.#canvasSize.width / 2.5);
         circle.endFill();
         circle.interactive = true;
