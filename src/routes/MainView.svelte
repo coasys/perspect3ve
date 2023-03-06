@@ -6,8 +6,9 @@
   import { HistoryElement } from './History';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';
+    import { ExpressionWidget } from './ExpressionWidget';
 
-  const COORDS_PRED_PREFIX = "p3://child_coords_2d"
+  
 
   export let perspectiveID: string;
 
@@ -17,7 +18,7 @@
 
   let perspective: PerspectiveProxy | undefined;
 
-  const LEVEL_SCALE = 0.24;
+  
 
   let history: HistoryElement[] = [];
   let children = new Map<string, Set<string>>();
@@ -142,168 +143,8 @@
     });
   }
 
-  const zoomIn = (node, parentLayer, childLayer, parentNode) => {
-    console.log('zooming in to', node);
-    const startScale = 1;
-    const endScale = 1 / childLayer.scale.x;
-    let elapsed = 0;
-    const animateZoom = (delta) => {
-      function lerp(start, end, t) {
-        return start * (1 - t) + end * t;
-      }
-      elapsed += delta;
-      const progress = Math.min(elapsed / zoomDuration, 1);
-      //console.log("progress:", progress)
-      const newScale = lerp(startScale, endScale, progress);
-      parentLayer.scale.set(newScale);
-      const newX = lerp(
-        canvas.clientWidth / 2,
-        canvas.clientWidth / 2 - childLayer.position.x * endScale,
-        progress
-      );
-      const newY = lerp(
-        canvas.clientHeight / 2,
-        canvas.clientHeight / 2 - childLayer.position.y * endScale,
-        progress
-      );
-      parentLayer.position.set(newX, newY);
-      if (progress >= 1) {
-        app.ticker.remove(animateZoom);
-        app.stage.removeChildren();
-        history.push({
-          expression: parentNode,
-          x: parentLayer.position.x,
-          y: parentLayer.position.y
-        });
-        setupLayers(node);
-      }
-    };
-    app.ticker.add(animateZoom);
-  };
 
-  function renderChildrenLayers(expression: string, layer: PIXI.Container) {
-    //console.log('renderChildrenLayers', expression);
-    updateChildren(expression);
-    //console.log('children:', children.get(expression));
-    children.get(expression)?.forEach(async (child) => {
-      let point = await getCoords(child, expression);
-      //console.log("COORS:",expression, point)
-      if (!point) {
-        console.error('no point for child:', child);
-        return;
-      }
 
-      let childLayer = new PIXI.Container();
-      childLayer.scale.set(LEVEL_SCALE);
-      childLayer.position.set(point.x, point.y);
-      
-      //console.log('adding child layer:', child, 'at', point);
-      renderExpressionLayer(child, childLayer);
-      //renderChildrenCircles(child, childLayer);
-      childLayer.interactive = true;
-      //childLayer.buttonMode = true;
-      //childLayer.hitArea = new PIXI.Rectangle(-2*childLayer.width, -2*childLayer.height, 2*childLayer.width, 2*childLayer.height);
-      let isDragging = false;
-      let isPointerDown = false;
-      let dragStart = new PIXI.Point();
-      let oneClick = false;
-      let twoClicks = false;
-      childLayer.on('pointerdown', (event) => {
-        //zoomIn(child, layer, childLayer);
-        if (oneClick) {
-          twoClicks = true;
-          setTimeout(() => {
-            twoClicks = false;
-          }, 200);
-        }
-
-        isPointerDown = true;
-        isDragging = false;
-        console.log(event.data.global);
-        dragStart.copyFrom(event.data.global);
-
-        oneClick = true;
-        setTimeout(() => {
-          oneClick = false;
-        }, 200);
-      });
-      childLayer.on('pointerup', () => {
-        if (twoClicks) {
-          console.log('dblclick -> zooming in');
-          zoomIn(child, layer, childLayer, expression);
-        } else {
-          if(isDragging)
-            updateCoords(child, expression, childLayer.position);
-          
-          if(selectedExpression != child) {
-            let old = selectedExpression
-            selectedExpression = null
-            updateExpressionLayer(old)
-          }
-            
-          selectedExpression = child
-          updateExpressionLayer(selectedExpression)
-          dispatch('selectExpression', child)
-        }
-        isDragging = false;
-        isPointerDown = false;
-      });
-      childLayer.on('pointermove', (event) => {
-        if (isPointerDown) {
-          isDragging = true;
-          const currentPoint = event.data.global;
-          childLayer.position.x += currentPoint.x - dragStart.x;
-          childLayer.position.y += currentPoint.y - dragStart.y;
-          //container.position.x = PIXI.utils.clamp(container.position.x, panBounds.x, panBounds.x + panBounds.width);
-          //container.position.y = PIXI.utils.clamp(container.position.y, panBounds.y, panBounds.y + panBounds.height);
-          dragStart.copyFrom(event.data.global);
-        }
-      });
-      childLayer.on('dblclick', () => {
-        console.log('dblclick -> zooming in');
-        zoomIn(child, layer, childLayer);
-      });
-
-      layer.addChild(childLayer);
-    });
-  }
-
-  function createExpressionCircle(selected) {
-    const circle = new PIXI.Graphics();
-    circle.beginFill(0xff00ff, selected ? 0.5 : 0.2);
-    if(selected)
-      circle.lineStyle(8, 0xffffff);
-    else
-      circle.lineStyle(5, 0x5a5a5a);
-    circle.drawCircle(0, 0, canvas.clientWidth / 2.5);
-    circle.endFill();
-    circle.interactive = true;
-    circle.buttonMode = true;
-    return circle;
-  }
-
-  function createTextNode(str) {
-    let align = 'center';
-    let yAnchor = 0.5;
-
-    try {
-      str = Literal.fromUrl(str).get()
-    } catch(e) {}
-
-    if (typeof str == 'object'){
-      str = JSON.stringify(str, null, 2)
-      align = 'left'
-      yAnchor = 1
-    } 
-
-    const text = new PIXI.Text(str, {
-      fontSize: 36,
-      fill: 0x0000ff,
-      align
-    });
-    text.anchor.set(0.5, yAnchor);
-    return text;
-  }
 
   // Define the zooming animation duration
   const zoomDuration = 50;
@@ -329,43 +170,14 @@
       const parentLayer = new PIXI.Container();
       parentLayer.position.set(parent.x, parent.y);
       parentLayer.scale.set(1 / LEVEL_SCALE);
-      renderExpressionLayer(parent.expression, parentLayer);
-      //parentLayer.interactive = true;
-      //parentLayer.buttonMode = true;
-
+      const parentWidget = new ExpressionWidget(
+        parent.expression, 
+        perspective, 
+        parentLayer,
+        { width: canvas.clientWidth, height: canvas.clientHeight}
+      )
       app?.stage.addChild(parentLayer);
 
-      const zoomOut = (node, parentLayer, childLayer) => {
-        console.log('zooming in to', node);
-        const startScale = 1 / LEVEL_SCALE;
-        const endScale = 1;
-        const startScaleInner = 1;
-        const endScaleInner = LEVEL_SCALE;
-        let elapsed = 0;
-
-        const animateZoom = (delta) => {
-          function lerp(start, end, t) {
-            return start * (1 - t) + end * t;
-          }
-          elapsed += delta;
-          const progress = Math.min(elapsed / zoomDuration, 1);
-          //console.log("progress:", progress)
-          const newScale = lerp(startScale, endScale, progress);
-          const newScaleInner = lerp(startScaleInner, endScaleInner, progress);
-          parentLayer.scale.set(newScale);
-          layer.scale.set(newScaleInner);
-          const newX = lerp(parent.x, canvas.clientWidth / 2, progress);
-          const newY = lerp(parent.y, canvas.clientHeight / 2, progress);
-          parentLayer.position.set(newX, newY);
-          if (progress >= 1) {
-            app.ticker.remove(animateZoom);
-            app.stage.removeChildren();
-            history.pop();
-            setupLayers(parent?.expression);
-          }
-        };
-        app.ticker.add(animateZoom);
-      };
       parentLayer.on('pointerdown', (event) => {
         console.log('zooming out');
         zoomOut(parent, parentLayer);
@@ -373,10 +185,13 @@
     }
     app?.stage.addChild(layer);
     layer.position.set(canvas.clientWidth / 2, canvas.clientHeight / 2);
-    renderExpressionLayer(expr, layer, true);
-
-    //renderChildrenCircles(expr, layer)
-    //renderChildrenLayers(expr, layer)
+    const widget = new ExpressionWidget(
+      expr, 
+      perspective, 
+      layer,
+      { width: canvas.clientWidth, height: canvas.clientHeight}
+    )
+    widget.addChildrenInteractive()
   }
 
   $: if (perspectiveID || !perspectiveID) update();
@@ -430,31 +245,6 @@
 
     // Add the circle to the toolbar
     toolbar.addChild(circle);
-/*
-    // Define the event listeners for the pointer events
-    function onDragStart(event) {
-      console.log("drag start:", event)
-      this.data = event.data;
-      this.alpha = 0.5;
-      this.dragging = true;
-    }
-
-    function onDragEnd() {
-      this.alpha = 1;
-      this.dragging = false;
-      this.data = null;
-      this.position = this.home;
-    }
-
-    function onDragMove(event) {
-      console.log(event)
-      if (this.dragging) {
-        console.log(this)
-        this.position.x = event.globalX;
-        this.position.y = event.globalY;
-      }
-    }
-*/
     return toolbar
   }
 
@@ -484,78 +274,6 @@
       app?.resize(canvas.clientWidth, canvas.clientHeight);
       renderer.resize(canvas.clientWidth, canvas.clientHeight);
     });
-
-    //setupLayers('ad4m://self');
-    /*
-    // Create a container for the circles and labels
-    container = new PIXI.Container();
-    app.stage.addChild(container);
-    container.position.set(300, 300);
-    const background = new PIXI.Graphics()
-      .beginFill(0x050505)
-      .drawRect(-renderer.width*5, -renderer.height*5, renderer.width*10, renderer.height*10)
-      .endFill();
-
-    container.addChild(background)
-
-    // Render the PixiJS stage
-    function animate() {
-      requestAnimationFrame(animate);
-      renderer.render(app.stage);
-    }
-    animate();
-
-    // Create the circles for the initial tree data
-    createCircles(treeData, 0, 0, 0);
-
-    // Enable dragging and panning of the container
-    let isDragging = false;
-    let dragStart = new PIXI.Point();
-    let dragDelta = new PIXI.Point();
-    
-    container.background = new PIXI.Sprite(PIXI.Texture.WHITE);
-    container.background.tint = 0x0a0a0a0;
-    container.background.width = renderer.width;
-    container.background.height = renderer.height;
-    container.width = width;
-    container.height = height;
-    container.interactive = true
-    */
-
-    /*
-    app.stage.on('pointerdown', event => {
-      console.log("start dragging")
-      isDragging = true;
-      console.log(event.data.global)
-      dragStart.copyFrom(event.data.global);
-    });
-    app.stage.on('pointermove', event => {
-        if (isDragging) {
-          const currentPoint = event.data.global;
-          dragDelta.set(currentPoint.x - dragStart.x, currentPoint.y - dragStart.y);
-          container.position.x += dragDelta.x;
-          container.position.y += dragDelta.y;
-          //container.position.x = PIXI.utils.clamp(container.position.x, panBounds.x, panBounds.x + panBounds.width);
-          //container.position.y = PIXI.utils.clamp(container.position.y, panBounds.y, panBounds.y + panBounds.height);
-          dragStart.copyFrom(event.data.global);
-        }
-    });
-    app.stage.on('pointerup', event => {
-      console.log("stop dragging")
-      isDragging = false;
-    });
-    app.stage.on('pointerupoutside', event => {
-      console.log("stop dragging")
-      isDragging = false;
-    });
-    
-*/
-
-    //app.stage.addChild(pixiContainer);
-    //pixiContainer.position.set(300, 300);
-
-    //rootNode = treeData;
-    //renderNodeDisplay(treeData, null);
   });
 
   onDestroy(() => {
