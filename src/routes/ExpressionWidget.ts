@@ -2,6 +2,7 @@ import * as PIXI from 'pixi.js';
 import '@pixi/math-extras';
 import '@pixi/interaction';
 import { LinkQuery, type LinkExpression, type PerspectiveProxy } from '@perspect3vism/ad4m';
+import { Graphics } from 'pixi.js';
 
 const COORDS_PRED_PREFIX = "p3://child_coords_2d"
 const LEVEL_SCALE = 0.24;
@@ -113,8 +114,8 @@ export class ExpressionWidget {
     }
 
     addGraphAndText() {
-        this.#graphic = this._createExpressionCircle()
-        this.#text = this._createTextNode(this.#base)
+        this.#graphic = this.#createExpressionCircle()
+        this.#text = this.#createTextNode(this.#base)
         this.#container.addChild(this.#graphic, this.#text)
     }
 
@@ -226,13 +227,11 @@ export class ExpressionWidget {
 
 
     setSelected(selected: boolean) {
-        this.#selected = selected
-        if(this.#selected)
-            this.#graphic!.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
-        else
-            this.#graphic!.lineStyle(OUTLINE_WIDTH, OUTLINE_COLOR);
+        if(this.#selected === selected) return
 
-        this.#graphic!.drawCircle(0, 0, this.#canvasSize.width / 2.5);
+        this.#selected = selected
+        this.#graphic!.clear()
+        this.#drawExpressionCircle(this.#graphic)
     }
 
     async #updateChildCoords(child: string, point: { x: number; y: number }) {
@@ -258,21 +257,25 @@ export class ExpressionWidget {
 
     
 
-    _createExpressionCircle() {
+    #createExpressionCircle(): PIXI.Graphics {
         const circle = new PIXI.Graphics();
-        circle.beginFill(0xff00ff, this.#selected ? 0.5 : 0.2);
-        if(this.#selected)
-            circle.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
-        else
-            circle.lineStyle(OUTLINE_WIDTH, OUTLINE_COLOR);
-        circle.drawCircle(0, 0, this.#canvasSize.width / 2.5);
-        circle.endFill();
+        this.#drawExpressionCircle(circle)
         circle.interactive = true;
         circle.buttonMode = true;
         return circle;
     }
+
+    #drawExpressionCircle(graphic: PIXI.Graphics) {
+        graphic.beginFill(0xff00ff, this.#selected ? 0.5 : 0.2);
+        if(this.#selected)
+            graphic.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
+        else
+            graphic.lineStyle(OUTLINE_WIDTH, OUTLINE_COLOR);
+        graphic.drawCircle(0, 0, this.#canvasSize.width / 2.5);
+        graphic.endFill();
+    }
     
-    _createTextNode(str) {
+    #createTextNode(str) {
         let align = 'center';
         let yAnchor = 0.5;
 
