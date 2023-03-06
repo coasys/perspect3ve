@@ -90,7 +90,7 @@ export class ExpressionWidget {
     }
 
     addGraphAndText() {
-        this.#graphic = this.#createExpressionCircle()
+        this.#graphic = this.#createExpressionGraphic()
         this.#text = this.#createTextNode(this.#base)
         this.#container.addChild(this.#graphic, this.#text)
     }
@@ -215,7 +215,7 @@ export class ExpressionWidget {
 
         this.#selected = selected
         this.#graphic!.clear()
-        this.#drawExpressionCircle(this.#graphic!)
+        this.#drawExpressionGraphic(this.#graphic!)
     }
 
     async #updateChildCoords(child: string, point: { x: number; y: number }) {
@@ -241,12 +241,38 @@ export class ExpressionWidget {
 
     
 
-    #createExpressionCircle(): PIXI.Graphics {
-        const circle = new PIXI.Graphics();
-        this.#drawExpressionCircle(circle)
-        circle.interactive = true;
-        circle.buttonMode = true;
-        return circle;
+    #createExpressionGraphic(): PIXI.Graphics {
+        const graphic = new PIXI.Graphics();
+        this.#drawExpressionGraphic(graphic)
+        graphic.interactive = true;
+        graphic.buttonMode = true;
+        return graphic;
+    }
+
+    #drawExpressionGraphic(graphic: PIXI.Graphics) {
+        try {
+            console.log('drawing', this.#base)
+            const literal = Literal.fromUrl(this.#base).get()
+            console.log("is literal", literal)
+            this.#drawExpressionSticky(graphic)
+        } catch(e) {
+            this.#drawExpressionCircle(graphic)
+        }
+    }
+
+    #drawExpressionSticky(graphic: PIXI.Graphics) {
+        graphic.beginFill(0xffffcc, this.#selected ? 0.5 : 0.2);
+        if(this.#selected)
+            graphic.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
+        else
+            graphic.lineStyle(OUTLINE_WIDTH, OUTLINE_COLOR);
+        graphic.drawRoundedRect(
+            -this.#canvasSize.width/2.2,
+            -this.#canvasSize.height/2.2, 
+            this.#canvasSize.width*0.8,
+            this.#canvasSize.height*0.8, 
+            this.#canvasSize.width/10);
+        graphic.endFill();
     }
 
     #drawExpressionCircle(graphic: PIXI.Graphics) {
@@ -277,9 +303,42 @@ export class ExpressionWidget {
             fontSize: 36,
             fill: 0x0000ff,
             //@ts-ignores
-            align
+            align,
+            wordWrap: true,
+            wordWrapWidth: 180,
         });
         text.anchor.set(0.5, yAnchor);
         return text;
+    }
+
+    #createStickyNote(textString: string): PIXI.Container {
+        // Create a new PIXI.Graphics object for the sticky note background
+        const background = new PIXI.Graphics();
+        background.beginFill(0xffffcc);
+        background.lineStyle(2, 0x000000);
+        background.drawRoundedRect(
+            -this.#canvasSize.width/2.2,
+            -this.#canvasSize.height/2.2, 
+            this.#canvasSize.width/2.2,
+            this.#canvasSize.height/2.2, 
+            10);
+        background.endFill();
+
+        // Create a new PIXI.Text object for the text
+        const text = new PIXI.Text(textString, {
+        fontSize: 20,
+        fontWeight: 'bold',
+        fill: 0x000000,
+        wordWrap: true,
+        wordWrapWidth: 180,
+        });
+
+        // Set the text position to be centered inside the sticky note
+        text.position.set((background.width - text.width) / 2, (background.height - text.height) / 2);
+
+        // Create a new PIXI.Container object for the sticky note
+        const stickyNote = new PIXI.Container();
+        stickyNote.addChild(background, text);
+        return stickyNote
     }
 }
