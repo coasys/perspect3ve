@@ -254,31 +254,7 @@
 
     let centerX = canvas!.clientWidth / 2;
     let centerY = canvas!.clientHeight / 2;
-    // calculate toplevel position through history      
-    
-    //let x = centerX
-    //let y = centerY
-    //let scale = 1;
-/*
-    console.log(x,y,scale)
-    for (let i = 0; i < history.length; i++) {
-      const widget = history[i];
-      const layer = widget.container;
-      
-      //const diffX = layer.position.x - centerX
-      //const diffY = layer.position.y - centerY
-      //console.log("diff: ", diffX, diffY)
-      //const scaledX = diffX * scale
-      //const scaledY = diffY * scale
-      //console.log("scaled: ", scaledX, scaledY)
-      x = x - (layer.position.x / scale );
-      y = y - (layer.position.y / scale );
-      scale *= LEVEL_SCALE;
-      
-      console.log(x,y,scale)
-    }
-    console.log(x,y,scale)
-*/
+   
     const topLevelWidget = history[0]
     if(topLevelWidget) {
       parentLayer = topLevelWidget.container
@@ -287,54 +263,17 @@
     const allParents = [...history]
     allParents.push(parent)
 
-    /*console.log(allParents[0].container.position)
-    let displacementX = (centerX - allParents[0].container.position.x)/LEVEL_SCALE
-    let displacementY = (centerY - allParents[0].container.position.y)/LEVEL_SCALE
-    console.log("displacement: ", displacementX, displacementY)
-    console.log(allParents)
-*/
-
-/*
-    let displacementX = 0
-    let displacementY = 0
-
-    for(let i = 0; i < allParents.length-1; i++) {
-      const parent = allParents[i]
-      displacementX += (parent.container.position.x-centerX) / (LEVEL_SCALE ** (history.length-i))
-      displacementY += (parent.container.position.y-centerY) / (LEVEL_SCALE ** (history.length-i))
-    }  
-*/
     const {x: displacementX, y: displacementY} = aggregateZoomDisplacement(history, {x: centerX, y: centerY})
     
     const startScale = 1/(LEVEL_SCALE ** history.length);
-    //const endScale = 1 / childLayer.scale.x;
-    //scale *= LEVEL_SCALE;
     const endScale = 1/(LEVEL_SCALE ** (history.length + 1));
 
-    //const allParents = [...history].push(parent)
-
-    //const {x: startX, y: startY} = mapForward({x: centerX, y: centerY}, history);
-    //const startX = parentLayer.position.x / (LEVEL_SCALE ** (history.length))
-    //const startY = parentLayer.position.y / (LEVEL_SCALE ** (history.length))
-    
-    //const endX = startX - (childLayer.position.x / (LEVEL_SCALE ** (history.length + 1)))
-    //const endY = startY - (childLayer.position.y / (LEVEL_SCALE ** (history.length + 1)))
-    //const endX = startX/LEVEL_SCALE - (childLayer.position.x)
-    //const endY = startY/LEVEL_SCALE - (childLayer.position.y)
-
-    console.log("displacement: ", displacementX, displacementY)
     const startX = parentLayer.position.x
     const startY = parentLayer.position.y
 
     const endX = displacementX - childLayer.position.x/LEVEL_SCALE + centerX
     const endY = displacementY - childLayer.position.y/LEVEL_SCALE + centerY
 
-    console.log("start: ", startX, startY)
-    console.log("end: ", endX, endY)
-    console.log("startScale: ", startScale)
-    console.log("endScale: ", endScale)
-
-    
 
     //console.log("endScale: ", endScale)
     let elapsed = 0;
@@ -344,8 +283,6 @@
       const newScale = lerp(startScale, endScale, progress);
       const newX = lerp(startX, endX, progress);
       const newY = lerp(startY, endY, progress);
-
-      //console.log("new: ", newX, newY, newScale)
 
       parentLayer.scale.set(newScale);
       parentLayer.position.set(newX, newY);
