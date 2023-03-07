@@ -12,6 +12,8 @@ const OUTLINE_COLOR_SELCTED = 0xffffff;
 const OUTLINE_WIDTH = 5;
 const OUTLINE_WIDTH_SELECTED = 8;
 
+let perspectiveBackground = PIXI.Assets.load('public/perspective_background.png')
+
 export class ExpressionWidget {
     #base: string
     #perspective: PerspectiveProxy
@@ -91,11 +93,16 @@ export class ExpressionWidget {
 
     addGraphAndText() {
         this.#graphic = this.#createExpressionGraphic()
-        this.#container.addChild(this.#graphic)
-        if(this.#base != "ad4m://self") {
+        if(this.#base == "ad4m://self") {
+            this.#createPerspectiveBackground().then((sprite) => {
+                this.#container.addChild(sprite)
+            })
+        } else {
             this.#text = this.#createTextNode(this.#base)
             this.#container.addChild(this.#text)
         }
+
+        this.#container.addChild(this.#graphic)
     }
 
     async updateChildrenCoords() {
@@ -280,12 +287,12 @@ export class ExpressionWidget {
     }
 
     #drawExpressionCircle(graphic: PIXI.Graphics) {
-        graphic.beginFill(0xff00ff, this.#selected ? 0.5 : 0.2);
+        graphic.beginFill(0xff00ff, this.#selected && (this.#base != "ad4m://self") ? 0.5 : 0.2);
         if(this.#selected)
             graphic.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
         else
             graphic.lineStyle(OUTLINE_WIDTH, OUTLINE_COLOR);
-        graphic.drawCircle(0, 0, this.#canvasSize.width / 2.5);
+        graphic.drawCircle(0, 0, this.#canvasSize.width / 1.7);
         graphic.endFill();
     }
     
@@ -314,35 +321,18 @@ export class ExpressionWidget {
         text.anchor.set(0.5, yAnchor);
         return text;
     }
+    
+    async #createPerspectiveBackground(): Promise<PIXI.Sprite> {
+        const backgroundImage = new PIXI.Sprite(await perspectiveBackground);
 
-    #createStickyNote(textString: string): PIXI.Container {
-        // Create a new PIXI.Graphics object for the sticky note background
-        const background = new PIXI.Graphics();
-        background.beginFill(0xffffcc);
-        background.lineStyle(2, 0x000000);
-        background.drawRoundedRect(
-            -this.#canvasSize.width/2.2,
-            -this.#canvasSize.height/2.2, 
-            this.#canvasSize.width/2.2,
-            this.#canvasSize.height/2.2, 
-            10);
-        background.endFill();
+        // Set the position and scale of the background image to fit inside the circle
+        //backgroundImage.anchor.set(0.5);
+        backgroundImage.position.set(-this.#graphic!.width/2, -this.#graphic!.height/2);
+        backgroundImage.width = this.#graphic!.width;
+        backgroundImage.height = this.#graphic!.height;
+        backgroundImage.alpha = 0.8;
+        backgroundImage.tint = 0x333333;
 
-        // Create a new PIXI.Text object for the text
-        const text = new PIXI.Text(textString, {
-        fontSize: 20,
-        fontWeight: 'bold',
-        fill: 0x000000,
-        wordWrap: true,
-        wordWrapWidth: 180,
-        });
-
-        // Set the text position to be centered inside the sticky note
-        text.position.set((background.width - text.width) / 2, (background.height - text.height) / 2);
-
-        // Create a new PIXI.Container object for the sticky note
-        const stickyNote = new PIXI.Container();
-        stickyNote.addChild(background, text);
-        return stickyNote
+        return backgroundImage;
     }
 }
