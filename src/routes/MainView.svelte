@@ -3,6 +3,7 @@
   import * as PIXI from 'pixi.js';
   import '@pixi/math-extras';
   import '@pixi/interaction';
+  import * as TWEEN from '@tweenjs/tween.js';
   import type { HistoryElement } from './History';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';  
@@ -173,7 +174,7 @@
         return start * (1 - t) + end * t;
       }
       elapsed += delta;
-      const progress = Math.min(elapsed / ZOOM_DURATION, 1);
+      const progress = TWEEN.Easing.Exponential.InOut(Math.min(elapsed / ZOOM_DURATION, 1));
       //console.log("progress:", progress)
       const newScale = lerp(startScale, endScale, progress);
       parentLayer.scale.set(newScale);
@@ -220,7 +221,7 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
         return start * (1 - t) + end * t;
       }
       elapsed += delta;
-      const progress = Math.min(elapsed / ZOOM_DURATION, 1);
+      const progress = TWEEN.Easing.Exponential.InOut(Math.min(elapsed / ZOOM_DURATION, 1));
       //console.log("progress:", progress)
       const newScale = lerp(startScale, endScale, progress);
       const newScaleInner = lerp(startScaleInner, endScaleInner, progress);
