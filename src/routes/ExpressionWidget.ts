@@ -23,6 +23,7 @@ export class ExpressionWidget {
     #childrenCoords: Map<string, {x: number, y: number}> = new Map()
     #childrenWidgets: Map<string, ExpressionWidget> = new Map()
     #canvasSize: {width: number, height: number} = {width: 0, height: 0}
+    #relativePosition: {x: number, y: number} = {x: 0, y: 0}
 
     #selectedCallbacks: Array<(expr: string) => void> = []
     #doubleClickCallbacks: Array<(widget: ExpressionWidget) => void> = []
@@ -48,16 +49,11 @@ export class ExpressionWidget {
                     let widget = this.#childrenWidgets.get(link.data.target)
                     let layer
                     if(!widget) {
-                        const { childWidget, childLayer } = this.addChild(link.data.target, point)
-                        widget = childWidget
-                        layer = childLayer
-
+                        widget = this.addChild(link.data.target, point)
                         widget.addChildrenLeafs()
-
-                        this.#makeChildInteractive(widget, layer)
-                    } else {
-                        layer = widget.#container
+                        this.#makeChildInteractive(widget)
                     }
+                    layer = widget.#container
                     layer.position.set(point.x, point.y)
                 }
             }
@@ -65,11 +61,24 @@ export class ExpressionWidget {
         })
 
         this.#container.on('pointerup', (event) => {
-            //console.log('pointerup', event.target)
+            // filter out events that are not over graphic of this
             if(event.target == this.#graphic) {
-                this.setSelected(true)
-                this.#childrenWidgets.forEach(child => child.setSelected(false))
-                this.#selectedCallbacks.forEach(callback => callback(this.#base))
+                if(!this.#draggingWidget) {
+                    this.setSelected(true)
+                    this.#childrenWidgets.forEach(child => child.setSelected(false))
+                    this.#selectedCallbacks.forEach(callback => callback(this.#base))
+                } else {
+                    this.#pointerUpHandlers.get(this.#draggingWidget!.base)!(event)
+                }   
+            }
+        })
+
+        this.#container.on('pointermove', (event) => {
+            // filter out events that are not over graphic of this
+            if(event.target == this.#graphic) {
+                if(this.#draggingWidget) {
+                    this.#pointerMoveHandlers.get(this.#draggingWidget!.base)!(event)
+                }
             }
         })
     }
@@ -82,12 +91,21 @@ export class ExpressionWidget {
         return this.#container
     }
 
+    get relativePosition() {
+        return this.#relativePosition
+    }
+
     onSelectionChanged(callback: (expr: string) => void) {
         this.#selectedCallbacks.push(callback)
     }
 
     onDoubleClick(callback: (widget: ExpressionWidget) => void) {
         this.#doubleClickCallbacks.push(callback)
+    }
+
+    clearEventCallbacks() {
+        this.#selectedCallbacks = []
+        this.#doubleClickCallbacks = []
     }
 
     addGraphAndText() {
@@ -117,20 +135,29 @@ export class ExpressionWidget {
                     let point = {x: 0, y: 0}
                     this.#childrenCoords.set(child, point)
                 }
-            }            
+            }         
+            const childWidget = this.#childrenWidgets.get(child)!
+            if(childWidget)
+                childWidget.#relativePosition = this.#childrenCoords.get(child)!
         }
     }
 
-    addChild(child: string, point: {x: number, y: number}) {
+    addChild(child: string, point: {x: number, y: number}): ExpressionWidget {
+        const existing = this.#childrenWidgets.get(child)
+        if(existing) {
+            return existing
+        }
+
         let childLayer = new PIXI.Container();
         childLayer.scale.set(LEVEL_SCALE);
         childLayer.position.set(point.x, point.y);
 
         const childWidget = new ExpressionWidget(child, this.#perspective, childLayer, this.#canvasSize)
         this.#childrenWidgets.set(child, childWidget)
+        childWidget.#relativePosition = point
 
         this.#container.addChild(childLayer)
-        return { childWidget, childLayer }
+        return childWidget
     }
 
     async addChildrenLeafs() {
@@ -145,52 +172,87 @@ export class ExpressionWidget {
         await this.updateChildrenCoords();
         
         this.#childrenCoords.forEach((point, child) => {
-            const { childWidget, childLayer } = this.addChild(child, point)
-
+            const childWidget = this.addChild(child, point)
             childWidget.addChildrenLeafs()
-            this.#makeChildInteractive(childWidget, childLayer)
-    
-            this.#container.addChild(childLayer);
+            this.#makeChildInteractive(childWidget)
         });
     }
 
-    #makeChildInteractive(childWidget: ExpressionWidget, childLayer: PIXI.Container) {
-        childLayer.interactive = true;
-        let isDragging = false;
-        let isPointerDown = false;
-        let dragStart = new PIXI.Point();
-        let oneClick = false;
-        let twoClicks = false;
+    makeAllChildrenInteractive() {
+        this.#childrenWidgets.forEach(child => {
+            this.#makeChildInteractive(child)
+        })
+    }
 
-        childLayer.on('pointerdown', (event) => {
-            //zoomIn(child, layer, childLayer);
-            if (oneClick) {
-                twoClicks = true;
+    clearInteractionHandlers() {
+        this.#childrenWidgets.forEach(child => {
+            child.#container.off('pointerdown', this.#pointerDownHandlers.get(child.#base))
+            child.#container.off('pointerup', this.#pointerUpHandlers.get(child.#base))
+            child.#container.off('pointermove', this.#pointerMoveHandlers.get(child.#base))
+        })
+
+        this.#pointerDownHandlers.clear()
+        this.#pointerUpHandlers.clear()
+        this.#pointerMoveHandlers.clear()
+    }
+
+
+    #makeChildInteractive(childWidget: ExpressionWidget) {
+        const childLayer = childWidget.#container;
+        childLayer.interactive = true;
+        childLayer.on('pointerdown', this.#childPointerdown(childWidget));
+        childLayer.on('pointerup', this.#childPointerup(childWidget));
+        childLayer.on('pointermove', this.#childPointermove(childWidget));
+    }
+
+    #isDragging = false;
+    #isPointerDown = false;
+    #draggingWidget: ExpressionWidget | null = null;
+    #dragStart = new PIXI.Point();
+    #oneClick = false;
+    #twoClicks = false;
+
+
+    #pointerDownHandlers: Map<string, ((event: PIXI.FederatedPointerEvent) => void)> = new Map();
+    #pointerUpHandlers: Map<string, ((event: PIXI.FederatedPointerEvent) => void)> = new Map();
+    #pointerMoveHandlers: Map<string, ((event: PIXI.FederatedPointerEvent) => void)> = new Map();
+
+    #childPointerdown(childWidget: ExpressionWidget): (event: PIXI.FederatedPointerEvent) => void {
+        const that = this;
+        const newHandler = (event: PIXI.FederatedPointerEvent) => {
+            if (that.#oneClick) {
+                that.#twoClicks = true;
                 setTimeout(() => {
-                    twoClicks = false;
+                    that.#twoClicks = false;
                 }, 200);
             }
 
-            isPointerDown = true;
-            isDragging = false;
+            that.#isPointerDown = true;
+            that.#draggingWidget = childWidget;
+            that.#isDragging = false;
             console.log(event.data.global);
-            dragStart.copyFrom(event.data.global);
+            that.#dragStart.copyFrom(event.data.global);
 
-            oneClick = true;
+            that.#oneClick = true;
             setTimeout(() => {
-                oneClick = false;
+                that.#oneClick = false;
             }, 200);
-        });
+        }
+        this.#pointerDownHandlers.set(childWidget.base, newHandler);
+        return newHandler;
+    }
 
-        childLayer.on('pointerup', () => {
-            if (twoClicks) {
-                this.#doubleClickCallbacks.forEach(callback => callback(childWidget))
+    #childPointerup(childWidget: ExpressionWidget): (event: PIXI.FederatedPointerEvent) => void {
+        const that = this;
+        const newHandler = (event: PIXI.FederatedPointerEvent) => {
+            if (that.#twoClicks) {
+                that.#doubleClickCallbacks.forEach(callback => callback(childWidget))
                 //console.log('dblclick -> zooming in');
                 //zoomIn(child, this.#container, childLayer, this.#base);
             } else {
-                if(isDragging) {
-                    this.#updateChildCoords(childWidget.#base, childLayer.position)
-                    isDragging = false;
+                if(that.#isDragging) {
+                    this.#updateChildCoords(childWidget.#base, childWidget.container.position)
+                    that.#isDragging = false;
                 } 
 
                 childWidget.setSelected(true)
@@ -202,20 +264,29 @@ export class ExpressionWidget {
                 this.setSelected(false)
                 this.#selectedCallbacks.forEach(callback => callback(childWidget.#base))
             }
-            isPointerDown = false;
-            isDragging = false;
-        });
-
-        childLayer.on('pointermove', (event) => {
-            if (isPointerDown) {
-                isDragging = true;
-                const currentPoint = event.data.global;
-                childLayer.position.x += currentPoint.x - dragStart.x;
-                childLayer.position.y += currentPoint.y - dragStart.y;
-                dragStart.copyFrom(event.data.global);
-            }
-        });
+            that.#isPointerDown = false;
+            that.#isDragging = false;
+            that.#draggingWidget = null
+        }
+        this.#pointerUpHandlers.set(childWidget.base, newHandler);
+        return newHandler
     }
+
+    #childPointermove(childWidget: ExpressionWidget): (event: PIXI.FederatedPointerEvent) => void {
+        const that = this;
+        const newHandler = (event: PIXI.FederatedPointerEvent) => {
+            if (that.#isPointerDown) {
+                that.#isDragging = true;
+                const currentPoint = event.data.global;
+                childWidget.container.position.x += currentPoint.x - that.#dragStart.x;
+                childWidget.container.position.y += currentPoint.y - that.#dragStart.y;
+                that.#dragStart.copyFrom(event.data.global);
+            }
+        }
+        this.#pointerMoveHandlers.set(childWidget.base, newHandler);
+        return newHandler;
+    }
+
 
 
 
