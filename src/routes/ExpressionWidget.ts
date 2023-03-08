@@ -351,14 +351,17 @@ export class ExpressionWidget {
         return graphic;
     }
 
-    #drawExpressionGraphic(graphic: PIXI.Graphics) {
+    async #drawExpressionGraphic(graphic: PIXI.Graphics) {
         try {
             //console.log('drawing', this.#base)
             const literal = Literal.fromUrl(this.#base).get()
             //console.log("is literal", literal)
-
-            //if(await SmartLiteral.isSmartLiteralBase(this.#perspective, literal))
-            this.#drawExpressionSticky(graphic)
+            const isSmart = await SmartLiteral.isSmartLiteralBase(this.#perspective, this.#base)
+            if(isSmart) {
+                this.#drawExpressionSticky(graphic)
+            } else {
+                this.#drawExpressionLiteralBox(graphic)
+            }
         } catch(e) {
             this.#drawExpressionCircle(graphic)
         }
@@ -378,6 +381,33 @@ export class ExpressionWidget {
             this.#canvasSize.width/10
         );
         graphic.endFill();
+    }
+
+    #drawExpressionLiteralBox(graphics: PIXI.Graphics) {
+        const vertices = [
+            new PIXI.Point(-500, -150),
+            new PIXI.Point(-400, 150),
+            new PIXI.Point(600, 150),
+            new PIXI.Point(500, -150),
+        ];
+          
+          // Set the line style
+          graphics.lineStyle(2, 0xffffff, 1);
+          
+          // Set the fill style
+          graphics.beginFill(0xffffff, 0.5);
+          //graphics.scale.set(1.5)
+
+          // Draw the parallelogram
+          graphics.drawPolygon(vertices);
+          
+          // End the fill
+          graphics.endFill();
+
+          
+          
+          // Skew the parallelogram by setting the transform matrix
+          //graphics.transform.setFromMatrix(new PIXI.Matrix(1, 0.5, -0.5, 1, 0, 0));
     }
 
     #drawExpressionCircle(graphic: PIXI.Graphics) {
