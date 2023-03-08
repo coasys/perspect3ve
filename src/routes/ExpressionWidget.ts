@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import '@pixi/math-extras';
 import '@pixi/interaction';
-import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral } from '@perspect3vism/ad4m';
+import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral, SMART_LITERAL_CONTENT_PREDICATE } from '@perspect3vism/ad4m';
 
 export const COORDS_PRED_PREFIX = "p3://child_coords_2d"
 export const LEVEL_SCALE = 0.16;
@@ -57,6 +57,10 @@ export class ExpressionWidget {
                     }
                     layer = widget.#container
                     layer.position.set(point.x, point.y)
+                }
+
+                if(link.data.predicate == SMART_LITERAL_CONTENT_PREDICATE) {
+                    this.updateDisplayText()
                 }
             }
             return null
@@ -133,15 +137,46 @@ export class ExpressionWidget {
                     this.#container.addChild(sprite)
                 })
             }
-
             if(this.#base.startsWith("flux_entry://")) {
                 this.#createBlobBackground(0xffffff).then((sprite) => {
                     this.#container.addChild(sprite)
                 })
             }
-            this.#text = this.#createTextNode(this.#base)
-            this.#container.addChild(this.#text)
+            this.updateDisplayText()
         }        
+    }
+
+    async updateDisplayText() {
+        const text = await this.getDisplayText()
+        if(this.#text) {
+            this.#container.removeChild(this.#text)
+            this.#text.destroy()
+        }
+        this.#text = this.#createTextNode(text)
+        this.#container.addChild(this.#text)
+    }
+
+    async getDisplayText(): Promise<string> {
+        try {
+            const parsedLiteralValue = Literal.fromUrl(this.#base).get()
+
+            if(await SmartLiteral.isSmartLiteralBase(this.#perspective, this.#base)) {
+                const smartLiteral = new SmartLiteral(this.#perspective, this.#base)
+                return await smartLiteral.get()
+            }
+
+            if (typeof parsedLiteralValue == 'object'){
+                if(parsedLiteralValue.data != undefined) {
+                    return parsedLiteralValue.data
+                } else {
+                    return JSON.stringify(parsedLiteralValue, null, 2)
+                }
+            } else {
+                return parsedLiteralValue
+            }
+        } catch(e) {
+            return this.#base
+        }
     }
 
     async updateChildrenCoords() {

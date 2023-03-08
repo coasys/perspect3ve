@@ -1,7 +1,7 @@
 <script lang="ts">
   import '@junto-foundation/junto-elements';
   import '@junto-foundation/junto-elements/dist/main.css';
-  import { parseExprUrl, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
+  import { parseExprUrl, SmartLiteral, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
   import { Literal, LinkQuery } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
@@ -22,6 +22,8 @@
   let nameInput
   let linkLanguageMeta
 
+  let editingProp
+
   const dispatch = createEventDispatcher();
 
   async function ensuerAd4mClient() {
@@ -36,6 +38,21 @@
 	}
   }
 
+  async function checkSmartLiteral() {
+	if(!expression) return
+	if(await SmartLiteral.isSmartLiteralBase(perspective, expression)) {
+		expressionType = "smart literal"
+		const smartLiteral: SmartLiteral = new SmartLiteral(perspective, expression)
+		const data = await smartLiteral.get()
+		console.log("smart literal data", data)
+		properties = [...properties, {
+			name: "Title", 
+			value: data,
+			onChange: (value) => smartLiteral.set(value)
+		}]
+	}
+  }
+
   async function update() {
 	
 	console.log("properties browser update", perspectiveID, expression)
@@ -47,6 +64,8 @@
 
 	await ensuerAd4mClient()
 	await ensurePerspective()
+
+	properties = []
 	
 	if(expression && expression != "ad4m://self") {
 		expressionData = null
@@ -54,6 +73,7 @@
 		try {
 			console.log("trying to get literal from url", expression)
 			expressionData = Literal.fromUrl(expression).get()
+			checkSmartLiteral()
 			switch(typeof expressionData) {
 				case "string":
 					title = expressionData
@@ -257,10 +277,37 @@
 			</j-box>
 		{/if}
 		<div class="properties">
-			{#each properties as { name, value }}
+			{#each properties as prop}
 			<div class="property">
-				<div class="name">{name}</div>
-				<div class="value">{value}</div>
+				<div class="name">{prop.name}</div>
+				{#if prop.onChange != undefined}
+					{#if prop.isEditing}
+						<j-input
+							type="text"
+							full="true"
+							value={prop.value}
+							bind:this={editingProp}
+							on:keydown={(event) => {
+								console.log(event)
+								if(event.key === 'Enter') {
+									const newValue = event.srcElement.value
+									prop.value = newValue
+									prop.onChange(newValue)
+									prop.isEditing = false
+								}
+								event.stopPropagation()
+							}}
+							on:blur={() => prop.isEditing = false}
+						/>
+					{:else}
+						<j-text variant="label" weight="bold">{prop.value || '<not set>'}</j-text>
+						<j-button size="xs" variant="link" style="padding-bottom: 3px"
+							on:click={() => prop.isEditing = true} 
+						>
+							<j-icon name="pencil" size="xs" />
+						</j-button>
+					{/if}
+				{/if}
 			</div>
 			{/each}
 		</div>
