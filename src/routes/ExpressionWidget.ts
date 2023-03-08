@@ -118,6 +118,11 @@ export class ExpressionWidget {
         this.#graphicMask.scale.set(0.99)
         this.#container.addChild(this.#graphicMask)
 
+        const totalMask = this.#graphic.clone()
+        totalMask.scale.set(1.1)
+        this.#container.addChild(totalMask)
+        this.#container.mask = totalMask
+
         if(this.#base == "ad4m://self") {
             this.#createPerspectiveBackground().then((sprite) => {
                 this.#container.addChild(sprite)
@@ -136,9 +141,7 @@ export class ExpressionWidget {
             }
             this.#text = this.#createTextNode(this.#base)
             this.#container.addChild(this.#text)
-        }
-
-        
+        }        
     }
 
     async updateChildrenCoords() {
@@ -410,6 +413,7 @@ export class ExpressionWidget {
         if(textString.length > 300) {
             textString = textString.substring(0, 300) + '...'
         }
+        textString = textString.split("://").join("\n://\n")
         const text = new PIXI.Text(textString, {
             fontSize: 126,
             fill: 0x0000ff,
