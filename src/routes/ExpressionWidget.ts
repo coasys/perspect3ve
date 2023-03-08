@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import '@pixi/math-extras';
 import '@pixi/interaction';
-import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal } from '@perspect3vism/ad4m';
+import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral } from '@perspect3vism/ad4m';
 
 export const COORDS_PRED_PREFIX = "p3://child_coords_2d"
 export const LEVEL_SCALE = 0.16;
@@ -331,9 +331,11 @@ export class ExpressionWidget {
 
     #drawExpressionGraphic(graphic: PIXI.Graphics) {
         try {
-            console.log('drawing', this.#base)
+            //console.log('drawing', this.#base)
             const literal = Literal.fromUrl(this.#base).get()
-            console.log("is literal", literal)
+            //console.log("is literal", literal)
+
+            //if(await SmartLiteral.isSmartLiteralBase(this.#perspective, literal))
             this.#drawExpressionSticky(graphic)
         } catch(e) {
             this.#drawExpressionCircle(graphic)
@@ -366,29 +368,43 @@ export class ExpressionWidget {
         graphic.endFill();
     }
     
-    #createTextNode(str: string) {
+    #createTextNode(expr: string) {
         let align = 'center';
         let yAnchor = 0.5;
 
+        let textString = expr
         try {
-            str = Literal.fromUrl(str).get()
+            const parsedLiteralValue = Literal.fromUrl(expr).get()
+            if (typeof parsedLiteralValue == 'object'){
+                if(parsedLiteralValue.data != undefined) {
+                    textString = parsedLiteralValue.data
+                } else {
+                    textString = JSON.stringify(parsedLiteralValue, null, 2)
+                    align = 'left'
+                    yAnchor = 1
+                }
+            } else {
+                textString = parsedLiteralValue
+            }
         } catch(e) {}
 
-        if (typeof str == 'object'){
-            str = JSON.stringify(str, null, 2)
-            align = 'left'
-            yAnchor = 1
-        } 
-
-        const text = new PIXI.Text(str, {
+        if(textString.length > 300) {
+            textString = textString.substring(0, 300) + '...'
+        }
+        const text = new PIXI.Text(textString, {
             fontSize: 126,
             fill: 0x0000ff,
             //@ts-ignores
             align,
             wordWrap: true,
             wordWrapWidth: 180,
+            maxWidth: 80,
         });
         text.anchor.set(0.5, yAnchor);
+        text.maxWidth = 80;
+        text.style.wordWrap = true;
+        text.style.wordWrapWidth = 200;
+        text.style.maxHeight = 100;
         return text;
     }
     

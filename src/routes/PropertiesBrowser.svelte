@@ -1,7 +1,7 @@
 <script lang="ts">
   import '@junto-foundation/junto-elements';
   import '@junto-foundation/junto-elements/dist/main.css';
-  import type { Ad4mClient, PerspectiveProxy } from '@perspect3vism/ad4m';
+  import { parseExprUrl, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
   import { Literal, LinkQuery } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
@@ -11,9 +11,11 @@
 
   let ad4m: Ad4mClient
   let perspective: PerspectiveProxy
+  let title: string
   let expressionData
   let expressionAuthor: string
   let expressionTimestamp: string
+  let expressionType: string
   let properties = []
 
   let isEditingPerspectiveName = false
@@ -28,8 +30,14 @@
 	}
   }
 
+  async function ensurePerspective() {
+	if (!perspective || perspective.uuid != perspectiveID) {
+		perspective = await ad4m.perspective.byUUID(perspectiveID)
+	}
+  }
+
   async function update() {
-	await ensuerAd4mClient()
+	
 	console.log("properties browser update", perspectiveID, expression)
 	if(!perspectiveID) {
 		perspective = null
@@ -37,15 +45,8 @@
 		return 
 	}
 
-	perspective = await ad4m.perspective.byUUID(perspectiveID)
-
-	if(perspective.sharedUrl) {
-		let nh = await ad4m.expression.get(perspective.sharedUrl)
-		nh = JSON.parse(nh.data)
-		linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
-	} else {
-		linkLanguageMeta = null
-	}
+	await ensuerAd4mClient()
+	await ensurePerspective()
 	
 	if(expression && expression != "ad4m://self") {
 		expressionData = null
@@ -53,20 +54,68 @@
 		try {
 			console.log("trying to get literal from url", expression)
 			expressionData = Literal.fromUrl(expression).get()
+			switch(typeof expressionData) {
+				case "string":
+					title = expressionData
+					break
+				case "number":
+					title = expressionData.toString()
+					break
+				case "boolean":
+					title = expressionData.toString()
+					break
+				case "object": 
+					console.log("object", expressionData)
+					if(expressionData.data != undefined) {
+						console.log("object data", expressionData.data)
+						title = expressionData.data
+					} else {
+						console.log("object stringify", expressionData)
+						title = JSON.stringify(expressionData)
+					}
+				default:
+					expressionData = JSON.stringify(expressionData)
+			}
+			expressionType = "literal " + typeof expressionData
+
 			const links = await perspective.get(new LinkQuery({target: expression}))
 			console.log("expression links:", links)
 			if(links.length) {
+				console.log(links)
 				expressionAuthor = links[0].author
 				expressionTimestamp = links[0].timestamp
+				// Treat SDNA differently
+				if(links.find(l => l.data.predicate == "ad4m://has_zome")) {
+					expressionType = "SDNA"
+					title = "Social DNA"
+				}
 			}
 		} catch(e) {
-			console.error(e)
-			const { author, timestamp, data } = await ad4m.expression.get(expression)
-			expressionAuthor = author
-			expressionTimestamp = timestamp
-			expressionData = data
+			//console.error(e)
+			const result = await ad4m.expression.get(expression)
+			if(result) {
+				const { author, timestamp, data, language } = result
+				expressionAuthor = author
+				expressionTimestamp = timestamp
+				expressionType = language.name ? language.name : language.address
+				expressionData = data
+				title = data
+			} else {
+				let exprRef = parseExprUrl(expression)
+				expressionType = exprRef.language.name ? exprRef.language.name : exprRef.language.address
+				expressionData = exprRef.expression
+				title = exprRef.expression
+			}
+			
 		}
-		
+	} else {
+		if(perspective.sharedUrl) {
+			let nh = await ad4m.expression.get(perspective.sharedUrl)
+			nh = JSON.parse(nh.data)
+			linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
+		} else {
+			linkLanguageMeta = null
+		}
 	}
   }
 
@@ -175,16 +224,38 @@
 		</j-box>
 	{:else}
 		<div class="header">
-			{#if typeof expressionData == 'string'}
-				<j-text variant="heading" size="800" weight="bold">{expressionData}</j-text>
-			{:else if typeof expressionData == 'object' && expressionData.name}
-				<j-text variant="heading" size="800" weight="bold">{expressionData.name}</j-text>
-			{:else}
-				<j-text variant="heading" size="800" weight="bold">{expression}</j-text>
+			{#if title}
+				{#if title.length > 50}
+					<j-text variant="heading" size="800" weight="bold">{title.slice(0, 50)}...</j-text>
+				{:else}
+					<j-text variant="heading" size="800" weight="bold">{title}</j-text>
+				{/if}
+			{:else if expressionData}
+				{#if typeof expressionData == 'string'}
+					<j-text variant="heading" size="800" weight="bold">{expressionData}</j-text>
+				{:else if typeof expressionData == 'object' && expressionData.name}
+					<j-text variant="heading" size="800" weight="bold">{expressionData.name}</j-text>
+				{:else if typeof expressionData == 'object' && expressionData.data}
+					<j-text variant="heading" size="800" weight="bold">{expressionData.data}</j-text>
+				{:else}
+					{#if expression.length > 50}
+						<j-text variant="heading" size="800" weight="bold">{expression.slice(0, 50)}...</j-text>
+					{:else}
+						<j-text variant="heading" size="800" weight="bold">{expression}</j-text>
+					{/if}
+				{/if}
 			{/if}
-			<div class="author">{expressionAuthor}</div>
-			<div class="timestamp">{expressionTimestamp}</div>
+			<j-text variant="label">Type/Language:</j-text>
+			<j-text variant="label" weight="bold">{expressionType}</j-text>
+			<j-text variant="label">{expressionTimestamp}</j-text>
+			<j-text variant="label">{expressionAuthor}</j-text>
+			<j-text variant="label">{expression}</j-text>
 		</div>
+		{#if expressionType == "SDNA"}
+			<j-box>
+				<j-text variant="heading-sm" size="400">{expressionData}</j-text>
+			</j-box>
+		{/if}
 		<div class="properties">
 			{#each properties as { name, value }}
 			<div class="property">
