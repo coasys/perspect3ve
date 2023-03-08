@@ -186,7 +186,8 @@
     app = new PIXI.Application({
       width,
       height,
-      backgroundColor: 0x000011
+      backgroundColor: 0x000011,
+      antialias: true,
     });
 
     // Add the PixiJS view to the DOM
