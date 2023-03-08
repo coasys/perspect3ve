@@ -351,12 +351,8 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
       }
       elapsed += delta;
       const progress = TWEEN.Easing.Exponential.InOut(Math.min(elapsed / ZOOM_DURATION, 1));
-      //console.log("progress:", progress)
       const newScale = lerp(startScale, endScale, progress);
-      //const newScaleInner = lerp(startScaleInner, endScaleInner, progress);
-      //console.log('newScaleInner', newScaleInner)
       parentLayer.scale.set(newScale);
-      //childWidget.container.scale.set(newScaleInner);
       
       const newX = lerp(parentLayer.position.x, newDisplacement.x + centerX, progress);
       const newY = lerp(parentLayer.position.y, newDisplacement.y + centerY, progress);
