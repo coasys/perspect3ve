@@ -8,7 +8,7 @@
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';  
   import { COORDS_PRED_PREFIX, ExpressionWidget, LEVEL_SCALE } from './ExpressionWidget';
-    import Toolbar from './Toolbar.svelte';
+  import Toolbar from './Toolbar.svelte';
 
   export let perspectiveID: string;
   
@@ -134,6 +134,8 @@
   async function update() {
     console.log('update', perspectiveID);
     if(perspectiveID) {
+      clear()
+      initPixi()
       createToolbar()
       const ad4m = await getAd4mClient();
       perspective = await ad4m.perspective.byUUID(perspectiveID);
@@ -178,7 +180,10 @@
     ]
   }
 
-  onMount(async () => {
+  function initPixi() {
+    if(app && app.view)
+      canvas?.removeChild(app.view);
+
     const width = canvas!.clientWidth;
     const height = canvas!.clientHeight;
 
@@ -206,6 +211,17 @@
       //app?.resize(canvas!.clientWidth, canvas!.clientHeight);
       renderer!.resize(canvas!.clientWidth, canvas!.clientHeight);
     });
+  }
+
+  function clear() {
+    widgtesByExpr.clear();
+    history = [];
+    currentWidget = null;
+    seenWidgets = new Set();
+  }
+
+  onMount(async () => {
+    await update();
   });
 
   onDestroy(() => {
