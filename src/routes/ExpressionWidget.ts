@@ -12,6 +12,7 @@ const OUTLINE_WIDTH = 5;
 const OUTLINE_WIDTH_SELECTED = 8;
 
 let perspectiveBackground = PIXI.Assets.load('public/perspective_background.png')
+let blobBackground = PIXI.Assets.load('public/FluxBlob.png')
 
 export class ExpressionWidget {
     #base: string
@@ -19,6 +20,7 @@ export class ExpressionWidget {
     #container: PIXI.Container
     #selected: boolean = false
     #graphic: PIXI.Graphics | null = null
+    #graphicMask: PIXI.Graphics | null = null
     #text: PIXI.Text | null = null
     #childrenCoords: Map<string, {x: number, y: number}> = new Map()
     #childrenWidgets: Map<string, ExpressionWidget> = new Map()
@@ -110,16 +112,33 @@ export class ExpressionWidget {
 
     addGraphAndText() {
         this.#graphic = this.#createExpressionGraphic()
+        this.#container.addChild(this.#graphic)
+
+        this.#graphicMask = this.#graphic.clone()
+        this.#graphicMask.scale.set(0.99)
+        this.#container.addChild(this.#graphicMask)
+
         if(this.#base == "ad4m://self") {
             this.#createPerspectiveBackground().then((sprite) => {
                 this.#container.addChild(sprite)
             })
         } else {
+            if(this.#base.startsWith("flux://")) {
+                this.#createBlobBackground(0x44bb33).then((sprite) => {
+                    this.#container.addChild(sprite)
+                })
+            }
+
+            if(this.#base.startsWith("flux_entry://")) {
+                this.#createBlobBackground(0xffffff).then((sprite) => {
+                    this.#container.addChild(sprite)
+                })
+            }
             this.#text = this.#createTextNode(this.#base)
             this.#container.addChild(this.#text)
         }
 
-        this.#container.addChild(this.#graphic)
+        
     }
 
     async updateChildrenCoords() {
@@ -399,6 +418,7 @@ export class ExpressionWidget {
             wordWrap: true,
             wordWrapWidth: 180,
             maxWidth: 80,
+            zIndex: 100,
         });
         text.anchor.set(0.5, yAnchor);
         text.maxWidth = 80;
@@ -418,6 +438,22 @@ export class ExpressionWidget {
         backgroundImage.height = this.#graphic!.height;
         backgroundImage.alpha = 0.8;
         backgroundImage.tint = 0x333333;
+
+        return backgroundImage;
+    }
+ 
+    async #createBlobBackground(tint: number): Promise<PIXI.Sprite> {
+        const backgroundImage = new PIXI.Sprite(await blobBackground);
+
+        // Set the position and scale of the background image to fit inside the circle
+        //backgroundImage.anchor.set(0.5);
+        backgroundImage.position.set(-this.#graphic!.width/2, -this.#graphic!.height/2);
+        backgroundImage.width = this.#graphic!.width;
+        backgroundImage.height = this.#graphic!.height;
+        backgroundImage.alpha = 0.6;
+        backgroundImage.tint = tint;
+        backgroundImage.zIndex = 7;
+        backgroundImage.mask = this.#graphicMask
 
         return backgroundImage;
     }
