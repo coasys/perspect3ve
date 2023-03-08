@@ -55,6 +55,10 @@
   });
 </script>
 
+<div class="header-bar">
+  <img class="title-logo" src="public/perspect3ve-logo-header.png" alt="Perspect3ve" />
+</div>
+
 {#if connected}
   <div class="container">
     <div class="nav">
@@ -71,9 +75,28 @@
 {/if}
 
 <style>
+
+  .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f0f0f0;
+    padding: 0 16px;
+    height: 64px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .title-logo {
+    height: 100%;
+    padding-left: 1px;
+  }
   .container {
     display: grid;
-    grid-template-columns: 120px 1fr 300px;
+    grid-template-columns: 100px 1fr 300px;
     grid-template-rows: 1fr;
     height: 100vh;
     max-height: 100vh;
@@ -92,5 +115,6 @@
     height: 100%;
     width: 100%-460px;
     background-color: #ffffff;
+    margin-left: -6px;
   }
 </style>

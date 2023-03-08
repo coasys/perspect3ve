@@ -84,7 +84,7 @@
     overflow: scroll;
     width: 80px;
     height: 100%;
-    padding: 20px;
+    padding: 10px;
     background-color: #2c2f33;
   }
 

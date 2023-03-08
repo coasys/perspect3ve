@@ -8,8 +8,11 @@
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';  
   import { COORDS_PRED_PREFIX, ExpressionWidget, LEVEL_SCALE } from './ExpressionWidget';
+    import Toolbar from './Toolbar.svelte';
 
   export let perspectiveID: string;
+  
+  let toolbarItems = []
 
   const ZOOM_DURATION = 30
 
@@ -131,10 +134,10 @@
   async function update() {
     console.log('update', perspectiveID);
     if(perspectiveID) {
+      createToolbar()
       const ad4m = await getAd4mClient();
       perspective = await ad4m.perspective.byUUID(perspectiveID);
       app?.stage.removeChildren()
-      app?.stage.addChild(createToolbar())
       const ad4mSelf = getOrCreateWidget('ad4m://self');
       ad4mSelf.container.position.set(canvas!.clientWidth / 2, canvas!.clientHeight / 2);
       setMainExpressionWidget(ad4mSelf);
@@ -144,57 +147,35 @@
     //}
   }
 
-  function createToolbar(): PIXI.Container {
-    // Create a new PIXI.Container object for the toolbar
-    const toolbar = new PIXI.Container();
-    toolbar.width = renderer!.width;
-    toolbar.height = 50;
-    app!.stage.addChild(toolbar);
+  async function createToolbar() {
+    toolbarItems = [
+      {
+        icon: 'plus',
+        label: 'Literal',
+        onClick: async () => {
+          console.log('creating new literal')
+          const literal = await SmartLiteral.create(perspective!, "New Expression")
 
-    // Create a new PIXI.Graphics object for the circle
-    const circle = new PIXI.Graphics();
-    circle.beginFill(0xff0000);
-    circle.drawCircle(15, 15, 25);
-    circle.endFill();
-    circle.interactive = true;
-    circle.buttonMode = true;
-    //circle.home = {x: 30, y: 30};
-    //circle.position = circle.home;
-
-    // Add event listeners for the pointer events
-    circle.on('pointerdown', async () => {
-      // create new smart literal
-      console.log('creating new literal')
-      const literal = await SmartLiteral.create(perspective!, "New Expression")
-
-      perspective?.add(new Link({
-        source: currentWidget?.base,
-        predicate: `${COORDS_PRED_PREFIX}{"x": 0, "y": 0}`,
-        target: literal.base
-      }))
-    })
-          //.on('pointerup', onDragEnd)
-          //.on('pointerupoutside', onDragEnd)
-          //.on('pointermove', onDragMove);
-
-/*
-    const green = new PIXI.Graphics();
-    green.beginFill(0x00ff00);
-    green.drawCircle(60, 15, 25);
-    green.endFill();
-    green.interactive = true;
-    green.buttonMode = true;
-
-    green.on('pointerdown', async () => {
-      let parent = history[history.length - 1];
-      if (parent) {
-        zoomOut(parent, currentWidget!);
-      }
-    })
-*/
-    // Add the circle to the toolbar
-    toolbar.addChild(circle);
-    return toolbar
+          perspective?.add(new Link({
+            source: currentWidget?.base,
+            predicate: `${COORDS_PRED_PREFIX}{"x": 0, "y": 0}`,
+            target: literal.base
+          }))
+        },
+      },
+      {
+        icon: 'minus',
+        onClick: () => {
+          console.log('clicked minus');
+        },
+      },
+      {
+        icon: 'home',
+        onClick: () => {
+          console.log('clicked home');
+        },
+      },
+    ]
   }
 
   onMount(async () => {
@@ -298,15 +279,7 @@
 };
 
 const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) => {
-    console.log('zooming out to', parentWidget.base);
-    //const startScale = 1 / LEVEL_SCALE;
-    //const endScale = 1;
-    const startScaleInner = 0.4;
-    const endScaleInner = LEVEL_SCALE;
-
     const startScale = 1/(LEVEL_SCALE ** (history.length));
-    //const endScale = 1 / childLayer.scale.x;
-    //scale *= LEVEL_SCALE;
     const endScale = 1/(LEVEL_SCALE ** (history.length - 1));
 
     console.log("startScale: ", startScale)
@@ -370,7 +343,7 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
 
 
 </script>
-
+<Toolbar title="Perspect3ve" items={toolbarItems} />
 <div bind:this={canvas} class="canvas" />
 
 <style>
@@ -384,6 +357,5 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
     display: block;
     height: 100%;
     width: 100%;
-    margin-left: -6px;
   }
 </style>
