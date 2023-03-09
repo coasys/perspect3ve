@@ -56,7 +56,7 @@
 </script>
 
 <div class="header-bar">
-  <img class="title-logo" src="public/perspect3ve-logo-header.png" alt="Perspect3ve" />
+  <img class="title-logo" src="/perspect3ve-logo-header.png" alt="Perspect3ve" />
 </div>
 
 {#if connected}

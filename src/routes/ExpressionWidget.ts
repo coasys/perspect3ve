@@ -11,8 +11,8 @@ const OUTLINE_COLOR_SELCTED = 0xffffff;
 const OUTLINE_WIDTH = 5;
 const OUTLINE_WIDTH_SELECTED = 8;
 
-let perspectiveBackground = PIXI.Assets.load('public/perspective_background.png')
-let blobBackground = PIXI.Assets.load('public/FluxBlob.png')
+let perspectiveBackground = PIXI.Assets.load('/perspective_background.png')
+let blobBackground = PIXI.Assets.load('/FluxBlob.png')
 
 export class ExpressionWidget {
     #base: string
