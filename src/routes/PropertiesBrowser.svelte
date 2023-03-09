@@ -1,10 +1,12 @@
 <script lang="ts">
   import '@junto-foundation/junto-elements';
   import '@junto-foundation/junto-elements/dist/main.css';
-  import { parseExprUrl, SmartLiteral, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
+  import { Link, parseExprUrl, SmartLiteral, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
   import { Literal, LinkQuery } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
+    import { FILE_STORAGE_LANG } from '../config';
+    import ImageCropper from './ImageCropper.svelte';
 
   export let perspectiveID
   export let expression
@@ -23,6 +25,8 @@
   let linkLanguageMeta
 
   let editingProp
+  let cropDialog
+  let cropper
 
   const dispatch = createEventDispatcher();
 
@@ -53,6 +57,63 @@
 	}
   }
 
+  async function checkBackgroundImage() {
+	if(!expression) return
+	const results = perspective.get(new LinkQuery({source: expression, predicate: "p3://bg_image"}))
+	let bgImage
+	if(results.length > 0) {
+		bgImage = results[0].target
+	}
+
+	properties = [...properties, {
+		name: "Background Image", 
+		value: bgImage || "<not set>",
+		onEdit: () => {
+			console.log(cropDialog)
+			cropDialog.open = true
+		}
+	}]
+  }
+
+  function blobUriToBase64(blobUri) {
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+			xhr.onload = function() {
+			const reader = new FileReader();
+			reader.onloadend = function() {
+				resolve(reader.result.split(',')[1]);
+			};
+			reader.readAsDataURL(xhr.response);
+		};
+		xhr.onerror = function() {
+			reject(new Error('Failed to load Blob data'));
+		};
+		xhr.open('GET', blobUri);
+		xhr.responseType = 'blob';
+		xhr.send();
+	});
+  }
+
+  async function handleSetBackgroundImage(blob) {
+	const base64 = await blobUriToBase64(blob)
+	console.log("base64", base64)
+	const fileData = {
+		name: "bg_image",
+		file_type: "image/png",
+		data_base64: base64
+	}
+	
+	const fileExprAddr = await ad4m.expression.create(fileData, FILE_STORAGE_LANG)
+	console.log("fileExprAddr", fileExprAddr)
+	if(!expression) throw "Couldn't set background image - File Store Language returned null"
+	await perspective.setSingleTarget(new Link({
+		source: expression!, 
+		predicate: "p3://bg_image", 
+		target: fileExprAddr
+	}))
+	update()
+  }
+
   async function update() {
 	
 	console.log("properties browser update", perspectiveID, expression)
@@ -69,6 +130,7 @@
 	
 	if(expression && expression != "ad4m://self") {
 		expressionData = null
+		checkBackgroundImage()
 		// First trying to handle expression as Literal
 		try {
 			console.log("trying to get literal from url", expression)
@@ -308,6 +370,14 @@
 						</j-button>
 					{/if}
 				{/if}
+
+				{#if prop.onEdit != undefined}
+					<j-button size="xs" variant="link" style="padding-bottom: 3px"
+						on:click={() => prop.onEdit()} 
+					>
+						<j-icon name="pencil" size="xs" />
+					</j-button>
+				{/if}
 			</div>
 			{/each}
 		</div>
@@ -315,6 +385,20 @@
   {:else}
 	<j-spinner></j-spinner>
   {/if}
+  <j-modal bind:this={cropDialog} class="modal">
+	<header class="header" slot="header">
+	  <j-text variant="heading">Set Background for {title}</j-text>
+	  <ImageCropper 
+	  	bind:this={cropper} 
+		on:cancel={() => cropDialog.open = false}
+		on:cropped={(event) => {
+			cropDialog.open = false
+			handleSetBackgroundImage(event.detail)
+		}}
+	></ImageCropper>
+	</header>
+  </j-modal>
+  
 </div>
 
 <style>
@@ -374,4 +458,13 @@
     font-size: 14px;
     color: #888888;
   }
+  
+  .header {
+	padding: 20px
+  }
+
+  .footer {
+	float: right;
+  }
+  
 </style>
