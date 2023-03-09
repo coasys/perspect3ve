@@ -10,7 +10,8 @@ export default defineConfig({
     fs: {
       allow: ['public']
     }
-  }
+  },
+  publicDir: 'public',
 
 
 });
