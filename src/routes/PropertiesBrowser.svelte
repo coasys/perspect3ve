@@ -6,6 +6,7 @@
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
     import { FILE_STORAGE_LANG } from '../config';
+    import { BACKGROUND_PREDICATE } from './ExpressionWidget';
     import ImageCropper from './ImageCropper.svelte';
 
   export let perspectiveID
@@ -59,7 +60,7 @@
 
   async function checkBackgroundImage() {
 	if(!expression) return
-	const results = perspective.get(new LinkQuery({source: expression, predicate: "p3://bg_image"}))
+	const results = perspective.get(new LinkQuery({source: expression, predicate: BACKGROUND_PREDICATE}))
 	let bgImage
 	if(results.length > 0) {
 		bgImage = results[0].target
@@ -108,7 +109,7 @@
 	if(!expression) throw "Couldn't set background image - File Store Language returned null"
 	await perspective.setSingleTarget(new Link({
 		source: expression!, 
-		predicate: "p3://bg_image", 
+		predicate: BACKGROUND_PREDICATE, 
 		target: fileExprAddr
 	}))
 	update()

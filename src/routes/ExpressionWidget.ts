@@ -4,6 +4,7 @@ import '@pixi/interaction';
 import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral, SMART_LITERAL_CONTENT_PREDICATE } from '@perspect3vism/ad4m';
 
 export const COORDS_PRED_PREFIX = "p3://child_coords_2d"
+export const BACKGROUND_PREDICATE = "p3://bg_image"
 export const LEVEL_SCALE = 0.16;
 
 const OUTLINE_COLOR = 0x5a5a5a;
@@ -29,6 +30,8 @@ export class ExpressionWidget {
 
     #selectedCallbacks: Array<(expr: string) => void> = []
     #doubleClickCallbacks: Array<(widget: ExpressionWidget) => void> = []
+
+    #backgroundSprite: PIXI.Sprite | null = null
 
     constructor(
         expression: string, 
@@ -61,6 +64,10 @@ export class ExpressionWidget {
 
                 if(link.data.predicate == SMART_LITERAL_CONTENT_PREDICATE) {
                     this.updateDisplayText()
+                }
+
+                if(link.data.predicate == BACKGROUND_PREDICATE) {
+                    this.updateBackground()
                 }
             }
             return null
@@ -143,6 +150,7 @@ export class ExpressionWidget {
                 })
             }
             this.updateDisplayText()
+            this.updateBackground()
         }        
     }
 
@@ -154,6 +162,40 @@ export class ExpressionWidget {
         }
         this.#text = this.#createTextNode(text)
         this.#container.addChild(this.#text)
+    }
+
+    setBackgroundSprite(sprite: PIXI.Sprite) {
+        if(sprite) {
+            if(this.#backgroundSprite) {
+                this.#container.removeChild(this.#backgroundSprite)
+                this.#backgroundSprite.destroy()
+            }
+            this.#container.addChild(sprite)
+            this.#backgroundSprite = sprite
+        }
+    }
+
+    async updateBackground() {
+        let background_links = await this.#perspective.get(new LinkQuery({ 
+            source: this.#base, 
+            predicate: BACKGROUND_PREDICATE
+        }))
+
+        if(background_links.length > 0) {
+            const background_link = background_links[0]
+            const background_url = background_link.data.target
+            
+            const background_file_expression = await this.#perspective.getExpression(background_url)
+
+            const sprite = await this.#createBackgroundFromFileExpression(background_file_expression)
+
+            if(sprite) {
+                this.setBackgroundSprite(sprite)
+            }
+
+            
+
+        }
     }
 
     async getDisplayText(): Promise<string> {
@@ -491,6 +533,7 @@ export class ExpressionWidget {
         });
         text.anchor.set(0.5, yAnchor);
         text.maxWidth = 80;
+        text.zIndex = 100;
         text.style.wordWrap = true;
         text.style.wordWrapWidth = 200;
         text.style.maxHeight = 100;
@@ -525,5 +568,46 @@ export class ExpressionWidget {
         backgroundImage.mask = this.#graphicMask
 
         return backgroundImage;
+    }
+
+    //@ts-ignore
+    async #createBackgroundFromFileExpression(fileExpression): Promise<PIXI.Sprite|null> {
+        if(typeof fileExpression.data == "string") {
+            fileExpression.data = JSON.parse(fileExpression.data)
+        }
+        if(!fileExpression || !fileExpression.data || !fileExpression.data.data_base64) {
+            console.error("Got broken file expression for background image: ", fileExpression)
+            return null
+        }
+
+        // Convert the base64 string to a blob
+        const byteCharacters = atob(fileExpression.data.data_base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'image/png' });
+
+        // Create a URL for the blob
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Create a texture from the URL
+        const texture = PIXI.Texture.from(blobUrl);
+
+        // Create a sprite using the texture
+        const backgroundImage = new PIXI.Sprite(texture);
+
+        // Set the position and scale of the background image to fit inside the circle
+        //backgroundImage.anchor.set(0.5);
+        backgroundImage.position.set(-this.#graphic!.width/2, -this.#graphic!.height/2);
+        backgroundImage.width = this.#graphic!.width;
+        backgroundImage.height = this.#graphic!.height;
+        backgroundImage.alpha = 1;
+        backgroundImage.zIndex = -7;
+        backgroundImage.mask = this.#graphicMask
+
+        return backgroundImage;
+
     }
 }
