@@ -34,7 +34,7 @@
     appDomain: 'dev.ad4m.perspect3ve',
     appUrl: 'https://perspect3ve.app',
 
-    appIconPath: 'public/Perspect3veLogo.png',
+    appIconPath: 'https://perspect3ve.app/Perspect3veLogo.png',
     capabilities: [
       {
         with: { domain: '*', pointers: ['*'] },
