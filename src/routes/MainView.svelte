@@ -81,55 +81,6 @@
     return widget;
   }
 
-  function setupLayers(expr: string) {
-    //app!.stage.children.forEach((child) => {
-    //  app!.stage.removeChild(child);
-    //});
-
-    currentExpression = expr
-    
-
-    app?.stage.addChild(createToolbar())
-
-    const layer = new PIXI.Container();
-    const widget = new ExpressionWidget(
-      expr, 
-      perspective!, 
-      layer,
-      { width: canvas!.clientWidth, height: canvas!.clientHeight}
-    )
-
-    let parent = history[history.length - 1];
-    //debugger
-    if (parent) {
-      const parentLayer = new PIXI.Container();
-      parentLayer.position.set(parent.x, parent.y);
-      parentLayer.scale.set(1 / LEVEL_SCALE);
-      const parentWidget = new ExpressionWidget(
-        parent.expression, 
-        perspective!, 
-        parentLayer,
-        { width: canvas!.clientWidth, height: canvas!.clientHeight}
-      )
-      app?.stage.addChild(parentLayer);
-
-      parentLayer.on('pointerdown', (event) => {
-        console.log('zooming out');
-        zoomOut(parentWidget, widget);
-      });
-    }
-    app?.stage.addChild(layer);
-    layer.position.set(canvas!.clientWidth / 2, canvas!.clientHeight / 2);
-    
-    widget.addChildrenInteractive()
-    widget.onSelectionChanged((expr) => {
-      dispatch('selectionChanged', expr)
-    })
-    widget.onDoubleClick((child) => {
-      zoomIn(widget, child);
-    })
-  }
-
   $: if (perspectiveID || !perspectiveID) update();
 
   async function update() {
@@ -146,9 +97,7 @@
       ad4mSelf.container.position.set(canvas!.clientWidth / 2, canvas!.clientHeight / 2);
       setMainExpressionWidget(ad4mSelf);
       app?.stage.addChild(ad4mSelf.container);
-    }// else {
-    //  app?.stage.removeChildren()
-    //}
+    }
   }
 
   async function createToolbar() {
