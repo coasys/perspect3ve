@@ -283,6 +283,13 @@ export class ExpressionWidget {
         })
     }
 
+    makeNonInteractiveRecursive() {
+        this.#container.interactive = false
+        this.#childrenWidgets.forEach(child => {
+            child.makeNonInteractiveRecursive()
+        })
+    }
+
     clearInteractionHandlers() {
         this.#childrenWidgets.forEach(child => {
             child.#container.off('pointerdown', this.#pointerDownHandlers.get(child.#base))

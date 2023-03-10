@@ -43,6 +43,7 @@
     }
 
     if(formerMainWidget) {
+      formerMainWidget.makeNonInteractiveRecursive()
       formerMainWidget.clearInteractionHandlers()
       formerMainWidget.clearEventCallbacks()
     }
@@ -133,6 +134,7 @@
 
   async function update() {
     console.log('update', perspectiveID);
+    widgtesByExpr.get("ad4m://self")?.makeNonInteractiveRecursive()
     if(perspectiveID) {
       clear()
       initPixi()
