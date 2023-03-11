@@ -121,6 +121,14 @@ export class ExpressionWidget {
         this.#doubleClickCallbacks = []
     }
 
+    destroy() {
+        this.#graphic?.destroy()
+        this.#graphicMask?.destroy()
+        this.#text?.destroy()
+        this.#container.destroy()
+        this.#childrenWidgets.forEach(child => child.destroy())
+    }
+
     addGraphAndText() {
         this.#graphic = this.#createExpressionGraphic()
         this.#container.addChild(this.#graphic)

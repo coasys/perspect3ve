@@ -46,6 +46,7 @@
       formerMainWidget.makeNonInteractiveRecursive()
       formerMainWidget.clearInteractionHandlers()
       formerMainWidget.clearEventCallbacks()
+      formerMainWidget.destroy()
     }
 
     const historyParent = history[history.length - 1];
