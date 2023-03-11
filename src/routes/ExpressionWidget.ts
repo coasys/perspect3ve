@@ -129,6 +129,26 @@ export class ExpressionWidget {
         this.#childrenWidgets.forEach(child => child.destroy())
     }
 
+    freeze() {
+        this.#container.cacheAsBitmap = true
+    }
+
+    unfreeze() {   
+        this.#container.cacheAsBitmap = false
+    }
+
+    updateBitmap() {
+        if(this.#container.cacheAsBitmap) {
+            this.unfreeze()
+            this.freeze()
+        }
+    }
+
+    freezeChildren() {
+        this.#childrenWidgets.forEach(child => child.freeze())
+    }
+
+
     addGraphAndText() {
         this.#graphic = this.#createExpressionGraphic()
         this.#container.addChild(this.#graphic)
@@ -200,9 +220,6 @@ export class ExpressionWidget {
             if(sprite) {
                 this.setBackgroundSprite(sprite)
             }
-
-            
-
         }
     }
 
@@ -278,11 +295,11 @@ export class ExpressionWidget {
     async addChildrenInteractive() {
         await this.updateChildrenCoords();
         
-        this.#childrenCoords.forEach((point, child) => {
+        for(const [child, point] of this.#childrenCoords) {
             const childWidget = this.addChild(child, point)
-            childWidget.addChildrenLeafs()
+            await childWidget.addChildrenLeafs()
             this.#makeChildInteractive(childWidget)
-        });
+        }
     }
 
     makeAllChildrenInteractive() {
@@ -404,12 +421,13 @@ export class ExpressionWidget {
 
 
 
-    setSelected(selected: boolean) {
+    async setSelected(selected: boolean) {
         if(this.#selected === selected) return
 
         this.#selected = selected
         this.#graphic!.clear()
-        this.#drawExpressionGraphic(this.#graphic!)
+        await this.#drawExpressionGraphic(this.#graphic!)
+        this.updateBitmap()
     }
 
     async #updateChildCoords(child: string, point: { x: number; y: number }) {

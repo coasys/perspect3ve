@@ -29,15 +29,16 @@
 
   const dispatch = createEventDispatcher();
 
-  function setMainExpressionWidget(widget: ExpressionWidget, formerMainWidget? : ExpressionWidget) {
+  async function setMainExpressionWidget(widget: ExpressionWidget, formerMainWidget? : ExpressionWidget) {
     console.log("setMainExpressionWidget", widget.base)
     currentWidget = widget;
+    widget.unfreeze()
 
     if(!seenWidgets.has(widget)) {
       console.log("first time seen", widget.base)
       seenWidgets.add(widget);
       widgtesByExpr.set(widget.base, widget);
-      widget.addChildrenInteractive()
+      await widget.addChildrenInteractive()
     } else {
       widget.makeAllChildrenInteractive()
     }
@@ -66,6 +67,8 @@
     widget.onDoubleClick((child) => {
       zoomIn(widget, child);
     })
+
+    widget.freezeChildren()
   }
 
   function getOrCreateWidget(expr: string): ExpressionWidget {
