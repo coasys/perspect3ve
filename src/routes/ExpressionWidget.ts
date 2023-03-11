@@ -87,11 +87,8 @@ export class ExpressionWidget {
         })
 
         this.#container.on('pointermove', (event) => {
-            // filter out events that are not over graphic of this
-            if(event.target == this.#graphic) {
-                if(this.#draggingWidget) {
-                    this.#pointerMoveHandlers.get(this.#draggingWidget!.base)!(event)
-                }
+            if(this.#draggingWidget && event.target != this.#draggingWidget.container) {
+                this.#pointerMoveHandlers.get(this.#draggingWidget!.base)!(event)
             }
         })
     }
@@ -360,6 +357,7 @@ export class ExpressionWidget {
 
             that.#isPointerDown = true;
             that.#draggingWidget = childWidget;
+            childWidget.#container.zIndex = 1000;
             that.#isDragging = false;
             console.log(event.data.global);
             that.#dragStart.copyFrom(event.data.global);
@@ -398,6 +396,7 @@ export class ExpressionWidget {
             that.#isPointerDown = false;
             that.#isDragging = false;
             that.#draggingWidget = null
+            childWidget.#container.zIndex = 0;
         }
         this.#pointerUpHandlers.set(childWidget.base, newHandler);
         return newHandler
@@ -406,7 +405,7 @@ export class ExpressionWidget {
     #childPointermove(childWidget: ExpressionWidget): (event: PIXI.FederatedPointerEvent) => void {
         const that = this;
         const newHandler = (event: PIXI.FederatedPointerEvent) => {
-            if (that.#isPointerDown) {
+            if (that.#isPointerDown && that.#draggingWidget === childWidget) {
                 that.#isDragging = true;
                 const currentPoint = event.data.global;
                 childWidget.container.position.x += currentPoint.x - that.#dragStart.x;
