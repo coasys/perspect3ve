@@ -187,6 +187,7 @@ export class ExpressionWidget {
         }
         this.#text = this.#createTextNode(text)
         this.#container.addChild(this.#text)
+        this.updateBitmap()
     }
 
     setBackgroundSprite(sprite: PIXI.Sprite) {
@@ -218,6 +219,7 @@ export class ExpressionWidget {
                 this.setBackgroundSprite(sprite)
             }
         }
+        this.updateBitmap()
     }
 
     async getDisplayText(): Promise<string> {
