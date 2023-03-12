@@ -29,10 +29,23 @@
 
   const dispatch = createEventDispatcher();
 
-  async function setMainExpressionWidget(widget: ExpressionWidget, formerMainWidget? : ExpressionWidget) {
-    console.log("setMainExpressionWidget", widget.base)
+  async function setMainExpressionWidget(widget: ExpressionWidget, formerMainWidget?: ExpressionWidget) {
     currentWidget = widget;
+    const width = canvas!.clientWidth;
+    const height = canvas!.clientHeight;
+
+    if(formerMainWidget) {
+      formerMainWidget.makeNonInteractiveRecursive()
+      formerMainWidget.clearInteractionHandlers()
+      formerMainWidget.clearEventCallbacks()
+      formerMainWidget.freeze()
+      //formerMainWidget.destroy()
+    }
+
     widget.unfreeze()
+    widget.container.scale.set(1)
+    widget.container.position.set(width/2, height/2)
+    app?.stage.addChild(widget.container)
 
     if(!seenWidgets.has(widget)) {
       console.log("first time seen", widget.base)
@@ -41,13 +54,6 @@
       await widget.addChildrenInteractive()
     } else {
       widget.makeAllChildrenInteractive()
-    }
-
-    if(formerMainWidget) {
-      formerMainWidget.makeNonInteractiveRecursive()
-      formerMainWidget.clearInteractionHandlers()
-      formerMainWidget.clearEventCallbacks()
-      formerMainWidget.destroy()
     }
 
     const historyParent = history[history.length - 1];
@@ -202,30 +208,30 @@
   }
 
   const zoomIn = (parent: ExpressionWidget, child: ExpressionWidget) => {
-    let parentLayer = parent.container
+    const parentLayer = parent.container
     const childLayer = child.container
 
     let centerX = canvas!.clientWidth / 2;
     let centerY = canvas!.clientHeight / 2;
    
-    const topLevelWidget = history[0]
-    if(topLevelWidget) {
-      parentLayer = topLevelWidget.container
-    }
+    //const topLevelWidget = history[0]
+    //if(topLevelWidget) {
+    //  parentLayer = topLevelWidget.container
+    //}
 
-    const allParents = [...history]
-    allParents.push(parent)
+    //const allParents = [...history]
+    //allParents.push(parent)
 
-    const {x: displacementX, y: displacementY} = aggregateZoomDisplacement(history, {x: centerX, y: centerY})
+    //const {x: displacementX, y: displacementY} = aggregateZoomDisplacement(history, {x: centerX, y: centerY})
     
-    const startScale = 1/(LEVEL_SCALE ** history.length);
-    const endScale = 1/(LEVEL_SCALE ** (history.length + 1));
+    const startScale = 1;
+    const endScale = 1/LEVEL_SCALE;
 
     const startX = parentLayer.position.x
     const startY = parentLayer.position.y
 
-    const endX = displacementX - childLayer.position.x/LEVEL_SCALE + centerX
-    const endY = displacementY - childLayer.position.y/LEVEL_SCALE + centerY
+    const endX = centerX - childLayer.position.x/LEVEL_SCALE 
+    const endY = centerY - childLayer.position.y/LEVEL_SCALE 
 
 
     //console.log("endScale: ", endScale)
@@ -244,6 +250,7 @@
         app!.ticker.remove(animateZoom);
         //app!.stage.removeChildren();
         history.push(parent);
+        parent.extractChildWidget(child);
         setMainExpressionWidget(child, parent);
       }
   };
@@ -251,44 +258,47 @@
 };
 
 const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) => {
-    const startScale = 1/(LEVEL_SCALE ** (history.length));
-    const endScale = 1/(LEVEL_SCALE ** (history.length - 1));
+    const startScale = 1/LEVEL_SCALE;
+    const endScale = 1;
 
-    console.log("startScale: ", startScale)
-    console.log("endScale: ", endScale)
+    const childStartScale = 1;
+    const childEndScale = LEVEL_SCALE;
+
+    //console.log("startScale: ", startScale)
+    //console.log("endScale: ", endScale)
 
     let elapsed = 0;
 
     let parentLayer = parentWidget.container
-    const topLevelWidget = history[0]
-    if(topLevelWidget) {
-      parentLayer = topLevelWidget.container
-    }
+    //const topLevelWidget = history[0]
+    //if(topLevelWidget) {
+    //  parentLayer = topLevelWidget.container
+    //}
 
     let centerX = canvas!.clientWidth / 2;
     let centerY = canvas!.clientHeight / 2;
 
-    console.log(history)
-    const oldDisplacement = aggregateZoomDisplacement(history, {x: centerX, y: centerY})
-    const historyClipped = history.slice(0, history.length-1)
-    console.log(historyClipped)
-    let newDisplacement = aggregateZoomDisplacement(historyClipped, {x: centerX, y: centerY})
+    //console.log(history)
+    //const oldDisplacement = aggregateZoomDisplacement(history, {x: centerX, y: centerY})
+    //const historyClipped = history.slice(0, history.length-1)
+    //console.log(historyClipped)
+    //let newDisplacement = aggregateZoomDisplacement(historyClipped, {x: centerX, y: centerY})
 
     let displacementX = 0
     let displacementY = 0
 
-    for(let i = 0; i < historyClipped.length; i++) {
-      const parent = historyClipped[i]
-      displacementX += (parent.relativePosition.x - centerX) / (LEVEL_SCALE ** (historyClipped.length-i-1)) 
-      displacementY += (parent.relativePosition.y - centerY) / (LEVEL_SCALE ** (historyClipped.length-i-1))
-    }
+    //for(let i = 0; i < historyClipped.length; i++) {
+    //  const parent = historyClipped[i]
+    //  displacementX += (parent.relativePosition.x - centerX) / (LEVEL_SCALE ** (historyClipped.length-i-1)) 
+    //  displacementY += (parent.relativePosition.y - centerY) / (LEVEL_SCALE ** (historyClipped.length-i-1))
+    //}
     
-    newDisplacement = {x: displacementX, y: displacementY}
+    //newDisplacement = {x: displacementX, y: displacementY}
 
-    const pos = `${parentLayer.position.x} ${parentLayer.position.y}`
-    console.log("oldPos", parentLayer.position.x, parentLayer.position.y)
-    console.log("oldDisplacement: ", oldDisplacement)
-    console.log("newDisplacement: ", newDisplacement)
+    //const pos = `${parentLayer.position.x} ${parentLayer.position.y}`
+    //console.log("oldPos", parentLayer.position.x, parentLayer.position.y)
+    //console.log("oldDisplacement: ", oldDisplacement)
+    //console.log("newDisplacement: ", newDisplacement)
 
     const animateZoom = (delta: number) => {
       function lerp(start: number, end: number, t: number) {
@@ -298,15 +308,25 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
       const progress = TWEEN.Easing.Exponential.InOut(Math.min(elapsed / ZOOM_DURATION, 1));
       const newScale = lerp(startScale, endScale, progress);
       parentLayer.scale.set(newScale);
+
+      const childScale = lerp(childStartScale, childEndScale, progress);
+      childWidget.container.scale.set(childScale);
       
-      const newX = lerp(parentLayer.position.x, newDisplacement.x + centerX, progress);
-      const newY = lerp(parentLayer.position.y, newDisplacement.y + centerY, progress);
+      const newX = lerp(parentLayer.position.x, centerX, progress);
+      const newY = lerp(parentLayer.position.y, centerY, progress);
       parentLayer.position.set(newX, newY);
-      console.log('newX', newX, 'newY', newY)
+
+
+      const childX = lerp(centerX, centerX + childWidget.relativePosition.x, progress);
+      const childY = lerp(centerY, centerY + childWidget.relativePosition.y, progress);
+      childWidget.container.position.set(childX, childY);
+
       if (progress >= 1) {
         app!.ticker.remove(animateZoom);
         //app!.stage.removeChildren();
         history.pop();
+        childWidget.container.scale.set(LEVEL_SCALE)
+        parentWidget.injectChildWidget(childWidget)
         setMainExpressionWidget(parentWidget, childWidget)
       }
     };

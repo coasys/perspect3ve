@@ -283,6 +283,18 @@ export class ExpressionWidget {
         return childWidget
     }
 
+    extractChildWidget(child: ExpressionWidget) {
+        this.#container.removeChild(child.container)
+        child.makeAllChildrenInteractive()
+    }
+
+    injectChildWidget(child: ExpressionWidget) {
+        this.#container.addChild(child.container)
+        child.#relativePosition = this.#childrenCoords.get(child.base)!
+        child.container.position = child.#relativePosition
+        this.#makeChildInteractive(child)
+    }
+
     async addChildrenLeafs() {
         await this.updateChildrenCoords();
         
@@ -383,6 +395,7 @@ export class ExpressionWidget {
             } else {
                 if(that.#isDragging) {
                     this.#updateChildCoords(childWidget.#base, childWidget.container.position)
+                    childWidget.#relativePosition = childWidget.container.position
                     that.#isDragging = false;
                 } 
 
