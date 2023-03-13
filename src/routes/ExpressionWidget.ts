@@ -146,8 +146,8 @@ export class ExpressionWidget {
     }
 
 
-    addGraphAndText() {
-        this.#graphic = this.#createExpressionGraphic()
+    async addGraphAndText() {
+        this.#graphic = await this.#createExpressionGraphic()
         this.#container.addChild(this.#graphic)
 
         this.#graphicMask = this.#graphic.clone()
@@ -467,9 +467,9 @@ export class ExpressionWidget {
 
     
 
-    #createExpressionGraphic(): PIXI.Graphics {
+    async #createExpressionGraphic(): PIXI.Graphics {
         const graphic = new PIXI.Graphics();
-        this.#drawExpressionGraphic(graphic)
+        await this.#drawExpressionGraphic(graphic)
         graphic.interactive = true;
         graphic.buttonMode = true;
         return graphic;
