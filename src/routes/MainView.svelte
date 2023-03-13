@@ -99,9 +99,13 @@
     if(perspectiveID) {
       clear()
       initPixi()
-      createToolbar()
+      
       const ad4m = await getAd4mClient();
       perspective = await ad4m.perspective.byUUID(perspectiveID);
+
+      createToolbar()
+      sdnaUpdateListener()
+
       app?.stage.removeChildren()
       const ad4mSelf = getOrCreateWidget('ad4m://self');
       ad4mSelf.container.position.set(canvas!.clientWidth / 2, canvas!.clientHeight / 2);
@@ -113,7 +117,7 @@
   async function createToolbar() {
     toolbarItems = [
       {
-        icon: 'plus',
+        icon: 'card-text',
         label: 'Literal',
         onClick: async () => {
           console.log('creating new literal')
@@ -125,20 +129,53 @@
             target: literal.base
           }))
         },
-      },
-      {
-        icon: 'minus',
-        onClick: () => {
-          console.log('clicked minus');
+      }]
+    
+    const sClasses = await perspective!.subjectClasses()
+
+    console.log("subject classes", sClasses)
+
+    // add subject classes to toolbar
+    for(const sClass of sClasses) {
+      console.log("add subject class", sClass, "to toolbar")
+      let sdnaResult
+      try {
+        sdnaResult = await perspective!.infer(`subject_class("${sClass}", Class), p3_class_color(Class, Color), p3_class_icon(Class, Icon).`)
+      }catch(e) {
+        console.log("error", e)
+      }
+      let color
+      let icon
+      if(sdnaResult && sdnaResult.length > 0) {
+        color = sdnaResult[0].Color
+        icon = sdnaResult[0].Icon
+      }
+      toolbarItems = [...toolbarItems, {
+        icon: icon?icon:'plus',
+        color,
+        label: sClass,
+        onClick: async () => {
+          console.log('creating new subject class')
+          const literal = await SmartLiteral.create(perspective!, `New ${sClass}`)
+
+          await perspective?.createSubject(sClass, literal.base)
+
+          perspective?.add(new Link({
+            source: currentWidget?.base,
+            predicate: `${COORDS_PRED_PREFIX}{"x": 0, "y": 0}`,
+            target: literal.base
+          }))
         },
-      },
-      {
-        icon: 'home',
-        onClick: () => {
-          console.log('clicked home');
-        },
-      },
-    ]
+      }]
+    }
+  }
+
+  function sdnaUpdateListener() {
+    perspective?.addListener('link-added', (link: LinkExpression) => {
+      if(link.data.source == "ad4m://self" && link.data.predicate == "ad4m://has_zome") {
+        createToolbar()
+      }
+    })
   }
 
   function initPixi() {

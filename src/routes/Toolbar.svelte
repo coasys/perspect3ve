@@ -7,7 +7,14 @@
     <h1 class="title">Create Expressions:</h1>
     <div class="items">
       {#each items as item}
-        <button on:click={item.onClick}>{item.label}</button>
+        
+        <j-button on:click={item.onClick}>
+            {#if item.icon}
+                <j-icon name="{item.icon}" size="xs" />
+            {/if}
+            {item.label}
+        </j-button>
+        
       {/each}
     </div>
   </div>
