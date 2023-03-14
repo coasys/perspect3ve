@@ -101,7 +101,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 40px;
+    height: 60px;
+    width: 60px;
     margin: 10px;
     border-radius: 50%;
     cursor: pointer;
