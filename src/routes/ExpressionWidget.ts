@@ -254,19 +254,21 @@ export class ExpressionWidget {
     }
 
     async #updateSubjectClass() {
-        const classResults = await this.#perspective.infer(`subject_class(ClassName, C), instance(C, "${this.base}"), p3_instance_shape(C, "${this.base}", Shape), p3_instance_color(C, "${this.base}", Color).`)
-        if(classResults && classResults.length > 0) {
-            const className = classResults[0].ClassName
-            this.#isInstanceOfSubjectClass = className
-            this.#subjectColor = parseInt(classResults[0].Color.substring(1), 16)
-            this.#subjectShape = classResults[0].Shape
-            this.#subjectProxy = await this.#perspective.getSubjectProxy(this.#base, className)
-        } else {
-            this.#isInstanceOfSubjectClass = null
-            this.#subjectColor = null
-            this.#subjectShape = null
-            this.#subjectProxy = null
-        }
+        try {        
+            const classResults = await this.#perspective.infer(`subject_class(ClassName, C), instance(C, "${this.base}"), p3_instance_shape(C, "${this.base}", Shape), p3_instance_color(C, "${this.base}", Color).`)
+            if(classResults && classResults.length > 0) {
+                const className = classResults[0].ClassName
+                this.#isInstanceOfSubjectClass = className
+                this.#subjectColor = parseInt(classResults[0].Color.substring(1), 16)
+                this.#subjectShape = classResults[0].Shape
+                this.#subjectProxy = await this.#perspective.getSubjectProxy(this.#base, className)
+            } else {
+                this.#isInstanceOfSubjectClass = null
+                this.#subjectColor = null
+                this.#subjectShape = null
+                this.#subjectProxy = null
+            }
+        } catch(e) {}
     }
 
     async getDisplayText(): Promise<string> {
