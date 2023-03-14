@@ -418,6 +418,7 @@ export class ExpressionWidget {
     #childPointerdown(childWidget: ExpressionWidget): (event: PIXI.FederatedPointerEvent) => void {
         const that = this;
         const newHandler = (event: PIXI.FederatedPointerEvent) => {
+            console.log('pointerdown', childWidget.base)
             if (that.#oneClick) {
                 that.#twoClicks = true;
                 setTimeout(() => {
@@ -444,6 +445,7 @@ export class ExpressionWidget {
     #childPointerup(childWidget: ExpressionWidget): (event: PIXI.FederatedPointerEvent) => void {
         const that = this;
         const newHandler = (event: PIXI.FederatedPointerEvent) => {
+            console.log('childPointerup', childWidget.base)
             if (that.#twoClicks) {
                 that.#doubleClickCallbacks.forEach(callback => callback(childWidget))
                 //console.log('dblclick -> zooming in');
@@ -476,6 +478,7 @@ export class ExpressionWidget {
     #childPointermove(childWidget: ExpressionWidget): (event: PIXI.FederatedPointerEvent) => void {
         const that = this;
         const newHandler = (event: PIXI.FederatedPointerEvent) => {
+            console.log('pointermove', childWidget.base)
             if (that.#isPointerDown && that.#draggingWidget === childWidget) {
                 that.#isDragging = true;
                 const currentPoint = event.data.global;
