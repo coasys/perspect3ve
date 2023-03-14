@@ -636,6 +636,8 @@ export class ExpressionWidget {
             }
         } catch(e) {}
 
+        if(!textString) textString = ""
+
         if(textString.length > 300) {
             textString = textString.substring(0, 300) + '...'
         }
