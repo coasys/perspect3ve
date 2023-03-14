@@ -36,12 +36,13 @@
 
     if(formerMainWidget) {
       formerMainWidget.makeNonInteractiveRecursive()
-      formerMainWidget.clearInteractionHandlers()
+      formerMainWidget.clearAllInteractionHandlers()
       formerMainWidget.clearEventCallbacks()
       formerMainWidget.freeze()
       //formerMainWidget.destroy()
     }
 
+    widget.clearEventCallbacks()
     widget.unfreeze()
     widget.container.scale.set(1)
     widget.container.position.set(width/2, height/2)
@@ -331,6 +332,8 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
         if(history.includes(parentWidget)) {
           history.pop();
           childWidget.container.scale.set(LEVEL_SCALE)
+          childWidget.clearAllInteractionHandlers()
+          childWidget.makeNonInteractiveRecursive()
           parentWidget.injectChildWidget(childWidget)
           setMainExpressionWidget(parentWidget, childWidget)
         }

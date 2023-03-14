@@ -285,6 +285,7 @@ export class ExpressionWidget {
 
     extractChildWidget(child: ExpressionWidget) {
         this.#container.removeChild(child.container)
+        this.clearInteractionHandlers(child)
         child.makeAllChildrenInteractive()
     }
 
@@ -326,13 +327,13 @@ export class ExpressionWidget {
         })
     }
 
-    clearInteractionHandlers() {
-        this.#childrenWidgets.forEach(child => {
-            child.#container.off('pointerdown', this.#pointerDownHandlers.get(child.#base))
-            child.#container.off('pointerup', this.#pointerUpHandlers.get(child.#base))
-            child.#container.off('pointermove', this.#pointerMoveHandlers.get(child.#base))
-        })
-
+    clearInteractionHandlers(child: ExpressionWidget) {
+        child.#container.off('pointerdown', this.#pointerDownHandlers.get(child.#base))
+        child.#container.off('pointerup', this.#pointerUpHandlers.get(child.#base))
+        child.#container.off('pointermove', this.#pointerMoveHandlers.get(child.#base))
+    }
+    clearAllInteractionHandlers() {
+        this.#childrenWidgets.forEach(this.clearInteractionHandlers.bind(this))
         this.#pointerDownHandlers.clear()
         this.#pointerUpHandlers.clear()
         this.#pointerMoveHandlers.clear()
@@ -342,9 +343,12 @@ export class ExpressionWidget {
     #makeChildInteractive(childWidget: ExpressionWidget) {
         const childLayer = childWidget.#container;
         childLayer.interactive = true;
-        childLayer.on('pointerdown', this.#childPointerdown(childWidget));
-        childLayer.on('pointerup', this.#childPointerup(childWidget));
-        childLayer.on('pointermove', this.#childPointermove(childWidget));
+        if(!this.#pointerDownHandlers.get(childWidget.#base))
+            childLayer.on('pointerdown', this.#childPointerdown(childWidget));
+        if(!this.#pointerUpHandlers.get(childWidget.#base))
+            childLayer.on('pointerup', this.#childPointerup(childWidget));
+        if(!this.#pointerMoveHandlers.get(childWidget.#base))
+            childLayer.on('pointermove', this.#childPointermove(childWidget));
     }
 
     #isDragging = false;
