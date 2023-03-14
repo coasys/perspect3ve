@@ -272,7 +272,6 @@ export class ExpressionWidget {
     async getDisplayText(): Promise<string> {
         try {
             const parsedLiteralValue = Literal.fromUrl(this.#base).get()
-            console.log("get text. #subjectProxy", this.#subjectProxy)
             if(this.#subjectProxy && this.#subjectProxy.title) {
                 return await this.#subjectProxy.title
             }

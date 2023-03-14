@@ -9,8 +9,10 @@
   import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';  
   import { COORDS_PRED_PREFIX, ExpressionWidget, LEVEL_SCALE } from './ExpressionWidget';
   import Toolbar from './Toolbar.svelte';
+  import PropertiesBrowser from './PropertiesBrowser.svelte';
 
   export let perspectiveID: string;
+  let selectedExpression
   
   let toolbarItems = []
 
@@ -39,7 +41,6 @@
       formerMainWidget.clearAllInteractionHandlers()
       formerMainWidget.clearEventCallbacks()
       formerMainWidget.freeze()
-      //formerMainWidget.destroy()
     }
 
     widget.clearEventCallbacks()
@@ -69,6 +70,7 @@
     
     widget.clearEventCallbacks()
     widget.onSelectionChanged((expr) => {
+        selectedExpression = expr
         dispatch('selectionChanged', expr)
       })
     widget.onDoubleClick((child) => {
@@ -193,6 +195,8 @@
       backgroundColor: 0x000011,
       antialias: true,
     });
+
+    globalThis.__PIXI_APP__ = app;
 
     // Add the PixiJS view to the DOM
     canvas!.appendChild(app.view);
@@ -343,7 +347,14 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
     app!.ticker.add(animateZoom);
 };
 
+function perspectiveDeleted(event) {
+    console.log('perspectiveDeleted', event.detail);
+    if(event.detail === perspectiveID) {
+      perspectiveID = null;
+    }
 
+    dispatch('perspectiveDeleted', event.detail);
+  }
 </script>
 
 
@@ -369,6 +380,7 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
 
   {#if perspective}
     <Toolbar title="Perspect3ve" items={toolbarItems} />
+    <PropertiesBrowser perspectiveID={perspectiveID} expression={selectedExpression} on:perspectiveDeleted={perspectiveDeleted}/>
   {/if}
 
 <style>

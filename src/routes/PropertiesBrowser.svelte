@@ -12,6 +12,8 @@
 
   export let perspectiveID
   export let expression
+  export let right=126;
+  export let top=90;
 
   let ad4m: Ad4mClient
   let perspective: PerspectiveProxy
@@ -31,6 +33,26 @@
   let cropper
 
   const dispatch = createEventDispatcher();
+
+
+
+    let moving = false
+
+    function start() {
+        moving = true
+    }
+
+    function stop() {
+        moving = false
+    }
+
+    function move(e) {
+        if (moving) {
+            console.log(e.movementX, e.movementY)
+            right -= e.movementX
+            top += e.movementY
+        }
+    }
 
   async function ensuerAd4mClient() {
 	if (!ad4m) {
@@ -289,8 +311,9 @@
   
   let propertySelect
 </script>
-
-<div class="properties-container">
+<svelte:window on:mouseup={stop} on:mousemove={move}/>
+<div class="properties-container" style="right: {right}px; top: {top}px;" on:mousedown={start}>
+  <span class="title">Properties</span>
   {#if perspective}
 	{#if expression == "ad4m://self"}
 		<j-box pb="800">
@@ -496,12 +519,23 @@
 
 <style>
   .properties-container {
+	position: absolute;
+	cursor: move;
     display: flex;
     flex-direction: column;
     width: 250px;
-    background-color: #f5f5f5;
-    padding: 20px;
+    background-color: #f5f5f5c5;
+    
   }
+
+  .title {
+      display: block;
+      margin: 0;
+      font-size: 24px;
+      color: white;
+      background-color: black;
+      padding: 8px 5px;
+    }
   
   .header {
     display: flex;

@@ -3,7 +3,6 @@
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import Nav from './Nav.svelte';
   import MainView from './MainView.svelte';
-  import PropertiesBrowser from './PropertiesBrowser.svelte';
   import { onMount, setContext } from 'svelte';
 
   let selectedPerspective = null;
@@ -65,12 +64,8 @@
       <Nav {selectedPerspective} on:select={setPerspective} />
     </div>
     <main>
-      <MainView perspectiveID={selectedPerspective} on:selectionChanged={setExpression} />
+      <MainView perspectiveID={selectedPerspective} on:selectionChanged={setExpression} on:perspectiveDeleted={perspectiveDeleted} />
     </main>
-
-    <div class="properties-browser">
-      <PropertiesBrowser perspectiveID={selectedPerspective} expression={selectedExpression} on:perspectiveDeleted={perspectiveDeleted}/>
-    </div>
   </div>
 {/if}
 
@@ -96,7 +91,7 @@
   }
   .container {
     display: grid;
-    grid-template-columns: 100px 1fr 300px;
+    grid-template-columns: 100px 1fr;
     grid-template-rows: 1fr;
     height: 100vh;
     max-height: 100vh;
