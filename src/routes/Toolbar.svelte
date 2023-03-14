@@ -1,48 +1,72 @@
 <script>
-    export let title;
     export let items;
+    export let left=126;
+    export let top=90;
+
+    let moving = false
+
+    function start() {
+        moving = true
+    }
+
+    function stop() {
+        moving = false
+    }
+
+    function move(e) {
+        if (moving) {
+            console.log(e.movementX, e.movementY)
+            left += e.movementX
+            top += e.movementY
+        }
+    }
   </script>
   
-  <div class="toolbar">
-    <h1 class="title">Create Expressions:</h1>
-    <div class="items">
+  <svelte:window on:mouseup={stop} on:mousemove={move}/>
+
+  <div class="toolbar" style="left: {left}px; top: {top}px;" on:mousedown={start}>
+    <span class="title">Tools</span>
+    <ul class="items">
       {#each items as item}
-        
-        <j-button on:click={item.onClick}>
-            {#if item.icon}
-                <j-icon name="{item.icon}" size="xs" />
-            {/if}
-            {item.label}
-        </j-button>
-        
+        <li class="item">
+            <j-button on:click={item.onClick}>
+                {#if item.icon}
+                    <j-icon name="{item.icon}" size="xs" />
+                {/if}
+                {item.label}
+            </j-button>
+        </li>
       {/each}
-    </div>
+    </ul>
   </div>
   
   <style>
     .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #f0f0f0;
-      padding: 0 16px;
-      height: 64px;
-      
-      top: 0;
-      left: 0;
-      right: 0;
+        position: absolute;
+        cursor: move;
+        user-select: none;  
+        align-items: center;
+        background-color: #a0a0a0aa;
+        padding: 0;
     }
   
     .title {
+        display: block;
       margin: 0;
       font-size: 24px;
+      color: white;
+      background-color: black;
+      padding: 8px 5px;
     }
   
     .items {
-      display: flex;
-      gap: 16px;
+        padding: 0 16px;
     }
   
+    .item {
+        display: block;
+        margin-bottom: 10px
+    } 
     button {
       font-size: 16px;
       padding: 8px 16px;

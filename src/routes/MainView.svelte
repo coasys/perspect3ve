@@ -347,7 +347,7 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
 </script>
 
 
-  <Toolbar title="Perspect3ve" items={toolbarItems} />
+  
 
   <div bind:this={canvas} class="canvas">
     <ul class="breadcrumbs">
@@ -367,6 +367,9 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
     </ul>
   </div>
 
+  {#if perspective}
+    <Toolbar title="Perspect3ve" items={toolbarItems} />
+  {/if}
 
 <style>
   main {
