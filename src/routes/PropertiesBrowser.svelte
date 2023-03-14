@@ -287,6 +287,7 @@
   }
 
   
+  let propertySelect
 </script>
 
 <div class="properties-container">
@@ -412,23 +413,47 @@
 				<div class="name">{prop.name}</div>
 				{#if prop.onChange != undefined}
 					{#if prop.isEditing}
-						<j-input
-							type="text"
-							full="true"
-							value={prop.value}
-							bind:this={editingProp}
-							on:keydown={(event) => {
-								console.log(event)
-								if(event.key === 'Enter') {
-									const newValue = event.srcElement.value
-									prop.value = newValue
-									prop.onChange(newValue)
+						{#if prop.options }
+							<j-select inputvalue="1" bind:this={propertySelect}>
+								<j-menu>
+									{#each prop.options as option}
+										<j-menu-item 
+											value="{option.Value}"
+											selected="{option.Value == prop.value}"
+										>{option.Label}</j-menu-item>
+									{/each}
+								</j-menu>
+							</j-select>
+							<j-button 
+								on:click={() => {
+									if(propertySelect.value == undefined) return
+									prop.value = propertySelect.value
+									prop.onChange(propertySelect.value)
 									prop.isEditing = false
 								}
-								event.stopPropagation()
-							}}
-							on:blur={() => prop.isEditing = false}
-						/>
+							}>Save</j-button>
+							<j-button on:click={() => {
+								prop.isEditing = false
+							}}>Cancel</j-button>
+						{:else}
+							<j-input
+								type="text"
+								full="true"
+								value={prop.value}
+								bind:this={editingProp}
+								on:keydown={(event) => {
+									console.log(event)
+									if(event.key === 'Enter') {
+										const newValue = event.srcElement.value
+										prop.value = newValue
+										prop.onChange(newValue)
+										prop.isEditing = false
+									}
+									event.stopPropagation()
+								}}
+								on:blur={() => prop.isEditing = false}
+							/>
+						{/if}
 					{:else}
 						<j-text variant="label" weight="bold">{prop.value || '<not set>'}</j-text>
 						<j-button size="xs" variant="link" style="padding-bottom: 3px"
@@ -504,14 +529,12 @@
   }
   
   .properties {
-    display: grid;
     grid-template-columns: repeat(2, 1fr);
     grid-gap: 10px;
   }
   
   .property {
-    display: flex;
-    flex-direction: column;
+    display: block;
     border: 1px solid #cccccc;
     padding: 10px;
   }
