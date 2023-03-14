@@ -39,6 +39,11 @@ export class ExpressionWidget {
     #selectedCallbacks: Array<(expr: string) => void> = []
     #doubleClickCallbacks: Array<(widget: ExpressionWidget) => void> = []
 
+    #isInstanceOfSubjectClass: string|null = null
+    #subjectProxy: any|null = null
+    #subjectColor: number|null = null
+    #subjectShape: string|null = null
+
     
 
     constructor(
@@ -69,7 +74,7 @@ export class ExpressionWidget {
 
         this.addGraphAndText()
 
-        this.#perspective.addListener('link-added', (link) => {
+        this.#perspective.addListener('link-added', async (link) => {
             if(link.data.source == this.#base) {
                 if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
                     const payload = link.data.predicate.substring(COORDS_PRED_PREFIX.length)
@@ -86,13 +91,13 @@ export class ExpressionWidget {
                     layer.position.set(point.x, point.y)
                 }
 
-                if(link.data.predicate == SMART_LITERAL_CONTENT_PREDICATE) {
-                    this.updateDisplayText()
-                }
-
                 if(link.data.predicate == BACKGROUND_PREDICATE) {
                     this.updateBackground()
                 }
+
+                await this.#updateSubjectClass()
+                await this.#drawExpressionGraphic(this.#graphic!)
+                this.updateDisplayText()
             }
             return null
         })
@@ -171,6 +176,7 @@ export class ExpressionWidget {
 
 
     async addGraphAndText() {
+        await this.#updateSubjectClass()
         this.#graphic = await this.#createExpressionGraphic()
         this.#backgroundContainer.addChild(this.#graphic)
 
@@ -204,9 +210,10 @@ export class ExpressionWidget {
     }
 
     async updateDisplayText() {
+        if(this.#base == "ad4m://self") return
         const text = await this.getDisplayText()
         if(this.#text) {
-            this.#container.removeChild(this.#text)
+            this.#overlayContainer.removeChild(this.#text)
             this.#text.destroy()
         }
         this.#text = this.#createTextNode(text)
@@ -246,9 +253,29 @@ export class ExpressionWidget {
         this.updateBitmap()
     }
 
+    async #updateSubjectClass() {
+        const classResults = await this.#perspective.infer(`subject_class(ClassName, C), instance(C, "${this.base}"), p3_instance_shape(C, "${this.base}", Shape), p3_instance_color(C, "${this.base}", Color).`)
+        if(classResults && classResults.length > 0) {
+            const className = classResults[0].ClassName
+            this.#isInstanceOfSubjectClass = className
+            this.#subjectColor = parseInt(classResults[0].Color.substring(1), 16)
+            this.#subjectShape = classResults[0].Shape
+            this.#subjectProxy = await this.#perspective.getSubjectProxy(this.#base, className)
+        } else {
+            this.#isInstanceOfSubjectClass = null
+            this.#subjectColor = null
+            this.#subjectShape = null
+            this.#subjectProxy = null
+        }
+    }
+
     async getDisplayText(): Promise<string> {
         try {
             const parsedLiteralValue = Literal.fromUrl(this.#base).get()
+            console.log("get text. #subjectProxy", this.#subjectProxy)
+            if(this.#subjectProxy && this.#subjectProxy.title) {
+                return await this.#subjectProxy.title
+            }
 
             if(await SmartLiteral.isSmartLiteralBase(this.#perspective, this.#base)) {
                 const smartLiteral = new SmartLiteral(this.#perspective, this.#base)
@@ -503,15 +530,11 @@ export class ExpressionWidget {
     }
 
     async #drawExpressionGraphic(graphic: PIXI.Graphics) {
-        const classResults = await this.#perspective.infer(`subject_class(ClassName, C), instance(C, "${this.base}"), p3_instance_shape(C, "${this.base}", Shape), p3_instance_color(C, "${this.base}", Color).`)
-        if(classResults && classResults.length > 0) {
-            const color = parseInt(classResults[0].Color.substring(1), 16)
-            const shape = classResults[0].Shape
-
-            if(shape === 'circle') {
-                this.#drawExpressionCircle(graphic, color)
+        if(this.#isInstanceOfSubjectClass) {
+            if(this.#subjectShape === 'circle') {
+                this.#drawExpressionCircle(graphic, this.#subjectColor)
             } else {
-                this.#drawExpressionSticky(graphic, color)
+                this.#drawExpressionSticky(graphic, this.#subjectColor)
             }
             return
         }
