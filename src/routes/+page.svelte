@@ -93,13 +93,13 @@
     display: grid;
     grid-template-columns: 100px 1fr;
     grid-template-rows: 1fr;
-    height: 100vh;
-    max-height: 100vh;
+    height: calc(100vh - 58px);
+    overflow: hidden;
   }
 
   .nav {
-
     overflow: scroll;
+    height: calc(100vh - 58px);
   }
 
   .properties-browser {
@@ -107,7 +107,7 @@
   }
 
   main {
-    height: 100%;
+    height: calc(100vh - 58px);
     width: 100%-460px;
     background-color: #ffffff;
     margin-left: -6px;

@@ -553,6 +553,11 @@ export class ExpressionWidget {
         }
     }
 
+
+    #minCanvasLength() {
+        return Math.min(this.#canvasSize.width, this.#canvasSize.height)
+    }
+
     #drawExpressionSticky(graphic: PIXI.Graphics, color: number = 0xffffcc) {
         graphic.clear()
         graphic.beginFill(color, this.#selected ? 0.5 : 0.2);
@@ -561,11 +566,11 @@ export class ExpressionWidget {
         else
             graphic.lineStyle(OUTLINE_WIDTH, OUTLINE_COLOR);
         graphic.drawRoundedRect(
-            -this.#canvasSize.width/2.2,
-            -this.#canvasSize.height/2.2, 
-            this.#canvasSize.width*0.9,
-            this.#canvasSize.height*0.9, 
-            this.#canvasSize.width/10
+            -this.#minCanvasLength()/2.2,
+            -this.#minCanvasLength()/2.2, 
+            this.#minCanvasLength()*0.9,
+            this.#minCanvasLength()*0.9, 
+            this.#minCanvasLength()/10
         );
         graphic.endFill();
     }
@@ -605,7 +610,7 @@ export class ExpressionWidget {
             graphic.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
         else
             graphic.lineStyle(OUTLINE_WIDTH, OUTLINE_COLOR);
-        graphic.drawCircle(0, 0, this.#canvasSize.width / 1.7);
+        graphic.drawCircle(0, 0, this.#minCanvasLength() / 2.1);
         graphic.endFill();
     }
     
@@ -618,7 +623,7 @@ export class ExpressionWidget {
             const parsedLiteralValue = Literal.fromUrl(expr).get()
             if (typeof parsedLiteralValue == 'object'){
                 if(parsedLiteralValue.data != undefined) {
-                    textString = parsedLiteralValue.data
+                    textString = parsedLiteralValue.data 
                 } else {
                     textString = JSON.stringify(parsedLiteralValue, null, 2)
                     align = 'left'

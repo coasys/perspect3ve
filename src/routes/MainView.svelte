@@ -394,7 +394,7 @@ function perspectiveDeleted(event) {
   .canvas {
     position: relative;
     display: block;
-    height: 100%;
+    height: calc(100vh - 64px);
     width: 100%;
   }
 

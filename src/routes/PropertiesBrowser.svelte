@@ -333,6 +333,7 @@
 		</div>
   </span>
   {#if !collapsed}
+  <div class="content">
   {#if perspective}
 	{#if expression == "ad4m://self"}
 		<j-box pb="800">
@@ -520,6 +521,7 @@
   {:else}
 	<j-spinner></j-spinner>
   {/if}
+  </div>
   {/if}
   <j-modal bind:this={cropDialog} class="modal">
 	<header class="header" slot="header">
@@ -545,7 +547,6 @@
     flex-direction: column;
     width: 250px;
     background-color: #f5f5f5c5;
-    
   }
 
   .title {
@@ -560,6 +561,11 @@
 
   .window-controls {
 	float: right;
+  } 
+
+  .content {
+	max-height: calc(0.8*100vh);
+	overflow: scroll;
   } 
   
   .header {
