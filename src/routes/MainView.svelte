@@ -31,6 +31,8 @@
 
   const dispatch = createEventDispatcher();
 
+  let gradientBackground
+
   async function setMainExpressionWidget(widget: ExpressionWidget, formerMainWidget?: ExpressionWidget) {
     currentWidget = widget;
     const width = canvas!.clientWidth;
@@ -110,6 +112,7 @@
       sdnaUpdateListener()
 
       app?.stage.removeChildren()
+      app?.stage.addChild(gradientBackground)
       const ad4mSelf = getOrCreateWidget('ad4m://self');
       ad4mSelf.container.position.set(canvas!.clientWidth / 2, canvas!.clientHeight / 2);
       setMainExpressionWidget(ad4mSelf);
@@ -181,6 +184,21 @@
     })
   }
 
+  function createGradientTexture(width, height, color1, color2, color3,  color4) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, color1);
+    gradient.addColorStop(0.25, color2);
+    gradient.addColorStop(0.5, color3);
+    gradient.addColorStop(1, color4);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    return PIXI.Texture.from(canvas);
+}
+
   function initPixi() {
     if(app && app.view)
       canvas?.removeChild(app.view);
@@ -192,7 +210,7 @@
     app = new PIXI.Application({
       width,
       height,
-      backgroundColor: 0x000011,
+      //backgroundColor: 0x000011,
       antialias: true,
     });
 
@@ -200,6 +218,16 @@
 
     // Add the PixiJS view to the DOM
     canvas!.appendChild(app.view);
+
+    const color1 = "#0569a6"
+    const color2 = "#6bc7ec"
+    const color3 = "#8f7998"
+    const color4 = "#1b2e4e"
+
+    const gradientTexture = createGradientTexture(app.screen.width, app.screen.height, 
+      color1, color2, color3, color4);
+    gradientBackground = new PIXI.Sprite(gradientTexture);
+    app.stage.addChild(gradientBackground);
 
     // Create a PixiJS renderer
     //@ts-ignore
