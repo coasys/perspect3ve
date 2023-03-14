@@ -5,9 +5,10 @@
   import { Literal, LinkQuery } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
-    import { FILE_STORAGE_LANG } from '../config';
-    import { BACKGROUND_PREDICATE } from './ExpressionWidget';
-    import ImageCropper from './ImageCropper.svelte';
+  import { FILE_STORAGE_LANG } from '../config';
+  import { flattenPrologList } from '../util';
+  import { BACKGROUND_PREDICATE } from './ExpressionWidget';
+  import ImageCropper from './ImageCropper.svelte';
 
   export let perspectiveID
   export let expression
@@ -55,6 +56,56 @@
 			value: data,
 			onChange: (value) => smartLiteral.set(value)
 		}]
+		title = data
+		return true
+	} else {
+		return false
+	}
+  }
+
+  export function capitalize(str: string) {
+	return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+  function propertyNameToSetterName(property: string): string {
+	return `set${capitalize(property)}`
+  }
+
+  async function checkSdnaClasses() {
+	if(!expression) return
+	const classResults = await perspective.infer(`subject_class(ClassName, C), instance(C, "${expression}"), findall(Prop, property(C, Prop), PropList).`)
+	console.log(classResults)
+	if(classResults.length > 0) {
+		const className = classResults[0].ClassName
+		const classProps = flattenPrologList(classResults[0].PropList)
+		console.log(className, classProps)
+
+		expressionType = className
+
+		const proxy = await perspective.getSubjectProxy(expression, className)
+
+		for(const prop of classProps) {
+			
+			const options = await perspective.infer(`subject_class("${className}", C), property_named_option(C, "${prop}", Value, Label).`)
+			console.log(`For ${prop} - options:`, options)
+
+			const value = await proxy[prop]
+
+			if(prop == "title" || prop == "Title") {
+				title = value
+			}
+
+			properties = [...properties, {
+				name: prop, 
+				value,
+				options,
+				onChange: (value) => proxy[propertyNameToSetterName(prop)](value)
+			}]
+			
+		}
+
+		return true
+	} else {
+		return false
 	}
   }
 
@@ -115,9 +166,91 @@
 	update()
   }
 
+  function checkLiteral() {
+	try {
+		expressionData = Literal.fromUrl(expression).get()
+		switch(typeof expressionData) {
+			case "string":
+				title = expressionData
+				break
+			case "number":
+				title = expressionData.toString()
+				break
+			case "boolean":
+				title = expressionData.toString()
+				break
+			case "object": 
+				console.log("object", expressionData)
+				if(expressionData.data != undefined) {
+					console.log("object data", expressionData.data)
+					title = expressionData.data
+				} else {
+					console.log("object stringify", expressionData)
+					title = JSON.stringify(expressionData)
+				}
+			default:
+				expressionData = JSON.stringify(expressionData)
+		}
+		expressionType = "literal " + typeof expressionData
+		return true
+	} catch(e) {
+		return false
+	}
+  }
+
+  async function checkSDNA() {
+	const links = await perspective.get(new LinkQuery({target: expression}))
+	console.log("expression links:", links)
+	if(links.length) {
+		console.log(links)
+		expressionAuthor = links[0].author
+		expressionTimestamp = links[0].timestamp
+		// Treat SDNA differently
+		if(links.find(l => l.data.predicate == "ad4m://has_zome")) {
+			expressionType = "SDNA"
+			title = "Social DNA"
+		}
+	}
+  }
+
+  async function populateFromExpression() {
+	expressionData = null
+	checkBackgroundImage()
+	if(await checkSdnaClasses()) return
+	if(await checkSmartLiteral()) return
+	if(checkLiteral()) {
+		await checkSDNA()
+		return
+	}
+
+	// Last resort, get the expression data from language
+	const result = await ad4m.expression.get(expression)
+	if(result) {
+		const { author, timestamp, data, language } = result
+		expressionAuthor = author
+		expressionTimestamp = timestamp
+		expressionType = language.name ? language.name : language.address
+		expressionData = data
+		title = data
+	} else {
+		let exprRef = parseExprUrl(expression)
+		expressionType = exprRef.language.name ? exprRef.language.name : exprRef.language.address
+		expressionData = exprRef.expression
+		title = exprRef.expression
+	}
+  }
+
+  async function populateFromPerspective() {
+	if(perspective.sharedUrl) {
+		let nh = await ad4m.expression.get(perspective.sharedUrl)
+		nh = JSON.parse(nh.data)
+		linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
+	} else {
+		linkLanguageMeta = null
+	}
+  }
+
   async function update() {
-	
-	console.log("properties browser update", perspectiveID, expression)
 	if(!perspectiveID) {
 		perspective = null
 		linkLanguageMeta = null
@@ -128,77 +261,11 @@
 	await ensurePerspective()
 
 	properties = []
-	
-	if(expression && expression != "ad4m://self") {
-		expressionData = null
-		checkBackgroundImage()
-		// First trying to handle expression as Literal
-		try {
-			console.log("trying to get literal from url", expression)
-			expressionData = Literal.fromUrl(expression).get()
-			checkSmartLiteral()
-			switch(typeof expressionData) {
-				case "string":
-					title = expressionData
-					break
-				case "number":
-					title = expressionData.toString()
-					break
-				case "boolean":
-					title = expressionData.toString()
-					break
-				case "object": 
-					console.log("object", expressionData)
-					if(expressionData.data != undefined) {
-						console.log("object data", expressionData.data)
-						title = expressionData.data
-					} else {
-						console.log("object stringify", expressionData)
-						title = JSON.stringify(expressionData)
-					}
-				default:
-					expressionData = JSON.stringify(expressionData)
-			}
-			expressionType = "literal " + typeof expressionData
 
-			const links = await perspective.get(new LinkQuery({target: expression}))
-			console.log("expression links:", links)
-			if(links.length) {
-				console.log(links)
-				expressionAuthor = links[0].author
-				expressionTimestamp = links[0].timestamp
-				// Treat SDNA differently
-				if(links.find(l => l.data.predicate == "ad4m://has_zome")) {
-					expressionType = "SDNA"
-					title = "Social DNA"
-				}
-			}
-		} catch(e) {
-			//console.error(e)
-			const result = await ad4m.expression.get(expression)
-			if(result) {
-				const { author, timestamp, data, language } = result
-				expressionAuthor = author
-				expressionTimestamp = timestamp
-				expressionType = language.name ? language.name : language.address
-				expressionData = data
-				title = data
-			} else {
-				let exprRef = parseExprUrl(expression)
-				expressionType = exprRef.language.name ? exprRef.language.name : exprRef.language.address
-				expressionData = exprRef.expression
-				title = exprRef.expression
-			}
-			
-		}
+	if(expression && expression != "ad4m://self") {
+		populateFromExpression()
 	} else {
-		if(perspective.sharedUrl) {
-			let nh = await ad4m.expression.get(perspective.sharedUrl)
-			nh = JSON.parse(nh.data)
-			linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
-		} else {
-			linkLanguageMeta = null
-		}
+		populateFromPerspective()
 	}
   }
 
