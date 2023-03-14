@@ -552,6 +552,7 @@
   .title {
       display: block;
       margin: 0;
+	  user-select: none;
       font-size: 24px;
       color: white;
       background-color: black;
