@@ -18,11 +18,19 @@ let blobBackground = PIXI.Assets.load('/FluxBlob.png')
 export class ExpressionWidget {
     #base: string
     #perspective: PerspectiveProxy
+
     #container: PIXI.Container
-    #selected: boolean = false
+
+    #backgroundContainer: PIXI.Container
+    #childrenContainer: PIXI.Container
+    #overlayContainer: PIXI.Container
+
+    #backgroundSprite: PIXI.Sprite | null = null
     #graphic: PIXI.Graphics | null = null
     #graphicMask: PIXI.Graphics | null = null
     #text: PIXI.Text | null = null
+
+    #selected: boolean = false
     #childrenCoords: Map<string, {x: number, y: number}> = new Map()
     #childrenWidgets: Map<string, ExpressionWidget> = new Map()
     #canvasSize: {width: number, height: number} = {width: 0, height: 0}
@@ -31,7 +39,7 @@ export class ExpressionWidget {
     #selectedCallbacks: Array<(expr: string) => void> = []
     #doubleClickCallbacks: Array<(widget: ExpressionWidget) => void> = []
 
-    #backgroundSprite: PIXI.Sprite | null = null
+    
 
     constructor(
         expression: string, 
@@ -43,6 +51,22 @@ export class ExpressionWidget {
         this.#perspective = perspective;
         this.#container = container
         this.#canvasSize = canvasSize
+
+        this.#backgroundContainer = new PIXI.Container()
+        this.#childrenContainer = new PIXI.Container()
+        this.#overlayContainer = new PIXI.Container()
+
+        
+        this.#container.addChild(this.#overlayContainer)
+        this.#container.addChild(this.#childrenContainer)
+        this.#container.addChild(this.#backgroundContainer)
+
+        this.#backgroundContainer.zIndex = 0
+        this.#childrenContainer.zIndex = 2
+        this.#overlayContainer.zIndex = 3
+
+        this.#container.sortableChildren = true
+
         this.addGraphAndText()
 
         this.#perspective.addListener('link-added', (link) => {
@@ -148,7 +172,7 @@ export class ExpressionWidget {
 
     async addGraphAndText() {
         this.#graphic = await this.#createExpressionGraphic()
-        this.#container.addChild(this.#graphic)
+        this.#backgroundContainer.addChild(this.#graphic)
 
         this.#graphicMask = this.#graphic.clone()
         this.#graphicMask.scale.set(0.99)
@@ -186,7 +210,7 @@ export class ExpressionWidget {
             this.#text.destroy()
         }
         this.#text = this.#createTextNode(text)
-        this.#container.addChild(this.#text)
+        this.#overlayContainer.addChild(this.#text)
         this.updateBitmap()
     }
 
@@ -443,7 +467,6 @@ export class ExpressionWidget {
         if(this.#selected === selected) return
 
         this.#selected = selected
-        this.#graphic!.clear()
         await this.#drawExpressionGraphic(this.#graphic!)
         this.updateBitmap()
     }
@@ -480,6 +503,19 @@ export class ExpressionWidget {
     }
 
     async #drawExpressionGraphic(graphic: PIXI.Graphics) {
+        const classResults = await this.#perspective.infer(`subject_class(ClassName, C), instance(C, "${this.base}"), p3_instance_shape(C, "${this.base}", Shape), p3_instance_color(C, "${this.base}", Color).`)
+        if(classResults && classResults.length > 0) {
+            const color = parseInt(classResults[0].Color.substring(1), 16)
+            const shape = classResults[0].Shape
+
+            if(shape === 'circle') {
+                this.#drawExpressionCircle(graphic, color)
+            } else {
+                this.#drawExpressionSticky(graphic, color)
+            }
+            return
+        }
+
         try {
             //console.log('drawing', this.#base)
             const literal = Literal.fromUrl(this.#base).get()
@@ -495,8 +531,9 @@ export class ExpressionWidget {
         }
     }
 
-    #drawExpressionSticky(graphic: PIXI.Graphics) {
-        graphic.beginFill(0xffffcc, this.#selected ? 0.5 : 0.2);
+    #drawExpressionSticky(graphic: PIXI.Graphics, color: number = 0xffffcc) {
+        graphic.clear()
+        graphic.beginFill(color, this.#selected ? 0.5 : 0.2);
         if(this.#selected)
             graphic.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
         else
@@ -512,6 +549,7 @@ export class ExpressionWidget {
     }
 
     #drawExpressionLiteralBox(graphics: PIXI.Graphics) {
+        graphics.clear()
         const vertices = [
             new PIXI.Point(-500, -150),
             new PIXI.Point(-400, 150),
@@ -538,8 +576,9 @@ export class ExpressionWidget {
           //graphics.transform.setFromMatrix(new PIXI.Matrix(1, 0.5, -0.5, 1, 0, 0));
     }
 
-    #drawExpressionCircle(graphic: PIXI.Graphics) {
-        graphic.beginFill(0xff00ff, this.#selected && (this.#base != "ad4m://self") ? 0.5 : 0.2);
+    #drawExpressionCircle(graphic: PIXI.Graphics, color: number = 0xff00ff) {
+        graphic.clear()
+        graphic.beginFill(color, this.#selected && (this.#base != "ad4m://self") ? 0.5 : 0.2);
         if(this.#selected)
             graphic.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
         else
@@ -584,7 +623,6 @@ export class ExpressionWidget {
         });
         text.anchor.set(0.5, yAnchor);
         text.maxWidth = 80;
-        text.zIndex = 100;
         text.style.wordWrap = true;
         text.style.wordWrapWidth = 200;
         text.style.maxHeight = 100;
