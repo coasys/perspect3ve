@@ -56,6 +56,10 @@
 
 <div class="header-bar">
   <img class="title-logo" src="/perspect3ve-logo-header.png" alt="Perspect3ve" />
+  <div class="button-group">
+    <j-icon class="system-button" name="gear"/>
+    <j-icon class="system-button" name="person-circle"/>
+  </div>
 </div>
 
 {#if connected}
@@ -111,5 +115,10 @@
     width: 100%-460px;
     background-color: #ffffff;
     margin-left: -6px;
+  }
+
+  .system-button {
+    margin-left: 10px;
+    cursor: pointer;
   }
 </style>
