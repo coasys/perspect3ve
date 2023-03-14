@@ -605,14 +605,14 @@ export class ExpressionWidget {
           //graphics.transform.setFromMatrix(new PIXI.Matrix(1, 0.5, -0.5, 1, 0, 0));
     }
 
-    #drawExpressionCircle(graphic: PIXI.Graphics, color: number = 0xff00ff) {
+    #drawExpressionCircle(graphic: PIXI.Graphics, color: number = 0x0000ff) {
         graphic.clear()
         graphic.beginFill(color, this.#selected && (this.#base != "ad4m://self") ? 0.5 : 0.2);
         if(this.#selected)
             graphic.lineStyle(OUTLINE_WIDTH_SELECTED, OUTLINE_COLOR_SELCTED);
         else
             graphic.lineStyle(OUTLINE_WIDTH, OUTLINE_COLOR);
-        graphic.drawCircle(0, 0, this.#minCanvasLength() / 2.1);
+        graphic.drawCircle(0, 0, this.#minCanvasLength() / 2.);
         graphic.endFill();
     }
     
