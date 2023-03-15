@@ -12,6 +12,7 @@ export default defineConfig({
     }
   },
   build: {
+    target: 'esnext',
     minify: false,
     // Or, if using terser (default minifier), you can try disabling certain optimizations:
     terserOptions: {
