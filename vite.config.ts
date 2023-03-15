@@ -10,7 +10,16 @@ export default defineConfig({
     fs: {
       allow: ['public']
     }
-  }
-
-
+  },
+  build: {
+    minify: false,
+    // Or, if using terser (default minifier), you can try disabling certain optimizations:
+    terserOptions: {
+      compress: {
+        drop_console: false,
+        keep_infinity: true,
+        // ... and any other options you'd like to disable
+      },
+    },
+  },
 });
