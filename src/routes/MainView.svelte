@@ -9,6 +9,7 @@
   import { COORDS_PRED_PREFIX, ExpressionWidget, LEVEL_SCALE } from './ExpressionWidget';
   import Toolbar from './Toolbar.svelte';
   import PropertiesBrowser from './PropertiesBrowser.svelte';
+    import MiniWindow from './MiniWindow.svelte';
 
   export let perspectiveID: string;
   let selectedExpression
@@ -406,8 +407,13 @@ function perspectiveDeleted(event) {
   </div>
 
   {#if perspective}
-    <Toolbar title="Perspect3ve" items={toolbarItems} />
-    <PropertiesBrowser perspectiveID={perspectiveID} expression={selectedExpression} on:perspectiveDeleted={perspectiveDeleted}/>
+    <MiniWindow title="Tools" left="90" background="#a0a0a0aa" width="160">
+      <Toolbar title="Perspect3ve" items={toolbarItems} />
+    </MiniWindow>
+    <MiniWindow title="Properties" left="{canvas.clientWidth - 200}">
+      <PropertiesBrowser perspectiveID={perspectiveID} expression={selectedExpression} on:perspectiveDeleted={perspectiveDeleted}/>  
+    </MiniWindow>
+    
   {/if}
 
 <style>

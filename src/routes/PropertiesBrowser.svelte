@@ -12,8 +12,7 @@
 
   export let perspectiveID
   export let expression
-  export let right=126;
-  export let top=90;
+  
 
   let ad4m: Ad4mClient
   let perspective: PerspectiveProxy
@@ -33,26 +32,6 @@
   let cropper
 
   const dispatch = createEventDispatcher();
-
-
-
-    let moving = false
-
-    function start() {
-        moving = true
-    }
-
-    function stop() {
-        moving = false
-    }
-
-    function move(e) {
-        if (moving) {
-            console.log(e.movementX, e.movementY)
-            right -= e.movementX
-            top += e.movementY
-        }
-    }
 
   async function ensuerAd4mClient() {
 	if (!ad4m) {
@@ -310,30 +289,9 @@
 
   
   let propertySelect
-  let collapsed = false
 </script>
 
-
-<svelte:window on:mouseup={stop} on:mousemove={move}/>
-<div class="properties-container" style="right: {right}px; top: {top}px;" on:mousedown={start}>
-  <span class="title">
-		Properties
-		<div class="window-controls">
-			{#if collapsed}
-				<j-button variant="link"
-					on:click={()=>collapsed = false}>
-					<j-icon style="color: white" name="arrows-angle-expand"/>
-				</j-button>
-			{:else}
-				<j-button variant="link"
-					on:click={()=>collapsed = true}>
-					<j-icon style="color: white" name="arrows-angle-contract"/>
-				</j-button>
-			{/if}
-		</div>
-  </span>
-  {#if !collapsed}
-  <div class="content">
+<div class="properties-container">
   {#if perspective}
 	{#if expression == "ad4m://self"}
 		<j-box pb="800">
@@ -521,8 +479,6 @@
   {:else}
 	<j-spinner></j-spinner>
   {/if}
-  </div>
-  {/if}
   <j-modal bind:this={cropDialog} class="modal">
 	<header class="header" slot="header">
 	  <j-text variant="heading">Set Background for {title}</j-text>
@@ -541,28 +497,8 @@
 
 <style>
   .properties-container {
-	position: absolute;
-	cursor: move;
-    display: flex;
-    flex-direction: column;
-    width: 250px;
-    background-color: #f5f5f5c5;
+
   }
-
-  .title {
-      display: block;
-      margin: 0;
-	  user-select: none;
-      font-size: 24px;
-      color: white;
-      background-color: black;
-      padding: 8px 5px;
-	  line-height: 38px;
-    }
-
-  .window-controls {
-	float: right;
-  } 
 
   .content {
 	max-height: calc(0.8*100vh);
