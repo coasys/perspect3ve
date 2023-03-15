@@ -10,6 +10,7 @@
   import Toolbar from './Toolbar.svelte';
   import PropertiesBrowser from './PropertiesBrowser.svelte';
     import MiniWindow from './MiniWindow.svelte';
+    import EveChat from './EveChat.svelte';
 
   export let perspectiveID: string;
   let selectedExpression
@@ -412,6 +413,9 @@ function perspectiveDeleted(event) {
     </MiniWindow>
     <MiniWindow title="Properties" left="{canvas.clientWidth - 200}">
       <PropertiesBrowser perspectiveID={perspectiveID} expression={selectedExpression} on:perspectiveDeleted={perspectiveDeleted}/>  
+    </MiniWindow>
+    <MiniWindow title="3ve" width="350">
+      <EveChat></EveChat>
     </MiniWindow>
     
   {/if}
