@@ -52,12 +52,23 @@
       connected = true;
     }
   });
+
+  let settingsDialog
+  let openaiKey
+  let openaiKeyInput
+
+  onMount(async () => {
+    openaiKey = localStorage.getItem('openaiKey')
+  });
 </script>
 
 <div class="header-bar">
   <img class="title-logo" src="/perspect3ve-logo-header.png" alt="Perspect3ve" />
   <div class="button-group">
-    <j-icon class="system-button" name="gear"/>
+    <j-button variant="link" on:click="{() => settingsDialog.open = true}" class="system-button">
+      <j-icon class="system-button" name="gear"/>
+    </j-button>
+    
     <j-icon class="system-button" name="person-circle"/>
   </div>
 </div>
@@ -72,6 +83,19 @@
     </main>
   </div>
 {/if}
+
+
+<j-modal bind:this={settingsDialog} class="modal">
+	<header class="header" slot="header">
+	  <j-text variant="heading">Settings</j-text>
+    <j-text variant="label">OpenAI API KEY:</j-text>
+    <j-input type="text"  bind:this={openaiKeyInput} value={openaiKey}/>
+    <j-button variant="primary" on:click={()=>{
+      localStorage.setItem('openaiKey', openaiKeyInput.value)
+      settingsDialog.open = false
+    }}>Save</j-button>
+	</header>
+</j-modal>
 
 <style>
 

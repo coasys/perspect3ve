@@ -3,9 +3,9 @@
     let inputElement
     let thinking = false
 
-    const apiKey = ""
     const dispatch = createEventDispatcher()
 
+    const apiKey = localStorage.getItem('openaiKey')
 
     async function chat_with_gpt_3_5(promptMessages) {
         thinking = true
