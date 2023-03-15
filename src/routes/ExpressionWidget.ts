@@ -1,6 +1,5 @@
 import * as PIXI from 'pixi.js';
 import '@pixi/math-extras';
-import '@pixi/interaction';
 import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral, SMART_LITERAL_CONTENT_PREDICATE } from '@perspect3vism/ad4m';
 
 export const COORDS_PRED_PREFIX = "p3://child_coords_2d"

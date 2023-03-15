@@ -2,7 +2,6 @@
   import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import * as PIXI from 'pixi.js';
   import '@pixi/math-extras';
-  import '@pixi/interaction';
   import * as TWEEN from '@tweenjs/tween.js';
   import type { HistoryElement } from './History';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
