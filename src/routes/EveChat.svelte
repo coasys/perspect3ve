@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte"
     let inputElement
     let thinking = false
 
     const apiKey = ""
+    const dispatch = createEventDispatcher()
 
 
     async function chat_with_gpt_3_5(promptMessages) {
@@ -202,17 +204,26 @@ Done.`
         const completion = await chat_with_gpt_3_5(promptMessages);
 
         console.log(completion);
+        const writeSplit = split(completion, "WRITE-SDNA:")
+        if(writeSplit.code) {
+            dispatch("sdnacreated", writeSplit.code)
+        }
         promptMessages = [...promptMessages, {role: "assistant", content: completion}]
     }
 
     function code(content) {
-        const split1 = content.split("SDNA:")
+        return split(content, "SDNA:")
+    }
+
+    function split(content, splitter) {
+        const split1 = content.split(splitter)
         const prefix = split1[0]
         let code
         let postfix
         const withoutPrefix = split1[1]    
         if(withoutPrefix) {
-            const split2 = withoutPrefix.split(":ADNS")
+            const reverseSplitter = splitter.split("").reverse().join("")
+            const split2 = withoutPrefix.split(reverseSplitter)
             code = split2[0]
             postfix = split2[1]
         }
@@ -238,7 +249,11 @@ Done.`
                     <div class="assistant">
                         {code(item.content).prefix}
                         {#if code(item.content).code}
-                            <pre class="code">{code(item.content).code}</pre>
+                            <pre class="code">
+                                <code class="language-prolog">
+                                    {code(item.content).code}
+                                </code>
+                            </pre>
                             {code(item.content).postfix}
                         {/if}
                     </div>

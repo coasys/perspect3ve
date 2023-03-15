@@ -415,7 +415,11 @@ function perspectiveDeleted(event) {
       <PropertiesBrowser perspectiveID={perspectiveID} expression={selectedExpression} on:perspectiveDeleted={perspectiveDeleted}/>  
     </MiniWindow>
     <MiniWindow title="3ve" width="350">
-      <EveChat></EveChat>
+      <EveChat on:sdnacreated={(event)=>{
+        console.log('sdnacreated', event)
+        const sdna = event.detail;
+        perspective?.addSdna(sdna);
+      }}></EveChat>
     </MiniWindow>
     
   {/if}
