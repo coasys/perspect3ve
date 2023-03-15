@@ -103,6 +103,7 @@ export class ExpressionWidget {
         })
 
         this.#container.on('pointerup', (event) => {
+            console.log("root pointerup", event.target)
             // filter out events that are not over graphic of this
             if(event.target == this.#graphic) {
                 if(!this.#draggingWidget) {
@@ -116,6 +117,7 @@ export class ExpressionWidget {
         })
 
         this.#container.on('pointermove', (event) => {
+            console.log("root pointermove", event.target)
             if(this.#draggingWidget && event.target != this.#draggingWidget.container) {
                 this.#pointerMoveHandlers.get(this.#draggingWidget!.base)!(event)
             }
