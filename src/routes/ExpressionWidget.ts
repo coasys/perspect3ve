@@ -230,6 +230,8 @@ export class ExpressionWidget {
             this.#text.destroy()
         }
         this.#text = this.#createTextNode(text)
+        if(this.#graphicMask)
+            this.#text.mask = this.#graphicMask
         this.#overlayContainer.addChild(this.#text)
         this.updateBitmap()
     }
