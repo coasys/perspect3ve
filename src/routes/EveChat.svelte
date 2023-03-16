@@ -212,7 +212,12 @@ Done.`
     }
 
     function code(content) {
-        return split(content, "SDNA:")
+        try{
+            return split(content, "SDNA:")
+        }catch(e) {
+            return {prefix: content}
+        }
+        
     }
 
     function split(content, splitter) {
