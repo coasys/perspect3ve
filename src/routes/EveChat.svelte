@@ -61,7 +61,7 @@ Make sure that each new Subject class definition uses a new random identifier
 but ensure the same identifier used throughout all predicate occurrences of the same class definition.
 When the user signals that the code is complete, 
 provide the the latest version to Perspect3ve to be written to the perspective's social DNA 
-by wrapping the code to commit with "WRITE-SDNA:" and ":ADNS-ETIRW"` 
+by wrapping the code to commit with "WRITE-SDNA:" and ":ANDS-ETIRW"` 
   },
   {
     role: "assistant",
@@ -175,7 +175,7 @@ p3_instance_shape(cjdotdng, Instance, "circle").
 p3_instance_color(cjdotdng, Instance, "#000055") :- property_getter(c, Instance, "state", "todo://ready").
 p3_instance_color(cjdotdng, Instance, "#FFFF00") :- property_getter(c, Instance, "state", "todo://doing").
 p3_instance_color(cjdotdng, Instance, "#00FF00") :- property_getter(c, Instance, "state", "todo://done").
-:ADNS-ETIRW
+:ANDS-ETIRW
 
 Done.`
     },
