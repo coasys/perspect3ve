@@ -339,6 +339,9 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
     let centerX = canvas!.clientWidth / 2;
     let centerY = canvas!.clientHeight / 2;
 
+    const childEndX = centerX + childWidget.relativePosition.x
+    const childEndY = centerY + childWidget.relativePosition.y
+
     let done = false;
     const animateZoom = (delta: number) => {
       function lerp(start: number, end: number, t: number) {
@@ -357,8 +360,8 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
       parentLayer.position.set(newX, newY);
 
 
-      const childX = lerp(centerX, centerX + childWidget.relativePosition.x, progress);
-      const childY = lerp(centerY, centerY + childWidget.relativePosition.y, progress);
+      const childX = lerp(centerX, childEndX, progress);
+      const childY = lerp(centerY, childEndY, progress);
       childWidget.container.position.set(childX, childY);
 
       if (progress >= 1 && !done) {
