@@ -377,6 +377,7 @@ export class ExpressionWidget {
         child.#relativePosition = this.#childrenCoords.get(child.base)!
         child.container.position = child.#relativePosition
         this.#makeChildInteractive(child)
+        child.unfreeze()
     }
 
     async addChildrenLeafs() {
