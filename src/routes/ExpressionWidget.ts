@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import '@pixi/math-extras';
-import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral, SMART_LITERAL_CONTENT_PREDICATE } from '@perspect3vism/ad4m';
+import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral, SMART_LITERAL_CONTENT_PREDICATE, Link } from '@perspect3vism/ad4m';
 
 export const COORDS_PRED_PREFIX = "p3://child_coords_2d"
 export const BACKGROUND_PREDICATE = "p3://bg_image"
@@ -515,11 +515,10 @@ export class ExpressionWidget {
     async #updateChildCoords(child: string, point: { x: number; y: number }) {
         this.#childrenCoords.set(child, point)
         let link = await this.#findCoordsLink(child)
-        while(link) {
-          await this.#perspective.remove(link)
-          link = await this.#findCoordsLink(child)
+        if(link) {
+            await this.#perspective.update(link!, this.#createCoordsLink(child, point))
         }
-        await this.#writeCoordsLink(child, point)
+    
     }
 
     async #findCoordsLink(expr: string): Promise<LinkExpression | undefined> {
@@ -527,10 +526,10 @@ export class ExpressionWidget {
         return results.find((link) => link.data.predicate.startsWith(COORDS_PRED_PREFIX))
     }
 
-    async #writeCoordsLink(expr: string, point: {x: number, y: number}) {
+    #createCoordsLink(expr: string, point: {x: number, y: number}) {
         const payload = JSON.stringify({x: point.x, y: point.y})
         const predicate = `${COORDS_PRED_PREFIX}${payload}`
-        await this.#perspective.add({ source: this.#base, target: expr, predicate })
+        return new Link({ source: this.#base, target: expr, predicate })
     }
 
     
