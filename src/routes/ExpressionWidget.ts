@@ -474,7 +474,7 @@ export class ExpressionWidget {
             } else {
                 if(that.#isDragging) {
                     this.#updateChildCoords(childWidget.#base, childWidget.container.position)
-                    childWidget.#relativePosition = childWidget.container.position
+                    childWidget.#relativePosition = {x: childWidget.container.position.x, y: childWidget.container.position.y}
                     that.#isDragging = false;
                 } 
 
