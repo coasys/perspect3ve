@@ -69,6 +69,9 @@ export class ExpressionWidget {
         this.#childrenContainer.zIndex = 2
         this.#overlayContainer.zIndex = 3
 
+        this.#backgroundContainer.interactive = true
+        this.#overlayContainer.interactive = true
+
         this.#container.sortableChildren = true
 
         this.addGraphAndText()
@@ -115,9 +118,10 @@ export class ExpressionWidget {
             return null
         })
 
-        this.#container.on('pointerup', (event) => {
+        const pointerup = (event) => {
             // filter out events that are not over graphic of this
-            if(event.target == this.#graphic) {
+            if(event.target == this.#container) {
+                console.log("root pointerup", event)
                 if(!this.#draggingWidget) {
                     this.setSelected(true)
                     this.#childrenWidgets.forEach(child => child.setSelected(false))
@@ -126,13 +130,17 @@ export class ExpressionWidget {
                     this.#pointerUpHandlers.get(this.#draggingWidget!.base)!(event)
                 }   
             }
-        })
+        }
 
-        this.#container.on('pointermove', (event) => {
+        this.#container.on('pointerup', pointerup)
+
+        const pointermove = (event) => {
             if(this.#draggingWidget && event.target != this.#draggingWidget.container) {
                 this.#pointerMoveHandlers.get(this.#draggingWidget!.base)!(event)
             }
-        })
+        }
+
+        this.#container.on('pointermove', pointermove)
     }
 
     get base() {
