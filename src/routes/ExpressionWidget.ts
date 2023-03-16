@@ -473,8 +473,9 @@ export class ExpressionWidget {
                 //zoomIn(child, this.#container, childLayer, this.#base);
             } else {
                 if(that.#isDragging) {
-                    this.#updateChildCoords(childWidget.#base, childWidget.container.position)
-                    childWidget.#relativePosition = {x: childWidget.container.position.x, y: childWidget.container.position.y}
+                    const pointCopy = JSON.parse(JSON.stringify({x: childWidget.container.position.x, y: childWidget.container.position.y}))
+                    this.#updateChildCoords(childWidget.#base, pointCopy)
+                    childWidget.#relativePosition = pointCopy
                     that.#isDragging = false;
                 } 
 
