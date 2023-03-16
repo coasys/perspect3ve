@@ -195,6 +195,14 @@ export class ExpressionWidget {
         this.#childrenWidgets.forEach(child => child.freeze())
     }
 
+    hideTitle() {
+        this.#overlayContainer.visible = false
+    }
+
+    showTitle() {
+        this.#overlayContainer.visible = true
+    }
+
 
     async addGraphAndText() {
         await this.#updateSubjectClass()
@@ -392,6 +400,7 @@ export class ExpressionWidget {
     makeAllChildrenInteractive() {
         this.#childrenWidgets.forEach(child => {
             this.#makeChildInteractive(child)
+            child.showTitle()
         })
     }
 

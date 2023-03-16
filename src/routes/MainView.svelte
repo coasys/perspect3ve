@@ -53,6 +53,7 @@
     widget.unfreeze()
     widget.container.scale.set(1)
     widget.container.position.set(width/2, height/2)
+    widget.hideTitle()
     app?.stage.addChild(widget.container)
 
     if(!seenWidgets.has(widget)) {
