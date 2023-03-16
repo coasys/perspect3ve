@@ -66,15 +66,16 @@
 
     const historyParent = history[history.length - 1];
     if(historyParent) {
+      historyParent.container.interactive = true
       historyParent.onSelectionChanged((expr) => {
         if(expr == historyParent.base) {
+          selectedExpression = expr
           dispatch('selectionChanged', expr)
           zoomOut(historyParent, currentWidget!)
         }
       })
     }
     
-    widget.clearEventCallbacks()
     widget.onSelectionChanged((expr) => {
         selectedExpression = expr
         dispatch('selectionChanged', expr)
@@ -82,6 +83,8 @@
     widget.onDoubleClick((child) => {
       zoomIn(widget, child);
     })
+
+    widget.container.interactive = true
 
     widget.freezeChildren()
   }
@@ -376,7 +379,6 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
           parentWidget.injectChildWidget(childWidget)
           setMainExpressionWidget(parentWidget, childWidget)
         }
-        
       }
     };
     app!.ticker.add(animateZoom);
