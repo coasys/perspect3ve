@@ -12,6 +12,7 @@
 
   export let perspectiveID
   export let expression
+  export let parent
   
 
   let ad4m: Ad4mClient
@@ -287,6 +288,15 @@
 	perspective = await ad4m.perspective.byUUID(perspectiveID)
   }
 
+  async function deleteCurrent() {
+	if(window.confirm(`Are you sure you want to delete ${expression} this from ${parent}?`)) {
+		console.log("deleteCurrent", expression, parent)
+		const links = await perspective.get(new LinkQuery({source: parent, target: expression}))
+		await perspective.removeLinks(links)
+		expression = parent
+	}
+  }
+
   
   let propertySelect
 </script>
@@ -403,11 +413,23 @@
 			<j-text variant="label">{expressionAuthor}</j-text>
 			<j-text variant="label">{expression}</j-text>
 		</div>
+
+		{#if expression}
+			<j-flex>
+				<j-button variant="transparent" on:click={deleteCurrent}>Delete</j-button>
+			</j-flex>
+		{/if}
+
+
 		{#if expressionType == "SDNA"}
 			<j-box>
 				<j-text variant="heading-sm" size="400">{expressionData}</j-text>
 			</j-box>
 		{/if}
+
+		
+
+
 		<div class="properties">
 			{#each properties as prop}
 			<div class="property">

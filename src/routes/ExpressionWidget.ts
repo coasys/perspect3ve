@@ -101,6 +101,20 @@ export class ExpressionWidget {
             return null
         })
 
+        this.#perspective.addListener('link-removed', async (link) => {
+            if(link.data.source == this.#base) {
+                if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
+                    this.#childrenCoords.delete(link.data.target)
+                    let widget = this.#childrenWidgets.get(link.data.target)
+                    if(widget) {
+                        widget.destroy()
+                        this.#childrenWidgets.delete(link.data.target)
+                    }
+                }
+            }
+            return null
+        })
+
         this.#container.on('pointerup', (event) => {
             // filter out events that are not over graphic of this
             if(event.target == this.#graphic) {

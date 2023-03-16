@@ -9,11 +9,12 @@
   import { COORDS_PRED_PREFIX, ExpressionWidget, LEVEL_SCALE } from './ExpressionWidget';
   import Toolbar from './Toolbar.svelte';
   import PropertiesBrowser from './PropertiesBrowser.svelte';
-    import MiniWindow from './MiniWindow.svelte';
-    import EveChat from './EveChat.svelte';
+  import MiniWindow from './MiniWindow.svelte';
+  import EveChat from './EveChat.svelte';
 
   export let perspectiveID: string;
   let selectedExpression
+  let selectionParent
   
   let toolbarItems = []
 
@@ -38,6 +39,8 @@
     currentWidget = widget;
     const width = canvas!.clientWidth;
     const height = canvas!.clientHeight;
+
+    selectionParent = widget.base
 
     if(formerMainWidget) {
       formerMainWidget.makeNonInteractiveRecursive()
@@ -412,7 +415,7 @@ function perspectiveDeleted(event) {
       <Toolbar title="Perspect3ve" items={toolbarItems} />
     </MiniWindow>
     <MiniWindow title="Properties" left="{canvas.clientWidth - 200}">
-      <PropertiesBrowser perspectiveID={perspectiveID} expression={selectedExpression} on:perspectiveDeleted={perspectiveDeleted}/>  
+      <PropertiesBrowser perspectiveID={perspectiveID} expression={selectedExpression} parent={selectionParent} on:perspectiveDeleted={perspectiveDeleted}/>  
     </MiniWindow>
     <MiniWindow title="3ve" width="350">
       <EveChat on:sdnacreated={(event)=>{
