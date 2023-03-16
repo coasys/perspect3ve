@@ -441,6 +441,7 @@ export class ExpressionWidget {
     #dragStart = new PIXI.Point();
     #oneClick = false;
     #twoClicks = false;
+    #dragOver: ExpressionWidget | null = null;
 
 
     #pointerDownHandlers: Map<string, ((event: PIXI.FederatedPointerEvent) => void)> = new Map();
@@ -475,17 +476,38 @@ export class ExpressionWidget {
 
     #childPointerup(childWidget: ExpressionWidget): (event: PIXI.FederatedPointerEvent) => void {
         const that = this;
-        const newHandler = (event: PIXI.FederatedPointerEvent) => {
+        const newHandler = async (event: PIXI.FederatedPointerEvent) => {
             if (that.#twoClicks) {
                 that.#doubleClickCallbacks.forEach(callback => callback(childWidget))
                 //console.log('dblclick -> zooming in');
                 //zoomIn(child, this.#container, childLayer, this.#base);
             } else {
                 if(that.#isDragging) {
-                    const pointCopy = JSON.parse(JSON.stringify({x: childWidget.container.position.x, y: childWidget.container.position.y}))
-                    this.#updateChildCoords(childWidget.#base, pointCopy)
-                    childWidget.#relativePosition = pointCopy
-                    that.#isDragging = false;
+                    if(that.#dragOver) {
+                        that.#dragOver.container.alpha = 1
+                        let link = await this.#findCoordsLink(childWidget.base)
+                        let newLink = JSON.parse(JSON.stringify(link!.data))
+                        newLink.source = that.#dragOver.base
+                        await this.#perspective.update(link, newLink)
+                        
+                        childWidget.#container.scale.set(LEVEL_SCALE*LEVEL_SCALE)
+                        
+                        that.#childrenWidgets.delete(childWidget.base)
+                        that.#childrenCoords.delete(childWidget.base)
+                        
+                        that.#dragOver.#updateChildCoords()
+                        that.#dragOver.setSelected(true)
+                        that.#dragOver.injectChildWidget(childWidget)
+
+                        that.#isDragging = false;
+                        that.#dragOver = null;
+
+                    } else {
+                        const pointCopy = JSON.parse(JSON.stringify({x: childWidget.container.position.x, y: childWidget.container.position.y}))
+                        this.#updateChildCoords(childWidget.#base, pointCopy)
+                        childWidget.#relativePosition = pointCopy
+                        that.#isDragging = false;
+                    }
                 } 
 
                 childWidget.setSelected(true)
@@ -515,6 +537,25 @@ export class ExpressionWidget {
                 childWidget.container.position.x += currentPoint.x - that.#dragStart.x;
                 childWidget.container.position.y += currentPoint.y - that.#dragStart.y;
                 that.#dragStart.copyFrom(event.data.global);
+
+                if(that.#dragOver)  {
+                    that.#dragOver.container.alpha = 1
+                }
+                that.#dragOver = null
+                that.#childrenWidgets.forEach((widget, key) => {
+                    if(key !== childWidget.#base) {
+                        if(widget.container.containsPoint && widget.container.containsPoint(currentPoint)) {
+                            that.#dragOver = widget
+                        }
+                    }
+                })
+
+                if(that.#dragOver) {
+                    that.#dragOver.container.alpha = 0.5
+                    childWidget.container.scale.set(0.5*LEVEL_SCALE)
+                } else {
+                    childWidget.container.scale.set(LEVEL_SCALE)
+                }
             }
         }
         this.#pointerMoveHandlers.set(childWidget.base, newHandler);
