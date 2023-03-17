@@ -1,11 +1,17 @@
 <script lang="ts">
-    import { type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
+    import { LanguageMeta, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
     import { getAd4mClient } from '@perspect3vism/ad4m-connect';
     import { onMount } from 'svelte/internal';
 
     let ad4m: Ad4mClient
     export let perspective: PerspectiveProxy
     let linkLanguageMeta
+    let showSharing = false
+
+    let linkLanguageTemplates = []
+    let linkLanguageSelect
+    let selectedLinkLanguage
+    let selectedMeta
 
     async function ensuerAd4mClient() {
         if (!ad4m) {
@@ -13,10 +19,23 @@
         }
     }
 
-    async function ensurePerspective() {
-        if (!perspective || perspective.uuid != perspectiveID) {
-            perspective = await ad4m.perspective.byUUID(perspectiveID)
+    async function getLinkLanguages() {
+        try {
+            await ensuerAd4mClient()
+            await new Promise(r => setTimeout(r, 1000))
+            console.log("getting link languages")
+            const result = await ad4m.runtime.knownLinkLanguageTemplates()
+            console.log("knownLinkLanguageTemplates", result)
+            linkLanguageTemplates = []
+            for(let address of result) {
+                const meta = await ad4m.languages.meta(address)
+                linkLanguageTemplates = [...linkLanguageTemplates, {address, meta}]
+            }
+            selectedLinkLanguage = linkLanguageTemplates[0]
+        }catch(e) {
+            console.error("Error getting link languages", e)
         }
+        
     }
 
     async function populateFromPerspective() {
@@ -29,20 +48,26 @@
         }
     }
 
-    onMount(async () => {
+    async function update() {
         await ensuerAd4mClient()
-        //await ensurePerspective()
-        await populateFromPerspective()
+        await getLinkLanguages()   
+    }
+
+    onMount(async () => {
+        await update()
     })
 
-    $: if(perspective) populateFromPerspective()
+    $: if(perspective) {
+        populateFromPerspective()
+    }
+
+    
 </script>
 
 {#if perspective}
-    <j-text variant="heading-sm" size="400">Sharing / Neighbourhood</j-text>
     
-        <j-text variant="label">URL:</j-text>
-        <j-text variant="label" weight="bold">{perspective.sharedUrl || '<not shared>'}</j-text>
+    <j-text variant="label">URL:</j-text>
+    <j-text variant="label" weight="bold">{perspective.sharedUrl || '<not shared>'}</j-text>
     
 
     {#if linkLanguageMeta}
@@ -71,6 +96,35 @@
                 <j-text variant="label">Source code link:</j-text>
                 <j-text variant="label" weight="bold">{linkLanguageMeta.sourceCodeLink}</j-text>
             </j-flex>
+        {/if}
+    {:else}
+        {#if !showSharing}
+            <j-button variant="primary" on:click={()=>{showSharing=true}}>Share as collaborative Neighbourhood</j-button>
+        {:else}
+            <j-text variant="label">Select Link Language:</j-text>
+            <j-select 
+                inputvalue="1" 
+                bind:this={linkLanguageSelect}
+                on:change={(e) => {
+                    console.log("change", e.detail.value)
+                    selectedLinkLanguage = e.detail.value
+                    selectedMeta = linkLanguageTemplates.find(({address}) => address === selectedLinkLanguage).meta
+                }}
+
+            >
+                <j-menu>
+                    {#each linkLanguageTemplates as { meta, address }}
+                        <j-menu-item 
+                            value="{address}"
+                            selected="{address === selectedLinkLanguage}"
+                        >{meta.name}</j-menu-item>
+                    {/each}
+                </j-menu>
+            </j-select>
+            {#if selectedLinkLanguage}
+                {selectedLinkLanguage}
+                {selectedMeta}
+            {/if}
         {/if}
     {/if}
 {/if}

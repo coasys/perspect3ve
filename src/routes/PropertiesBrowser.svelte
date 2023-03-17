@@ -335,6 +335,7 @@
 		</j-box>
 			
 		<j-box>
+			<j-text variant="heading-sm" size="400">Sharing / Neighbourhood</j-text>
 			<NeighbourhoodSharing perspective={perspective} />
 		</j-box>
 
