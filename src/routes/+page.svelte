@@ -1,16 +1,30 @@
-<script>
+<script lang="ts">
   import Ad4mConnectUI from '@perspect3vism/ad4m-connect';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import Nav from './Nav.svelte';
   import MainView from './MainView.svelte';
   import { onMount, setContext } from 'svelte';
+  import type { Ad4mClient, PerspectiveProxy } from '@perspect3vism/ad4m';
 
   let selectedPerspective = null;
   let selectedExpression = "ad4m://self";
 
-  function setPerspective(event) {
+  let ad4m: Promise<Ad4mClient> = getAd4mClient()
+
+  async function setPerspective(event) {
     console.log('handleSelect', event.detail);
     selectedPerspective = event.detail;
+
+    if(selectedPerspective) {
+      const perspective: PerspectiveProxy = (await (await ad4m).perspective.byUUID(selectedPerspective))!
+      console.log("perspective", perspective)
+      if(perspective.name) {
+        perspectiveAddress = perspective.name
+      } else {
+        perspectiveAddress = perspective.uuid
+      }
+    }
+
   }
 
   function setExpression(event) {
@@ -57,6 +71,9 @@
   let openaiKey
   let openaiKeyInput
 
+  let addressInput
+  let perspectiveAddress
+
   onMount(async () => {
     openaiKey = localStorage.getItem('openaiKey')
   });
@@ -64,6 +81,9 @@
 
 <div class="header-bar">
   <img class="title-logo" src="/perspect3ve-logo-header.png" alt="Perspect3ve" />
+  <div class="address-bar">
+    <j-input type="text" value={perspectiveAddress} bind:this={addressInput} />
+  </div>
   <div class="button-group">
     <j-button variant="link" on:click="{() => settingsDialog.open = true}" class="system-button">
       <j-icon class="system-button" name="gear"/>
@@ -145,4 +165,9 @@
     margin-left: 10px;
     cursor: pointer;
   }
+
+  .address-bar {
+    margin-left: 10px;
+    width: 50%;
+  } 
 </style>
