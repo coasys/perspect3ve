@@ -10,7 +10,7 @@
   let selectedPerspective = null;
   let selectedExpression = "ad4m://self";
 
-  let ad4m: Promise<Ad4mClient> = getAd4mClient()
+  let ad4m: Ad4mClient
 
   async function setPerspective(event) {
     console.log('handleSelect', event.detail);
@@ -18,7 +18,7 @@
 
     console.log("selectedPerspective", selectedPerspective)
     if(selectedPerspective) {
-      perspective = await (await ad4m).perspective.byUUID(selectedPerspective)
+      perspective = await ad4m.perspective.byUUID(selectedPerspective)
       console.log("perspective", perspective)
       if(!perspective) {
         console.error("Perspective not found: ", selectedPerspective)
@@ -67,8 +67,9 @@
     ]
   });
 
-  onMount(() => {
+  onMount(async () => {
     ui.connect();
+    ad4m = await ui.getAd4mClient()
   });
 
   ui.addEventListener('authstatechange', async (e) => {
@@ -161,7 +162,9 @@
 <j-modal bind:this={sharingDialog} class="modal">
 	<header class="header" slot="header">
 	  <j-text variant="heading">Share Perspective</j-text>
-    <NeighbourhoodSharing perspective={perspective} />
+    {#if sharingDialog && sharingDialog.open}
+      <NeighbourhoodSharing perspective={perspective} />
+    {/if}
 	</header>
 </j-modal>
 
