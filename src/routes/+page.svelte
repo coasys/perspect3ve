@@ -5,6 +5,7 @@
   import MainView from './MainView.svelte';
   import { onMount, setContext } from 'svelte';
   import type { Ad4mClient, PerspectiveProxy } from '@perspect3vism/ad4m';
+    import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
 
   let selectedPerspective = null;
   let selectedExpression = "ad4m://self";
@@ -15,14 +16,24 @@
     console.log('handleSelect', event.detail);
     selectedPerspective = event.detail;
 
+    console.log("selectedPerspective", selectedPerspective)
     if(selectedPerspective) {
-      const perspective: PerspectiveProxy = (await (await ad4m).perspective.byUUID(selectedPerspective))!
+      perspective = await (await ad4m).perspective.byUUID(selectedPerspective)
       console.log("perspective", perspective)
-      if(perspective.name) {
-        perspectiveAddress = perspective.name
-      } else {
-        perspectiveAddress = perspective.uuid
+      if(!perspective) {
+        console.error("Perspective not found: ", selectedPerspective)
+        return
       }
+      if(perspective.sharedUrl) {
+        perspectiveAddress = perspective.sharedUrl
+      } else {
+        if(perspective.name) {
+          perspectiveAddress = perspective.name
+        } else {
+          perspectiveAddress = perspective.uuid
+        }
+      }
+      
     }
 
   }
@@ -73,16 +84,46 @@
 
   let addressInput
   let perspectiveAddress
+  let perspective: PerspectiveProxy|null
+
+  let sharingDialog
 
   onMount(async () => {
     openaiKey = localStorage.getItem('openaiKey')
   });
+
+
 </script>
 
 <div class="header-bar">
   <img class="title-logo" src="/perspect3ve-logo-header.png" alt="Perspect3ve" />
   <div class="address-bar">
-    <j-input type="text" value={perspectiveAddress} bind:this={addressInput} />
+    <j-flex>
+      <j-button variant="link" disabled>
+        <j-icon name="chevron-left"/>
+      </j-button>
+      <j-button variant="link" disabled>
+        <j-icon name="chevron-right"/>
+      </j-button>
+      
+      <j-button variant="link" disabled>
+        <j-icon name="arrow-up-circle"/>
+      </j-button>
+      
+      <j-input class="address-input" type="text" value={perspectiveAddress} bind:this={addressInput} />
+      
+      <j-button variant="link" on:click={()=>{sharingDialog.open=true}}>
+
+        {#if perspective && perspective.sharedUrl}
+          <j-icon name="share-fill"/>
+        {:else}
+          <j-icon name="share"/>
+        {/if}
+        
+      </j-button>
+      
+    </j-flex>
+    
   </div>
   <div class="button-group">
     <j-button variant="link" on:click="{() => settingsDialog.open = true}" class="system-button">
@@ -114,6 +155,13 @@
       localStorage.setItem('openaiKey', openaiKeyInput.value)
       settingsDialog.open = false
     }}>Save</j-button>
+	</header>
+</j-modal>
+
+<j-modal bind:this={sharingDialog} class="modal">
+	<header class="header" slot="header">
+	  <j-text variant="heading">Share Perspective</j-text>
+    <NeighbourhoodSharing perspective={perspective} />
 	</header>
 </j-modal>
 
@@ -168,6 +216,10 @@
 
   .address-bar {
     margin-left: 10px;
-    width: 50%;
+    width: 60%;
   } 
+
+  .address-input {
+    width: 100%;
+  }
 </style>

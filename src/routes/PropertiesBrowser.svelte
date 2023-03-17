@@ -9,6 +9,7 @@
   import { flattenPrologList } from '../util';
   import { BACKGROUND_PREDICATE } from './ExpressionWidget';
   import ImageCropper from './ImageCropper.svelte';
+  import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
 
   export let perspectiveID
   export let expression
@@ -333,44 +334,10 @@
 			</j-flex>
 		</j-box>
 			
-
 		<j-box>
-			<j-text variant="heading-sm" size="400">Sharing / Neighbourhood</j-text>
-			
-				<j-text variant="label">URL:</j-text>
-				<j-text variant="label" weight="bold">{perspective.sharedUrl || '<not shared>'}</j-text>
-			
-
-			{#if linkLanguageMeta}
-				<j-box pt="400" pb="400">
-					<j-text variant="heading-sm" size="400">Link Language:</j-text>
-					<j-text variant="label" weight="bold">{linkLanguageMeta.name}</j-text>
-					<j-text variant="label" weight="bold">{linkLanguageMeta.address}</j-text>
-					<j-flex gap="200" j="start" a="end">
-						<j-text variant="label">Description:</j-text>
-						<j-text variant="label" weight="bold">{linkLanguageMeta.description}</j-text>
-					</j-flex>
-				</j-box>
-				
-			
-				{#if linkLanguageMeta.templated}
-					<j-box pb="400">
-						<j-text variant="heading-sm" size="400">Templated</j-text>
-						<j-text variant="label">Source:</j-text>
-						<j-text variant="label" weight="bold">{linkLanguageMeta.templateSourceLanguageAddress}</j-text>
-						<j-text variant="label">Template parameters:</j-text>
-						<j-text variant="label" weight="bold">{linkLanguageMeta.templateAppliedParams}</j-text>
-					</j-box>
-				{/if}
-				{#if linkLanguageMeta.sourceCodeLink}
-					<j-flex gap="200" j="start" a="end">
-						<j-text variant="label">Source code link:</j-text>
-						<j-text variant="label" weight="bold">{linkLanguageMeta.sourceCodeLink}</j-text>
-					</j-flex>
-				{/if}
-			{/if}
-		
+			<NeighbourhoodSharing perspective={perspective} />
 		</j-box>
+
 
 		<j-box pt="300">
 			<j-button color="red" variant="transparent" size="xs"
