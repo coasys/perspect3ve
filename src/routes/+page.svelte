@@ -88,10 +88,49 @@
   let perspective: PerspectiveProxy|null
 
   let sharingDialog
+  let neighbourhoodJoinDialog
+  let joinNeighbourhoodExpression
+  let joinNeighbourhoodAddress
 
   onMount(async () => {
     openaiKey = localStorage.getItem('openaiKey')
   });
+
+  async function lookupAddress() {
+    const perspectiveAddress = addressInput.value
+    const allPerspectives = await ad4m.perspective.all()
+    const perspective = allPerspectives.find(p => {
+      return p.name === perspectiveAddress ||
+        p.sharedUrl === perspectiveAddress ||
+        p.uuid === perspectiveAddress
+    })
+
+    if(!perspective && perspectiveAddress.startsWith("neighbourhood://")) {
+      console.log("Try NH", perspectiveAddress)
+      ad4m = await ui.getAd4mClient()
+      const nh = await ad4m.expression.get(perspectiveAddress)
+      console.log(nh)
+      if(nh) {
+        joinNeighbourhoodExpression = nh
+        joinNeighbourhoodExpression.data = JSON.parse(joinNeighbourhoodExpression.data)
+        joinNeighbourhoodAddress = perspectiveAddress
+        neighbourhoodJoinDialog.open = true
+      }
+    } else {
+      if(perspective) {
+        selectedPerspective = perspective.uuid
+        setPerspective({detail: perspective.uuid})
+      } else {
+        alert("Perspective not found")
+      }
+    }
+
+    
+  }
+
+  async function joinNeighbourhood() {
+
+  }
 
 
 </script>
@@ -111,7 +150,19 @@
         <j-icon name="arrow-up-circle"/>
       </j-button>
       
-      <j-input class="address-input" type="text" value={perspectiveAddress} bind:this={addressInput} />
+      <j-input 
+        class="address-input" 
+        type="text" 
+        value={perspectiveAddress} 
+        bind:this={addressInput} 
+        on:keydown={(event) => {
+          console.log(event)
+          if(event.key === 'Enter') {
+            lookupAddress()
+          }
+          event.stopPropagation()
+        }}
+      />
       
       <j-button variant="link" on:click={()=>{sharingDialog.open=true}}>
 
@@ -168,6 +219,27 @@
 	</header>
 </j-modal>
 
+<j-modal bind:this={neighbourhoodJoinDialog} class="modal">
+  <header class="header" slot="header">
+    <j-text variant="heading">Join Neighbourhood</j-text>
+    <j-text variant="label">URL:</j-text>
+    <j-text>{joinNeighbourhoodAddress}</j-text>
+    <j-text variant="label">Author:</j-text>
+    <j-text>{joinNeighbourhoodExpression?.author}</j-text>
+    <j-text variant="label">Timestamp:</j-text>
+    <j-text>{joinNeighbourhoodExpression?.timestamp}</j-text>
+    {#if joinNeighbourhoodExpression?.data?.meta?.links?.length > 0}
+      <j-text variant="label">Meta info:</j-text>
+      
+      {#each joinNeighbourhoodExpression?.data.meta.links as metaLink}
+        <j-text variant="label">{metaLink.data.source}[{metaLink.data.predicate}]:</j-text>
+        <j-text>{metaLink.data.target}</j-text>
+      {/each}
+    {/if}
+    
+    <j-button variant="primary" on:click={joinNeighbourhood}>Join</j-button>
+  </header>
+</j-modal>
 <style>
 
   .header-bar {
