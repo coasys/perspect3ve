@@ -345,8 +345,14 @@ export class ExpressionWidget {
     }
 
     async updateChildrenCoords() {
+        const memberLinks = await this.#perspective.get(new LinkQuery({ source: this.#base, predicate: "flux://has_member" }));        
+        const members = memberLinks.map((link) => link.data.target)
+        const messageLinks = await this.#perspective.get(new LinkQuery({ source: this.#base, predicate: "flux://has_message" }));        
+        const messages = messageLinks.map((link) => link.data.target)
         const result: LinkExpression[] = await this.#perspective.get(new LinkQuery({ source: this.#base }));        
         for(const link of result) {
+            if(members.includes(link.data.target)) continue
+            if(messages.includes(link.data.target)) continue
             const child = link.data.target  
             if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
                 const payload = link.data.predicate.substring(COORDS_PRED_PREFIX.length)
