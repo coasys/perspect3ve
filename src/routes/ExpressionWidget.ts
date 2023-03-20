@@ -76,21 +76,25 @@ export class ExpressionWidget {
 
         this.addGraphAndText()
 
-        this.#perspective.addListener('link-added', async (link) => {
+        const updateChildFromLink = async (link: LinkExpression) => {
+            const payload = link.data.predicate.substring(COORDS_PRED_PREFIX.length)
+            const point = JSON.parse(payload)
+            this.#childrenCoords.set(link.data.target, point)
+            let widget = this.#childrenWidgets.get(link.data.target)
+            let layer
+            if(!widget) {
+                widget = this.addChild(link.data.target, point)
+                widget.addChildrenLeafs()
+                this.#makeChildInteractive(widget)
+            }
+            layer = widget.#container
+            layer.position.set(point.x, point.y)
+        }
+
+        this.#perspective.addListener('link-added', async (link: LinkExpression) => {
             if(link.data.source == this.#base) {
                 if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
-                    const payload = link.data.predicate.substring(COORDS_PRED_PREFIX.length)
-                    const point = JSON.parse(payload)
-                    this.#childrenCoords.set(link.data.target, point)
-                    let widget = this.#childrenWidgets.get(link.data.target)
-                    let layer
-                    if(!widget) {
-                        widget = this.addChild(link.data.target, point)
-                        widget.addChildrenLeafs()
-                        this.#makeChildInteractive(widget)
-                    }
-                    layer = widget.#container
-                    layer.position.set(point.x, point.y)
+                    updateChildFromLink(link)
                 }
 
                 if(link.data.predicate == BACKGROUND_PREDICATE) {
@@ -117,6 +121,18 @@ export class ExpressionWidget {
             }
             return null
         })
+
+        this.#perspective.addListener('link-updated', async (data) => {
+            const { newLink, oldLink } = data
+            const link = newLink
+            console.log(link)
+            if(link.data.source == this.#base) {
+                if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
+                    updateChildFromLink(link)
+                }
+            }
+        })
+
 
         const pointerup = (event) => {
             // filter out events that are not over graphic of this
