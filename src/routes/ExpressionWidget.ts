@@ -270,27 +270,51 @@ export class ExpressionWidget {
     setBackgroundSprite(sprite: PIXI.Sprite) {
         if(sprite) {
             if(this.#backgroundSprite) {
-                this.#container.removeChild(this.#backgroundSprite)
+                this.#backgroundContainer.removeChild(this.#backgroundSprite)
                 this.#backgroundSprite.destroy()
             }
-            this.#container.addChild(sprite)
+            this.#backgroundContainer.addChild(sprite)
             this.#backgroundSprite = sprite
         }
     }
 
     async updateBackground() {
-        let background_links = await this.#perspective.get(new LinkQuery({ 
-            source: this.#base, 
-            predicate: BACKGROUND_PREDICATE
-        }))
+        let background_url
+        let background_file_expression
 
-        if(background_links.length > 0) {
-            const background_link = background_links[0]
-            const background_url = background_link.data.target
-            
-            const background_file_expression = await this.#perspective.getExpression(background_url)
+        if(this.#subjectProxy && this.#subjectProxy.image) {
+            const image = await this.#subjectProxy.image
+            if(image) {
+                if(image.data_base64)
+                    background_file_expression = image
+                else
+                    background_url = image
+            }   
+        }
 
-            const sprite = await this.#createBackgroundFromFileExpression(background_file_expression)
+        if(!background_file_expression && !background_url) {
+            let background_links = await this.#perspective.get(new LinkQuery({ 
+                source: this.#base, 
+                predicate: BACKGROUND_PREDICATE
+            }))
+
+            if(background_links.length > 0) {
+                const background_link = background_links[0]
+                background_url = background_link.data.target
+            }
+        }
+
+        if(!background_file_expression && background_url) {   
+            background_file_expression = await this.#perspective.getExpression(background_url)
+        }
+
+        if(background_file_expression) {
+            let sprite
+            if(background_file_expression.data_base64) {
+                sprite = await this.#createBackgroundFromBase64(background_file_expression.data_base64)
+            } else {
+                sprite = await this.#createBackgroundFromFileExpression(background_file_expression)
+            }
 
             if(sprite) {
                 this.setBackgroundSprite(sprite)
@@ -828,8 +852,12 @@ export class ExpressionWidget {
             return null
         }
 
+        return await this.#createBackgroundFromBase64(fileExpression.data.data_base64)
+    }
+
+    async #createBackgroundFromBase64(data_base64: string): Promise<PIXI.Sprite|null> {
         // Convert the base64 string to a blob
-        const byteCharacters = atob(fileExpression.data.data_base64);
+        const byteCharacters = atob(data_base64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
