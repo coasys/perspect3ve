@@ -87,13 +87,17 @@
 		const proxy = await perspective.getSubjectProxy(expression, className)
 
 		for(const prop of classProps) {
-			
-			const options = await perspective.infer(`subject_class("${className}", C), property_named_option(C, "${prop}", Value, Label).`)
-			console.log(`For ${prop} - options:`, options)
+			let options
+			try {
+				options = await perspective.infer(`subject_class("${className}", C), property_named_option(C, "${prop}", Value, Label).`)
+				console.log(`For ${prop} - options:`, options)
+			} catch(e) {
+
+			}
 
 			const value = await proxy[prop]
 
-			if(prop == "title" || prop == "Title") {
+			if(prop == "title" || prop == "Title" || prop == "name" || prop == "Name") {
 				title = value
 			}
 
@@ -218,6 +222,7 @@
 
   async function populateFromExpression() {
 	expressionData = null
+	title = "<no title>"
 	checkBackgroundImage()
 	if(await checkSdnaClasses()) return
 	if(await checkSmartLiteral()) return
