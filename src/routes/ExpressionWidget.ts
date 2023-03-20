@@ -125,7 +125,6 @@ export class ExpressionWidget {
         this.#perspective.addListener('link-updated', async (data) => {
             const { newLink, oldLink } = data
             const link = newLink
-            console.log(link)
             if(link.data.source == this.#base) {
                 if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
                     updateChildFromLink(link)
@@ -301,28 +300,57 @@ export class ExpressionWidget {
     }
 
     async #updateSubjectClass() {
+        if(this.#base == "ad4m://self") return
         try {        
-            const classResults = await this.#perspective.infer(`subject_class(ClassName, C), instance(C, "${this.base}"), p3_instance_shape(C, "${this.base}", Shape), p3_instance_color(C, "${this.base}", Color).`)
+            const classResults = await this.#perspective.infer(`subject_class(ClassName, C), instance(C, "${this.base}").`)
             if(classResults && classResults.length > 0) {
                 const className = classResults[0].ClassName
-                this.#isInstanceOfSubjectClass = className
-                this.#subjectColor = parseInt(classResults[0].Color.substring(1), 16)
-                this.#subjectShape = classResults[0].Shape
                 this.#subjectProxy = await this.#perspective.getSubjectProxy(this.#base, className)
+                this.#isInstanceOfSubjectClass = className
+
+                this.updateDisplayText()
+
+                this.#subjectColor = null
+                this.#subjectShape = null
+
+                const shapeResults = await this.#perspective.infer(`subject_class("${className}", C), (p3_instance_shape(C, "${this.base}", Shape);Shape=none),(p3_instance_color(C, "${this.base}", Color);Color=none).`)
+
+                console.log("shapeResults", shapeResults)
+                if(shapeResults.Color != "none")
+                    this.#subjectColor = parseInt(shapeResults.Color.substring(1), 16)
+
+                if(shapeResults.Shape != "none")
+                    this.#subjectShape = shapeResults.Shape
+                
+                
             } else {
                 this.#isInstanceOfSubjectClass = null
                 this.#subjectColor = null
                 this.#subjectShape = null
                 this.#subjectProxy = null
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error(e)
+        }
     }
 
     async getDisplayText(): Promise<string> {
         try {
-            const parsedLiteralValue = Literal.fromUrl(this.#base).get()
+            
             if(this.#subjectProxy && this.#subjectProxy.title) {
                 return await this.#subjectProxy.title
+            }
+
+            if(this.#subjectProxy && this.#subjectProxy.Title) {
+                return await this.#subjectProxy.Title
+            }
+
+            if(this.#subjectProxy && this.#subjectProxy.name) {
+                return await this.#subjectProxy.name
+            }
+
+            if(this.#subjectProxy && this.#subjectProxy.Name) {
+                return await this.#subjectProxy.Name
             }
 
             if(await SmartLiteral.isSmartLiteralBase(this.#perspective, this.#base)) {
@@ -330,6 +358,7 @@ export class ExpressionWidget {
                 return await smartLiteral.get()
             }
 
+            const parsedLiteralValue = Literal.fromUrl(this.#base).get()
             if (typeof parsedLiteralValue == 'object'){
                 if(parsedLiteralValue.data != undefined) {
                     return parsedLiteralValue.data
@@ -340,6 +369,7 @@ export class ExpressionWidget {
                 return parsedLiteralValue
             }
         } catch(e) {
+            console.log("error getting display text", e)
             return this.#base
         }
     }
@@ -629,7 +659,7 @@ export class ExpressionWidget {
     }
 
     async #drawExpressionGraphic(graphic: PIXI.Graphics) {
-        if(this.#isInstanceOfSubjectClass) {
+        if(this.#isInstanceOfSubjectClass && this.#subjectShape) {
             if(this.#subjectShape === 'circle') {
                 this.#drawExpressionCircle(graphic, this.#subjectColor)
             } else {
