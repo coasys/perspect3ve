@@ -236,17 +236,17 @@ export class ExpressionWidget {
 
         if(this.#base == "ad4m://self") {
             this.#createPerspectiveBackground().then((sprite) => {
-                this.#container.addChild(sprite)
+                this.#backgroundContainer.addChild(sprite)
             })
         } else {
             if(this.#base.startsWith("flux://")) {
                 this.#createBlobBackground(0x44bb33).then((sprite) => {
-                    this.#container.addChild(sprite)
+                    this.#backgroundContainer.addChild(sprite)
                 })
             }
             if(this.#base.startsWith("flux_entry://")) {
                 this.#createBlobBackground(0xffffff).then((sprite) => {
-                    this.#container.addChild(sprite)
+                    this.#backgroundContainer.addChild(sprite)
                 })
             }
             this.updateDisplayText()
