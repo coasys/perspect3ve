@@ -579,6 +579,8 @@ export class ExpressionWidget {
         let link = await this.#findCoordsLink(child)
         if(link) {
             await this.#perspective.update(link!, this.#createCoordsLink(child, point))
+        } else {
+            await this.#perspective.add(this.#createCoordsLink(child, point))
         }
     
     }
