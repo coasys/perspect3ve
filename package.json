@@ -43,6 +43,7 @@
     "@tweenjs/tween.js": "^18.6.4",
     "pixi.js": "^7.1.4",
     "pixijs": "^7.1.3",
-    "svelte-easy-crop": "^2.0.1"
+    "svelte-easy-crop": "^2.0.1",
+    "uuid": "^9.0.0"
   }
 }

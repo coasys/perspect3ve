@@ -1,7 +1,9 @@
 <script lang="ts">
-    import { LanguageMeta, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
+    import { LanguageMeta, Perspective, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
     import { getAd4mClient } from '@perspect3vism/ad4m-connect';
     import { onMount } from 'svelte/internal';
+    import { v4 as uuidv4 } from 'uuid';
+
 
     let ad4m: Ad4mClient
     export let perspective: PerspectiveProxy
@@ -39,6 +41,7 @@
     }
 
     async function populateFromPerspective() {
+        await ensuerAd4mClient()
         if(perspective.sharedUrl) {
             let nh = await ad4m.expression.get(perspective.sharedUrl)
             nh = JSON.parse(nh.data)
@@ -59,6 +62,36 @@
 
     $: if(perspective) {
         populateFromPerspective()
+    }
+
+    let sharingInProgress = false
+    let sharingProgressMessage = ""
+    let sharingError = null
+    async function shareToNeighbourhood() {
+        try {
+            sharingInProgress = true
+            sharingProgressMessage = "Cloning link language..."
+
+            const values = {
+                name: selectedMeta.name + " " + perspective.name,
+                description: selectedMeta.description,
+                uid: uuidv4()
+            }
+            
+            const stringified = JSON.stringify(values)
+
+            const newLinkLanguage = await ad4m.languages.applyTemplateAndPublish(selectedMeta.address, stringified)
+            sharingProgressMessage = "Publishing Neighbourhood..."
+            const newNeighbourhood = await ad4m.neighbourhood.publishFromPerspective(perspective.uuid, newLinkLanguage.address, new Perspective())
+            sharingProgressMessage = "Published successfully as " + newNeighbourhood.sharedUrl
+            perspective = await ad4m.perspective.byUUID(perspective.uuid)
+            linkLanguageMeta = newLinkLanguage
+            sharingInProgress = false
+        } catch(e) {
+            sharingInProgress = false
+            sharingError = e.message
+            console.error("Error sharing neighbourhood", e)
+        }
     }
 
     
@@ -99,16 +132,23 @@
         {/if}
     {:else}
         {#if !showSharing}
-            <j-button variant="primary" on:click={()=>{showSharing=true}}>Share as collaborative Neighbourhood</j-button>
+            <j-button variant="transparent" on:click={()=>{showSharing=true}}>Share as collaborative Neighbourhood...</j-button>
         {:else}
             <j-text variant="label">Select Link Language:</j-text>
             <j-select 
                 inputvalue="1" 
                 bind:this={linkLanguageSelect}
-                on:change={(e) => {
-                    console.log("change", e.detail.value)
-                    selectedLinkLanguage = e.detail.value
-                    selectedMeta = linkLanguageTemplates.find(({address}) => address === selectedLinkLanguage).meta
+                on:change={async (e) => {
+                    if(e.detail != undefined) {
+                        await getLinkLanguages()
+                        const { address, meta } = linkLanguageTemplates[e.detail]
+                        selectedLinkLanguage = address
+                        selectedMeta = meta
+                    } else {
+                        selectedLinkLanguage = null
+                        selectedMeta = null
+                    }
+                    
                 }}
 
             >
@@ -121,10 +161,36 @@
                     {/each}
                 </j-menu>
             </j-select>
-            {#if selectedLinkLanguage}
-                {selectedLinkLanguage}
-                {selectedMeta}
+            {#if selectedMeta}
+                <j-box>
+                    <j-text variant="label">Address:</j-text>
+                    <j-text variant="label" weight="bold">{selectedMeta.address}</j-text>
+                    <j-text variant="label">Description:</j-text>
+                    <j-text variant="label" weight="bold">{selectedMeta.description}</j-text>
+                    <j-text variant="label">Author:</j-text>
+                    <j-text variant="label" weight="bold">{selectedMeta.author}</j-text>
+                    {#if selectedMeta.sourceCodeLink}
+                        <j-flex gap="200" j="start" a="end">
+                            <j-text variant="label">Source code link:</j-text>
+                            <j-text variant="label" weight="bold">{selectedMeta.sourceCodeLink}</j-text>
+                        </j-flex>
+                    {/if}
+                </j-box>
+                <j-button variant="primary" on:click={shareToNeighbourhood} disabled={sharingInProgress}>Share</j-button>
+                {#if sharingInProgress}
+                    <j-spinner />
+                    <j-text variant="label">{sharingProgressMessage}</j-text>
+                {/if}
+                {#if sharingError}
+                    <j-text variant="label" class="error">{sharingError}</j-text>
+                {/if}
             {/if}
         {/if}
     {/if}
 {/if}
+
+<style>
+    .error {
+        color: red;
+    }
+</style>
