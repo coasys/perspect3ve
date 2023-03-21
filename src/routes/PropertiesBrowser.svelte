@@ -1,7 +1,7 @@
 <script lang="ts">
   import '@junto-foundation/junto-elements';
   import '@junto-foundation/junto-elements/dist/main.css';
-  import { Link, parseExprUrl, SmartLiteral, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
+  import { Agent, Link, parseExprUrl, Perspective, PerspectiveProxy, SmartLiteral, type Ad4mClient } from '@perspect3vism/ad4m';
   import { Literal, LinkQuery } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher, afterUpdate } from 'svelte';
@@ -315,18 +315,40 @@
   let chatMessages
   let chatInput
 
+  let agents = new Map()
+
   async function getChatMessages() {
 	const links = await perspective.get(new LinkQuery({source: expression, predicate: "flux://has_message"}))
 	links.sort((a, b) => a.timestamp - b.timestamp)
-	chatMessages = links.map(link => {
+	chatMessages = await Promise.all(links.map(async link => {
 		const chatExpression = Literal.fromUrl(link.data.target).get()
-		console.log("chatExpression", chatExpression)
+		let agent: Agent = agents.get(chatExpression.author)
+		if(!agent) {
+			agent = await ad4m.agent.byDID(chatExpression.author)
+			agents.set(chatExpression.author, agent)
+		}
+		const p = new Perspective(agent.perspective?.links)
+		const username = Literal.fromUrl(p.getSingleTarget(new LinkQuery({predicate: "sioc://has_username"}))).get()
+		const profile_image_url = p.getSingleTarget(new LinkQuery({predicate: "sioc://has_profile_image"}))
+		console.log("profile_image_url", profile_image_url)
+		let profile_base64
+		let mime_type
+		if(profile_image_url) {
+			const profile_image = await perspective.getExpression(profile_image_url)
+			if(profile_image) {
+				const data = JSON.parse(profile_image.data)
+				profile_base64 = data.data_base64
+				mime_type = data.file_type
+			}	
+		}
 		return {
 			content: chatExpression.data,
 			timestamp: chatExpression.timestamp,
-			author: chatExpression.author
+			author: username,
+			profile_base64,
+			mime_type
 		}
-	})
+	}))
   }
 
   afterUpdate(async () => {
@@ -525,9 +547,10 @@
 			{#if tab=="chat"}
 				<div class="chat">
 					{#each chatMessages as message}
-						<div class="message">
-							<div class="author">{message.author}</div>
-							<div class="text">{@html message.content}</div>
+						<div class="chat-message">
+							<img class="chat-avatar" src={`data:${message.mime_type};base64,${message.profile_base64}`} />
+							<div class="chat-message-content">{@html message.content}</div>
+							<div class="chat-message-author">{message.author}</div>
 						</div>
 					{/each}
 					<j-input 
@@ -585,7 +608,6 @@
     margin-bottom: 20px;
   }
   
-  
   .description {
     font-size: 14px;
     color: #888888;
@@ -638,6 +660,23 @@
 
   .footer {
 	float: right;
+  }
+
+  .chat-message {
+	border: #888888 1px solid;
+	border-radius: 5px;
+	padding: 10px;
+  }
+
+  .chat-avatar {
+	width: 40px;
+	height: 40px;
+	float: left;
+	margin: 5px;
+  }
+
+  .chat-message-author {
+	font-size: 12px;
   }
   
 </style>
