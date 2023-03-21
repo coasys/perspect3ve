@@ -33,6 +33,9 @@
   let cropDialog
   let cropper
 
+  let tab="properties"
+  let tabs
+
   const dispatch = createEventDispatcher();
 
   async function ensuerAd4mClient() {
@@ -275,6 +278,8 @@
 	} else {
 		populateFromPerspective()
 	}
+
+	getChatMessages()
   }
 
   onMount(async () => {
@@ -305,6 +310,35 @@
 
   
   let propertySelect
+
+  let chatMessages
+  let chatInput
+
+  async function getChatMessages() {
+	const links = await perspective.get(new LinkQuery({source: expression, predicate: "flux://has_message"}))
+	links.sort((a, b) => a.timestamp - b.timestamp)
+	chatMessages = links.map(link => {
+		const chatExpression = Literal.fromUrl(link.data.target).get()
+		console.log("chatExpression", chatExpression)
+		return {
+			content: chatExpression.data,
+			timestamp: chatExpression.timestamp,
+			author: chatExpression.author
+		}
+	})
+  }
+
+  async function handleSendMessage() {
+	const message = chatInput.value
+	const messageExpression = await perspective.createExpression(message, 'literal')
+	console.log("messageExpression", messageExpression)
+	await perspective.add(new Link({source: expression, predicate: "flux://has_message", target: messageExpression}))
+	chatInput.value = ""
+	await getChatMessages()
+  }
+
+  getChatMessages()
+
 </script>
 
 <div class="properties-container">
@@ -387,88 +421,127 @@
 			<j-text variant="label">{expression}</j-text>
 		</div>
 
-		{#if expression}
-			<j-flex>
-				<j-button variant="transparent" on:click={deleteCurrent}>Delete</j-button>
-			</j-flex>
-		{/if}
+		<j-tabs bind:this={tabs} on:change={(e)=>{tab=tabs.value; console.log('tab', tab)}}>
+			<j-tab-item value="properties" checked={tab=="properties"}>Props.</j-tab-item>
+			<j-tab-item value="actions" checked={tab=="actions"} >Actions</j-tab-item>
+			<j-tab-item value="chat" checked={tab=="chat"}>Chat</j-tab-item>
+		</j-tabs>
+
+		<div class="tabs-content">
+
+			{#if tab=="actions"}
+				{#if expression}
+					<j-flex>
+						<j-button variant="transparent" on:click={deleteCurrent}>Delete</j-button>
+					</j-flex>
+				{/if}
+			{/if}
 
 
-		{#if expressionType == "SDNA"}
-			<j-box>
-				<j-text variant="heading-sm" size="400">{expressionData}</j-text>
-			</j-box>
-		{/if}
+			{#if tab=="properties"}
+				{#if expressionType == "SDNA"}
+					<j-box>
+						<j-text variant="heading-sm" size="400">{expressionData}</j-text>
+					</j-box>
+				{/if}
 
-		
+				
 
 
-		<div class="properties">
-			{#each properties as prop}
-			<div class="property">
-				<div class="name">{prop.name}</div>
-				{#if prop.onChange != undefined}
-					{#if prop.isEditing}
-						{#if prop.options }
-							<j-select inputvalue="1" bind:this={propertySelect}>
-								<j-menu>
-									{#each prop.options as option}
-										<j-menu-item 
-											value="{option.Value}"
-											selected="{option.Value == prop.value}"
-										>{option.Label}</j-menu-item>
-									{/each}
-								</j-menu>
-							</j-select>
-							<j-button 
-								on:click={() => {
-									if(propertySelect.value == undefined) return
-									prop.value = propertySelect.value
-									prop.onChange(propertySelect.value)
-									prop.isEditing = false
-								}
-							}>Save</j-button>
-							<j-button on:click={() => {
-								prop.isEditing = false
-							}}>Cancel</j-button>
-						{:else}
-							<j-input
-								type="text"
-								full="true"
-								value={prop.value}
-								bind:this={editingProp}
-								on:keydown={(event) => {
-									console.log(event)
-									if(event.key === 'Enter') {
-										const newValue = event.srcElement.value
-										prop.value = newValue
-										prop.onChange(newValue)
+				<div class="properties">
+					{#each properties as prop}
+					<div class="property">
+						<div class="name">{prop.name}</div>
+						{#if prop.onChange != undefined}
+							{#if prop.isEditing}
+								{#if prop.options }
+									<j-select inputvalue="1" bind:this={propertySelect}>
+										<j-menu>
+											{#each prop.options as option}
+												<j-menu-item 
+													value="{option.Value}"
+													selected="{option.Value == prop.value}"
+												>{option.Label}</j-menu-item>
+											{/each}
+										</j-menu>
+									</j-select>
+									<j-button 
+										on:click={() => {
+											if(propertySelect.value == undefined) return
+											prop.value = propertySelect.value
+											prop.onChange(propertySelect.value)
+											prop.isEditing = false
+										}
+									}>Save</j-button>
+									<j-button on:click={() => {
 										prop.isEditing = false
-									}
-									event.stopPropagation()
-								}}
-								on:blur={() => prop.isEditing = false}
-							/>
+									}}>Cancel</j-button>
+								{:else}
+									<j-input
+										type="text"
+										full="true"
+										value={prop.value}
+										bind:this={editingProp}
+										on:keydown={(event) => {
+											console.log(event)
+											if(event.key === 'Enter') {
+												const newValue = event.srcElement.value
+												prop.value = newValue
+												prop.onChange(newValue)
+												prop.isEditing = false
+											}
+											event.stopPropagation()
+										}}
+										on:blur={() => prop.isEditing = false}
+									/>
+								{/if}
+							{:else}
+								<j-text variant="label" weight="bold">{prop.value || '<not set>'}</j-text>
+								<j-button size="xs" variant="link" style="padding-bottom: 3px"
+									on:click={() => prop.isEditing = true} 
+								>
+									<j-icon name="pencil" size="xs" />
+								</j-button>
+							{/if}
 						{/if}
-					{:else}
-						<j-text variant="label" weight="bold">{prop.value || '<not set>'}</j-text>
-						<j-button size="xs" variant="link" style="padding-bottom: 3px"
-							on:click={() => prop.isEditing = true} 
-						>
-							<j-icon name="pencil" size="xs" />
-						</j-button>
-					{/if}
-				{/if}
 
-				{#if prop.onEdit != undefined}
-					<j-button size="xs" variant="link" style="padding-bottom: 3px"
-						on:click={() => prop.onEdit()} 
-					>
-						<j-icon name="pencil" size="xs" />
-					</j-button>
-				{/if}
-			</div>
-			{/each}
+						{#if prop.onEdit != undefined}
+							<j-button size="xs" variant="link" style="padding-bottom: 3px"
+								on:click={() => prop.onEdit()} 
+							>
+								<j-icon name="pencil" size="xs" />
+							</j-button>
+						{/if}
+					</div>
+					{/each}
+				</div>
+			{/if}
+
+			{#if tab=="chat"}
+				<div class="chat">
+					{#each chatMessages as message}
+						<div class="message">
+							<div class="author">{message.author}</div>
+							<div class="text">{@html message.content}</div>
+						</div>
+					{/each}
+					<j-input 
+						bind:this={chatInput}
+						type="text"
+						full="true"
+						on:keydown={(event) => {
+							if(event.key === 'Enter') {
+								const content = event.srcElement.value
+								if(content.length > 0) {
+									handleSendMessage(content)
+									event.srcElement.value = ''
+								}
+							}
+							event.stopPropagation()
+						}}
+					/>
+				</div>
+			{/if}
 		</div>
 	{/if}
   {:else}
@@ -492,18 +565,19 @@
 
 <style>
   .properties-container {
-
+	
   }
 
   .content {
 	max-height: calc(0.8*100vh);
+	width: 450px;
 	overflow: scroll;
   } 
   
   .header {
     display: flex;
     flex-direction: column;
-    margin-bottom: 50px;
+    margin-bottom: 20px;
   }
   
   
@@ -524,10 +598,16 @@
     color: #888888;
     margin-bottom: 10px;
   }
+
+  .tabs-content {
+	max-height: 300px;
+	overflow: scroll;
+  }
   
   .properties {
     grid-template-columns: repeat(2, 1fr);
     grid-gap: 10px;
+	
   }
   
   .property {

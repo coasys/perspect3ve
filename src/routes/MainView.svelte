@@ -420,7 +420,7 @@ function perspectiveDeleted(event) {
     <MiniWindow title="Tools" left="90" background="#a0a0a0aa" width="160">
       <Toolbar title="Perspect3ve" items={toolbarItems} />
     </MiniWindow>
-    <MiniWindow title="Properties" left="{canvas.clientWidth - 200}">
+    <MiniWindow title="Properties" left="{canvas.clientWidth - 200}" width="320">
       <PropertiesBrowser perspectiveID={perspectiveID} expression={selectedExpression} parent={selectionParent} on:perspectiveDeleted={perspectiveDeleted}/>  
     </MiniWindow>
     <MiniWindow title="3ve" width="350">
