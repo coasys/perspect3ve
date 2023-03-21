@@ -4,12 +4,13 @@
   import { Agent, Link, parseExprUrl, Perspective, PerspectiveProxy, SmartLiteral, type Ad4mClient } from '@perspect3vism/ad4m';
   import { Literal, LinkQuery } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
-  import { onMount, createEventDispatcher, afterUpdate } from 'svelte';
+  import { onMount, createEventDispatcher, afterUpdate, getContext } from 'svelte';
   import { FILE_STORAGE_LANG } from '../config';
   import { flattenPrologList } from '../util';
   import { BACKGROUND_PREDICATE } from './ExpressionWidget';
   import ImageCropper from './ImageCropper.svelte';
   import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
+  import AgentCache, { type AgentLoaded } from './AgentCache';
 
   export let perspectiveID
   export let expression
@@ -39,11 +40,20 @@
 
   const dispatch = createEventDispatcher();
 
+  let agentCache
+
   async function ensuerAd4mClient() {
 	if (!ad4m) {
 		ad4m = await getAd4mClient()
 	}
   }
+
+  async function ensureAgentCache() {
+	await ensuerAd4mClient()
+	if(!agentCache) {
+		agentCache = new AgentCache(ad4m)
+	}
+  }	
 
   async function ensurePerspective() {
 	if (!perspective || perspective.uuid != perspectiveID) {
@@ -320,33 +330,17 @@
   async function getChatMessages() {
 	const links = await perspective.get(new LinkQuery({source: expression, predicate: "flux://has_message"}))
 	links.sort((a, b) => a.timestamp - b.timestamp)
+	await ensureAgentCache()
 	chatMessages = await Promise.all(links.map(async link => {
 		const chatExpression = Literal.fromUrl(link.data.target).get()
-		let agent: Agent = agents.get(chatExpression.author)
-		if(!agent) {
-			agent = await ad4m.agent.byDID(chatExpression.author)
-			agents.set(chatExpression.author, agent)
-		}
-		const p = new Perspective(agent.perspective?.links)
-		const username = Literal.fromUrl(p.getSingleTarget(new LinkQuery({predicate: "sioc://has_username"}))).get()
-		const profile_image_url = p.getSingleTarget(new LinkQuery({predicate: "sioc://has_profile_image"}))
-		console.log("profile_image_url", profile_image_url)
-		let profile_base64
-		let mime_type
-		if(profile_image_url) {
-			const profile_image = await perspective.getExpression(profile_image_url)
-			if(profile_image) {
-				const data = JSON.parse(profile_image.data)
-				profile_base64 = data.data_base64
-				mime_type = data.file_type
-			}	
-		}
+		let agent: AgentLoaded = await agentCache.getAgent(chatExpression.author)
+
 		return {
 			content: chatExpression.data,
 			timestamp: chatExpression.timestamp,
-			author: username,
-			profile_base64,
-			mime_type
+			author: agent.username,
+			profile_base64: agent.profile_base64,
+			mime_type: agent.profile_mime_type
 		}
 	}))
   }
@@ -663,6 +657,10 @@
   }
 
   .chat-message {
+	margin: 10px;
+  }
+
+  .chat-message-content {
 	border: #888888 1px solid;
 	border-radius: 5px;
 	padding: 10px;
