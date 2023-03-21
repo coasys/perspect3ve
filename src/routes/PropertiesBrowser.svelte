@@ -290,6 +290,7 @@
 		populateFromPerspective()
 	}
 
+	showNumChatMessages = 10
 	getChatMessages()
   }
 
@@ -324,12 +325,14 @@
 
   let chatMessages
   let chatInput
-
-  let agents = new Map()
+  let showNumChatMessages = 10
 
   async function getChatMessages() {
 	const links = await perspective.get(new LinkQuery({source: expression, predicate: "flux://has_message"}))
 	links.sort((a, b) => a.timestamp - b.timestamp)
+	links.reverse()
+	links.splice(showNumChatMessages)
+	links.reverse()
 	await ensureAgentCache()
 	chatMessages = await Promise.all(links.map(async link => {
 		const chatExpression = Literal.fromUrl(link.data.target).get()
@@ -355,6 +358,11 @@
 	console.log("messageExpression", messageExpression)
 	await perspective.add(new Link({source: expression, predicate: "flux://has_message", target: messageExpression}))
 	chatInput.value = ""
+	await getChatMessages()
+  }
+
+  async function loadMoreChatMessages() {
+	showNumChatMessages += 10
 	await getChatMessages()
   }
 
@@ -540,6 +548,9 @@
 
 			{#if tab=="chat"}
 				<div class="chat">
+					<div class="chat-load-more">
+						<j-button variant="link" class="chat-load-more" on:click={loadMoreChatMessages}>Load more...</j-button>
+					</div>
 					{#each chatMessages as message}
 						<div class="chat-message">
 							<img class="chat-avatar" src={`data:${message.mime_type};base64,${message.profile_base64}`} />
@@ -675,6 +686,10 @@
 
   .chat-message-author {
 	font-size: 12px;
+  }
+
+  .chat-load-more {
+	text-align: center;
   }
   
 </style>
