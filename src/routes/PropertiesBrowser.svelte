@@ -4,7 +4,7 @@
   import { Link, parseExprUrl, SmartLiteral, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
   import { Literal, LinkQuery } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
-  import { onMount, createEventDispatcher } from 'svelte';
+  import { onMount, createEventDispatcher, afterUpdate } from 'svelte';
   import { FILE_STORAGE_LANG } from '../config';
   import { flattenPrologList } from '../util';
   import { BACKGROUND_PREDICATE } from './ExpressionWidget';
@@ -35,6 +35,7 @@
 
   let tab="properties"
   let tabs
+  let tabsContent
 
   const dispatch = createEventDispatcher();
 
@@ -328,6 +329,10 @@
 	})
   }
 
+  afterUpdate(async () => {
+	tabsContent.scrollTop = tabsContent.scrollHeight
+  })
+
   async function handleSendMessage() {
 	const message = chatInput.value
 	const messageExpression = await perspective.createExpression(message, 'literal')
@@ -427,7 +432,7 @@
 			<j-tab-item value="chat" checked={tab=="chat"}>Chat</j-tab-item>
 		</j-tabs>
 
-		<div class="tabs-content">
+		<div class="tabs-content" bind:this={tabsContent}>
 
 			{#if tab=="actions"}
 				{#if expression}
