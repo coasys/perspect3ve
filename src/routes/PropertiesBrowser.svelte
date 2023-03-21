@@ -553,7 +553,11 @@
 					</div>
 					{#each chatMessages as message}
 						<div class="chat-message">
-							<img class="chat-avatar" src={`data:${message.mime_type};base64,${message.profile_base64}`} />
+							{#if message.profile_base64}
+								<j-avatar src={`data:${message.mime_type};base64,${message.profile_base64}`} />
+							{:else}
+								<j-avatar />
+							{/if}
 							<div class="chat-message-content">{@html message.content}</div>
 							<div class="chat-message-author">{message.author}</div>
 						</div>
