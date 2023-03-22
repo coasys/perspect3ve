@@ -227,10 +227,10 @@
     // Add the PixiJS view to the DOM
     canvas!.appendChild(app.view);
 
-    const color1 = "#0569a6"
-    const color2 = "#6bc7ec"
-    const color3 = "#8f7998"
-    const color4 = "#1b2e4e"
+    const color1 = "white"
+    const color2 = "white"
+    const color3 = "white"
+    const color4 = "white"
 
     const gradientTexture = createGradientTexture(app.screen.width, app.screen.height, 
       color1, color2, color3, color4);
