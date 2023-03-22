@@ -32,7 +32,6 @@
 <svelte:window on:mouseup={stop} on:mousemove={move}/>
 <div class="mini-window" style="width: {width}px; left: {left}px; top: {top}px; {background?`background-color: ${background}`:''}" on:mousedown={start}>
     <span class="title">
-		{title}
 		<div class="window-controls">
 			{#if collapsed}
 				<j-button variant="link"
@@ -46,6 +45,7 @@
 				</j-button>
 			{/if}
 		</div>
+        <j-text variant="heading">{title}</j-text>
   </span>
   {#if !collapsed}
     <div class="content">
@@ -61,7 +61,7 @@
         cursor: move;
         display: flex;
         flex-direction: column;
-        background-color: #f5f5f5c5;
+        background-color: var(--j-color-ui-100);
     }
 
     .title {
@@ -70,7 +70,7 @@
 	  user-select: none;
       font-size: 24px;
       color: white;
-      background-color: black;
+      background-color: var(--j-color-white);
       padding: 8px 5px;
 	  line-height: 38px;
     }

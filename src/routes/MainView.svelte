@@ -417,7 +417,7 @@ function perspectiveDeleted(event) {
   </div>
 
   {#if perspective}
-    <MiniWindow title="Tools" left="90" background="#a0a0a0aa" width="160">
+    <MiniWindow title="Tools" left="90" background="var(--j-color-ui-300)" width="160">
       <Toolbar title="Perspect3ve" items={toolbarItems} />
     </MiniWindow>
     <MiniWindow title="Properties" left="{canvas.clientWidth - 200}" width="320">
