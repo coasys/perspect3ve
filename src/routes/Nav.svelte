@@ -1,8 +1,6 @@
 <script>
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
-  import '@junto-foundation/junto-elements';
-  import '@junto-foundation/junto-elements/dist/main.css';
 
   let refs;
 
@@ -51,18 +49,20 @@
   <ul bind:this={refs} class="nav">
     {#each perspectives as p}
       {@const displayText = p.name.length > 0 ? p.name : p.uuid}
-      <button
-        class="nav-item {selected === p.uuid ? 'selected' : ''}"
-        on:click={() => handleSelect(p.uuid)}
-      >
-        <span class="nav-item-text">
-          {#if displayText.length > 10}
-            {displayText.slice(0, 5)}...
-          {:else}
-            {displayText}
-          {/if}
-        </span>
-      </button>
+      <j-tooltip title={displayText}>
+        <j-avatar hash={p.uuid}
+          class="nav-item {selected === p.uuid ? 'selected' : ''}"
+          on:click={() => handleSelect(p.uuid)}
+        >
+          <span class="nav-item-text">
+            {#if displayText.length > 10}
+              {displayText.slice(0, 5)}...
+            {:else}
+              {displayText}
+            {/if}
+          </span>
+        </j-avatar>
+      </j-tooltip>
     {/each}
   </ul>
   <div class="nav-controls">
