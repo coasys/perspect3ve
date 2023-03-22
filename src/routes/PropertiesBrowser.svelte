@@ -1,6 +1,4 @@
 <script lang="ts">
-  import '@junto-foundation/junto-elements';
-  import '@junto-foundation/junto-elements/dist/main.css';
   import { Agent, Link, parseExprUrl, Perspective, PerspectiveProxy, SmartLiteral, type Ad4mClient } from '@perspect3vism/ad4m';
   import { Literal, LinkQuery } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';

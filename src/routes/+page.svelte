@@ -1,11 +1,13 @@
 <script lang="ts">
+  import '@junto-foundation/junto-elements';
+  import '@junto-foundation/junto-elements/dist/main.css';
+  import './cyberpunk.css';
   import Ad4mConnectUI from '@perspect3vism/ad4m-connect';
-  import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import Nav from './Nav.svelte';
   import MainView from './MainView.svelte';
   import { onMount, setContext } from 'svelte';
   import type { Ad4mClient, PerspectiveProxy } from '@perspect3vism/ad4m';
-    import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
+  import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
 
   let selectedPerspective = null;
   let selectedExpression = "ad4m://self";
