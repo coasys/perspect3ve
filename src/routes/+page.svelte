@@ -6,7 +6,7 @@
   import Nav from './Nav.svelte';
   import MainView from './MainView.svelte';
   import { onMount, setContext } from 'svelte';
-  import type { Ad4mClient, PerspectiveProxy } from '@perspect3vism/ad4m';
+  import { Literal, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
   import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
 
   let selectedPerspective = null;
@@ -107,6 +107,20 @@
         p.uuid === perspectiveAddress
     })
 
+    function tryParsingLiteral(input: string): string {
+      try {
+        let value = Literal.fromUrl(input).get()
+        if(typeof value == 'object') {
+          if(value.data)
+            value = value.data
+          else
+            value = JSON.stringify(value)
+        }
+        return value
+      } catch(e) {}
+      return input
+    }
+
     if(!perspective && perspectiveAddress.startsWith("neighbourhood://")) {
       console.log("Try NH", perspectiveAddress)
       ad4m = await ui.getAd4mClient()
@@ -115,6 +129,13 @@
       if(nh) {
         joinNeighbourhoodExpression = nh
         joinNeighbourhoodExpression.data = JSON.parse(joinNeighbourhoodExpression.data)
+        if(joinNeighbourhoodExpression?.data?.meta?.links?.length > 0) {
+          for(const link of joinNeighbourhoodExpression.data.meta.links) {
+            link.data.source = tryParsingLiteral(link.data.source)
+            link.data.predicate = tryParsingLiteral(link.data.predicate)
+            link.data.target = tryParsingLiteral(link.data.target)
+          }
+        }
         joinNeighbourhoodAddress = perspectiveAddress
         neighbourhoodJoinDialog.open = true
       }
@@ -126,12 +147,30 @@
         alert("Perspective not found")
       }
     }
-
-    
   }
 
-  async function joinNeighbourhood() {
+  let joiningInProgress = false
+  let joiningError = null
 
+  async function joinNeighbourhood() {
+    console.log("Join neighbourhood", joinNeighbourhoodAddress)
+    joiningInProgress = true
+    let neighbourhood
+    try {
+      neighbourhood = await ad4m.neighbourhood.joinFromUrl(joinNeighbourhoodAddress)
+    } catch(e) {
+      console.error(e)
+      joiningError = e.message
+      joiningInProgress = false
+      return
+    }
+    
+    joiningInProgress = false
+    console.log("Joined neighbourhood", neighbourhood)
+    neighbourhoodJoinDialog.open = false
+    selectedPerspective = neighbourhood.uuid
+    setPerspective({detail: neighbourhood.uuid})
+    
   }
 
 
@@ -224,14 +263,14 @@
 <j-modal bind:this={neighbourhoodJoinDialog} class="modal">
   <header class="header" slot="header">
     <j-text variant="heading">Join Neighbourhood</j-text>
-    <j-text variant="label">URL:</j-text>
-    <j-text>{joinNeighbourhoodAddress}</j-text>
-    <j-text variant="label">Author:</j-text>
+    <j-text variant="subheading">URL:</j-text>
+    <j-text >{joinNeighbourhoodAddress}</j-text>
+    <j-text variant="subheading">Author:</j-text>
     <j-text>{joinNeighbourhoodExpression?.author}</j-text>
-    <j-text variant="label">Timestamp:</j-text>
+    <j-text variant="subheading">Timestamp:</j-text>
     <j-text>{joinNeighbourhoodExpression?.timestamp}</j-text>
     {#if joinNeighbourhoodExpression?.data?.meta?.links?.length > 0}
-      <j-text variant="label">Meta info:</j-text>
+      <j-text variant="subheading">Meta info:</j-text>
       
       {#each joinNeighbourhoodExpression?.data.meta.links as metaLink}
         <j-text variant="label">{metaLink.data.source}[{metaLink.data.predicate}]:</j-text>
@@ -239,7 +278,13 @@
       {/each}
     {/if}
     
-    <j-button variant="primary" on:click={joinNeighbourhood}>Join</j-button>
+    <j-button variant="primary" on:click={joinNeighbourhood} disabled={joiningInProgress}>Join</j-button>
+    {#if joiningInProgress}
+        <j-spinner />
+        {#if joiningError}
+          <j-text variant="label">{joiningError}</j-text>
+        {/if}
+    {/if}
   </header>
 </j-modal>
 <style>
