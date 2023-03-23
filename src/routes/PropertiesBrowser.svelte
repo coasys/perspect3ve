@@ -422,9 +422,9 @@
 		<div class="header">
 			{#if title}
 				{#if title.length > 50}
-					<j-text variant="heading" size="800" weight="bold">{title.slice(0, 50)}...</j-text>
+					<j-text variant="subheading" size="800" weight="bold">{title.slice(0, 50)}...</j-text>
 				{:else}
-					<j-text variant="heading" size="800" weight="bold">{title}</j-text>
+					<j-text variant="subheading" size="800" weight="bold">{title}</j-text>
 				{/if}
 			{:else if expressionData}
 				{#if typeof expressionData == 'string'}
