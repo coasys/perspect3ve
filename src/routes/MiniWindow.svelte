@@ -36,12 +36,12 @@
 			{#if collapsed}
 				<j-button variant="link"
 					on:click={()=>collapsed = false}>
-					<j-icon style="color: white" name="arrows-angle-expand"/>
+					<j-icon style="color: var(--j-color-black)" name="arrows-angle-expand"/>
 				</j-button>
 			{:else}
 				<j-button variant="link"
 					on:click={()=>collapsed = true}>
-					<j-icon style="color: white" name="arrows-angle-contract"/>
+					<j-icon style="color: var(--j-color-black)" name="arrows-angle-contract"/>
 				</j-button>
 			{/if}
 		</div>
@@ -69,7 +69,7 @@
       margin: 0;
 	  user-select: none;
       font-size: 24px;
-      color: white;
+      color: var(--j-color-black);
       background-color: var(--j-color-white);
       padding: 8px 5px;
 	  line-height: 38px;
@@ -77,5 +77,6 @@
 
     .window-controls {
         float: right;
+        color: var(--j-color-black);
     } 
 </style>
