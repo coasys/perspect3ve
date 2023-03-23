@@ -457,7 +457,7 @@
 		<j-tabs bind:this={tabs} on:change={(e)=>{tab=tabs.value; console.log('tab', tab)}}>
 			<j-tab-item value="properties" checked={tab=="properties"}>Props.</j-tab-item>
 			<j-tab-item value="actions" checked={tab=="actions"} >Actions</j-tab-item>
-			<j-tab-item value="chat" checked={tab=="chat"}>Chat</j-tab-item>
+			<j-tab-item value="chat" checked={tab=="chat"}><j-icon name="chat-left-dots"/></j-tab-item>
 		</j-tabs>
 
 		<div class="tabs-content" bind:this={tabsContent}>
