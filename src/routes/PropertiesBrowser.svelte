@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Agent, Link, parseExprUrl, Perspective, PerspectiveProxy, SmartLiteral, type Ad4mClient } from '@perspect3vism/ad4m';
+  import { Agent, Link, LinkExpression, parseExprUrl, Perspective, PerspectiveProxy, SmartLiteral, type Ad4mClient } from '@perspect3vism/ad4m';
   import { Literal, LinkQuery } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher, afterUpdate, getContext } from 'svelte';
@@ -290,6 +290,12 @@
 
 	showNumChatMessages = 10
 	getChatMessages()
+
+	perspective.addListener("link-added", (link: LinkExpression) => {
+		if(link.data.source == expression && link.data.predicate == "flux://has_message") {
+			getChatMessages()
+		}
+	})
   }
 
   onMount(async () => {
