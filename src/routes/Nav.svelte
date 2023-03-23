@@ -85,7 +85,7 @@
     width: 80px;
     height: 100%;
     padding: 10px;
-    background-color: #2c2f33;
+    background-color: var(--j-color-ui-80);
   }
 
   .nav {
