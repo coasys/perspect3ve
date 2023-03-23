@@ -180,14 +180,14 @@
   <img class="title-logo" src="/perspect3ve-logo-header.png" alt="Perspect3ve" />
   <div class="address-bar">
     <j-flex>
-      <j-button variant="link" disabled>
+      <j-button class="header-button" variant="link" disabled>
         <j-icon name="chevron-left"/>
       </j-button>
-      <j-button variant="link" disabled>
+      <j-button class="header-button" variant="link" disabled>
         <j-icon name="chevron-right"/>
       </j-button>
       
-      <j-button variant="link" disabled>
+      <j-button class="header-button" variant="link" disabled>
         <j-icon name="arrow-up-circle"/>
       </j-button>
       
@@ -205,7 +205,7 @@
         }}
       />
       
-      <j-button variant="link" on:click={()=>{sharingDialog.open=true}}>
+      <j-button class="header-button" variant="link" on:click={()=>{sharingDialog.open=true}}>
 
         {#if perspective && perspective.sharedUrl}
           <j-icon name="share-fill"/>
@@ -293,7 +293,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #f0f0f0;
+    background-color: var(--j-color-ui-100);
     padding: 0 16px;
     height: 64px;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
@@ -329,6 +329,11 @@
     width: 100%-460px;
     background-color: #ffffff;
     margin-left: -6px;
+  }
+
+  .header-button {
+    display: flex;
+    align-items: center;
   }
 
   .system-button {
