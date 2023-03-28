@@ -332,6 +332,8 @@
   let showNumChatMessages = 10
 
   async function getChatMessages() {
+	await ensuerAd4mClient()
+	await ensurePerspective()
 	const links = await perspective.get(new LinkQuery({source: expression, predicate: "flux://has_message"}))
 	links.sort((a, b) => a.timestamp - b.timestamp)
 	links.reverse()
@@ -353,7 +355,8 @@
   }
 
   afterUpdate(async () => {
-	tabsContent.scrollTop = tabsContent.scrollHeight
+	if(tabsContent)
+		tabsContent.scrollTop = tabsContent.scrollHeight
   })
 
   async function handleSendMessage() {
