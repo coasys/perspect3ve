@@ -1,13 +1,20 @@
 <script lang="ts">
   import '@junto-foundation/junto-elements';
   import '@junto-foundation/junto-elements/dist/main.css';
+  import './90s.css';
+  //import '../themes/black.css';
+  //import '../themes/cyberpunk.css';
   import './cyberpunk.css';
+  //import '../themes/dark.css';
+  //import '../themes/default.css';
+  //import '../themes/light.css';
   import Ad4mConnectUI from '@perspect3vism/ad4m-connect';
   import Nav from './Nav.svelte';
   import MainView from './MainView.svelte';
   import { onMount, setContext } from 'svelte';
   import { Literal, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
   import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
+  import { PROFILE_NAME } from './config';
 
   let selectedPerspective = null;
   let selectedExpression = "ad4m://self";
@@ -15,27 +22,23 @@
   let ad4m: Ad4mClient
 
   async function setPerspective(event) {
-    console.log('handleSelect', event.detail);
     selectedPerspective = event.detail;
 
-    console.log("selectedPerspective", selectedPerspective)
     if(selectedPerspective) {
       perspective = await ad4m.perspective.byUUID(selectedPerspective)
-      console.log("perspective", perspective)
       if(!perspective) {
         console.error("Perspective not found: ", selectedPerspective)
         return
       }
-      if(perspective.sharedUrl) {
+      if(perspective.name == PROFILE_NAME) {
+        perspectiveAddress = "Me"  
+      } else if(perspective.sharedUrl) {
         perspectiveAddress = perspective.sharedUrl
+      } else if(perspective.name) {
+        perspectiveAddress = perspective.name
       } else {
-        if(perspective.name) {
-          perspectiveAddress = perspective.name
-        } else {
-          perspectiveAddress = perspective.uuid
-        }
+        perspectiveAddress = perspective.uuid
       }
-      
     }
 
   }
