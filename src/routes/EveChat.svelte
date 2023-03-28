@@ -316,6 +316,7 @@ Done.`
         padding: 0.5rem;
         border-radius: 0.5rem;
         list-style: none;
+        color: black;
     }
     .user {
         background-color: #e6e6e6;
