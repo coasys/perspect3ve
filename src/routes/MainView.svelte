@@ -11,6 +11,7 @@
   import PropertiesBrowser from './PropertiesBrowser.svelte';
   import MiniWindow from './MiniWindow.svelte';
   import EveChat from './EveChat.svelte';
+  import { PROFILE_NAME } from './config';
 
   export let perspectiveID: string;
   let selectedExpression
@@ -121,10 +122,17 @@
 
       app?.stage.removeChildren()
       app?.stage.addChild(gradientBackground)
-      const ad4mSelf = getOrCreateWidget('ad4m://self');
-      ad4mSelf.container.position.set(canvas!.clientWidth / 2, canvas!.clientHeight / 2);
-      setMainExpressionWidget(ad4mSelf);
-      app?.stage.addChild(ad4mSelf.container);
+
+      let rootWidget
+      if(perspective.name == PROFILE_NAME) {
+        rootWidget = getOrCreateWidget('flux://profile');
+      } else {
+        rootWidget = getOrCreateWidget('ad4m://self');
+      }
+
+      rootWidget.container.position.set(canvas!.clientWidth / 2, canvas!.clientHeight / 2);
+      setMainExpressionWidget(rootWidget);
+      app?.stage.addChild(rootWidget.container);
     }
   }
 
