@@ -337,15 +337,26 @@ export class ExpressionWidget {
                 this.#subjectColor = null
                 this.#subjectShape = null
 
-                const shapeResults = await this.#perspective.infer(`subject_class("${className}", C), (p3_instance_shape(C, "${this.base}", Shape);Shape=none),(p3_instance_color(C, "${this.base}", Color);Color=none).`)
+                const shapeResults = await this.#perspective.infer(`subject_class("${className}", C), (p3_instance_shape(C, "${this.base}", Shape);p3_instance_color(C, "${this.base}", Color)).`)
 
-                console.log("shapeResults", shapeResults)
-                if(shapeResults.Color != "none")
-                    this.#subjectColor = parseInt(shapeResults.Color.substring(1), 16)
+                const tryExtractColorAndShape = (result) => {
+                    if(result.Color && typeof result.Color == "string" && result.Color != "none")
+                        this.#subjectColor = parseInt(result.Color.substring(1), 16)
 
-                if(shapeResults.Shape != "none")
-                    this.#subjectShape = shapeResults.Shape
+                    if(result.Shape && typeof result.Shape == "string"  && result.Shape != "none")
+                        this.#subjectShape = result.Shape
+                }
+
+                if(shapeResults.length) {
+                    shapeResults.forEach(tryExtractColorAndShape)
+                } else {
+                    tryExtractColorAndShape(shapeResults)
+                }
                 
+                
+                
+                if(this.#subjectShape || this.#subjectColor)
+                    this.#updateExpressionGraphic()
                 
             } else {
                 this.#isInstanceOfSubjectClass = null
@@ -680,6 +691,13 @@ export class ExpressionWidget {
         graphic.interactive = true;
         graphic.buttonMode = true;
         return graphic;
+    }
+
+    async #updateExpressionGraphic() {
+        if(this.#graphic) {
+            await this.#drawExpressionGraphic(this.#graphic)
+            this.updateBitmap()
+        }
     }
 
     async #drawExpressionGraphic(graphic: PIXI.Graphics) {
