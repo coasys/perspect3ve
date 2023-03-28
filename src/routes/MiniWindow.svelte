@@ -4,6 +4,8 @@
     export let top = 90;
     export let background
     export let width = 250
+    export let minified = false
+    export let dockposition = "left"
 
     let moving = false
     let collapsed = false
@@ -29,10 +31,24 @@
 </script>
 
 <svelte:window on:mouseup={stop} on:mousemove={move}/>
-<div class="mini-window" style="width: {width}px; left: {left}px; top: {top}px; {background?`background-color: ${background}`:''}" on:mousedown={start}>
+<div 
+  class="mini-window {minified?'minified':''} {dockposition?'dock-'+dockposition:''}"  
+  style="width: {width}px; {!minified?'left: '+left+'px; top: '+top+'px; ':''} {background?`background-color: ${background}`:''}" 
+  on:mousedown={start}>
     <span class="title">
         <j-text variant="heading">{title}</j-text>
 		<div class="window-controls">
+            {#if minified}
+                <j-button variant="link"
+                    on:click={()=>minified = false}>
+                    <j-icon style="color: var(--j-color-black)" name="window"/>
+                </j-button>
+            {:else}
+                <j-button variant="link"
+                    on:click={()=>minified = true}>
+                    <j-icon style="color: var(--j-color-black)" name="dash-square"/>
+                </j-button>
+            {/if}
 			{#if collapsed}
 				<j-button variant="link"
 					on:click={()=>collapsed = false}>
@@ -46,7 +62,7 @@
 			{/if}
 		</div>
   </span>
-  {#if !collapsed}
+  {#if !collapsed && !minified}
     <div class="content">
         <slot></slot>
     </div>
@@ -61,6 +77,26 @@
         display: flex;
         flex-direction: column;
         background-color: var(--j-color-ui-100);
+    }
+
+    .minified {
+        top: undefined;
+        bottom: 0;
+        left: 0;
+    }
+    
+    .dock-center {
+        left: 50%;
+        transform: translateX(-50%);
+    } 
+
+    .dock-left {
+        left: 0;
+    }
+
+    .dock-right {
+        left: calc(100% - 330px);
+        right: 0;
     }
 
     .title {

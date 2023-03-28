@@ -417,13 +417,13 @@ function perspectiveDeleted(event) {
   </div>
 
   {#if perspective}
-    <MiniWindow title="Tools" left="90" background="var(--j-color-ui-300)" width="160">
+    <MiniWindow title="Tools" left="90" background="var(--j-color-ui-300)" width="190">
       <Toolbar title="Perspect3ve" items={toolbarItems} />
     </MiniWindow>
-    <MiniWindow title="Properties" left="{canvas.clientWidth - 200}" width="320">
+    <MiniWindow title="Properties" left="{canvas.clientWidth - 200}" width="320" dockposition="right">
       <PropertiesBrowser perspectiveID={perspectiveID} expression={selectedExpression} parent={selectionParent} on:perspectiveDeleted={perspectiveDeleted}/>  
     </MiniWindow>
-    <MiniWindow title="3ve" width="350">
+    <MiniWindow title="3ve" width="350" left="{canvas.clientWidth/2}" minified dockposition="center">
       <EveChat on:sdnacreated={(event)=>{
         console.log('sdnacreated', event)
         const sdna = event.detail;
