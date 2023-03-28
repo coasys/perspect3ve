@@ -24,7 +24,6 @@
         if (moving) {
             left += e.movementX
             top += e.movementY
-            console.log(left, top)
         }
     }
 </script>
