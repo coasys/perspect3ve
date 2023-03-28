@@ -304,6 +304,18 @@ export class ExpressionWidget {
             }
         }
 
+        if(!background_file_expression && !background_url) {
+            let background_links = await this.#perspective.get(new LinkQuery({ 
+                source: this.#base, 
+                predicate: "sioc://has_profile_image"
+            }))
+
+            if(background_links.length > 0) {
+                const background_link = background_links[0]
+                background_url = background_link.data.target
+            }
+        }
+
         if(!background_file_expression && background_url) {   
             background_file_expression = await this.#perspective.getExpression(background_url)
         }
