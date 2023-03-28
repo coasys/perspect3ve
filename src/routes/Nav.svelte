@@ -3,7 +3,7 @@
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
   import { PROFILE_NAME } from './config';
-  
+
   let ad4m: Ad4mClient|undefined;
   let perspectives: PerspectiveProxy[] = [];
   let profile: PerspectiveProxy|undefined;
@@ -33,6 +33,7 @@
 
   async function ensureProfilePerspective() {
     profile = perspectives.find(p => p.name === PROFILE_NAME)
+    
     if (!profile) {
       profile = await ad4m!.perspective.add(PROFILE_NAME)
       const me = await ad4m!.agent.me()
@@ -59,7 +60,7 @@
     ad4m.perspective.addPerspectiveAddedListener(update)
     ad4m.perspective.addPerspectiveRemovedListener(update)
 
-    update()
+    await update()
     await ensureProfilePerspective()
   });
 </script>
