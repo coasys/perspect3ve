@@ -1,11 +1,14 @@
-<script>
+<script lang="ts">
+  import { LinkQuery, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
+  import { PROFILE_NAME } from './config';
+  
+  let ad4m: Ad4mClient|undefined;
+  let perspectives: PerspectiveProxy[] = [];
+  let profile: PerspectiveProxy|undefined;
 
-  let refs;
-
-  let ad4m;
-  let perspectives = [];
+  
 
   const navItems = [
     { id: 'home', label: 'Home' },
@@ -23,17 +26,33 @@
   }
 
   function addNewPerspective() {
-    ad4m.perspective.add("New Perspective")
+    ad4m!.perspective.add("New Perspective")
   }
 
-  let navHeight = 0;
+  let profileSrc
+
+  async function ensureProfilePerspective() {
+    profile = perspectives.find(p => p.name === PROFILE_NAME)
+    if (!profile) {
+      profile = await ad4m!.perspective.add(PROFILE_NAME)
+      const me = await ad4m!.agent.me()
+      await profile.loadSnapshot(me.perspective!)
+      perspectives.push(profile)
+    }
+
+    const thumbnail = await profile.get(new LinkQuery({predicate: "sioc://has_profile_thumbnail_image"}))
+    if(thumbnail && thumbnail.length > 0) {
+      const imageURI = thumbnail[0].data.target
+      const imageExpr = await ad4m!.expression.get(imageURI)
+      const imageData = JSON.parse(imageExpr.data)
+      profileSrc = `data:${imageData.file_type};base64,${imageData.data_base64}`
+    }
+  }
 
   onMount(async () => {
-    // Set the height of the nav container to match the height of the nav items
-    navHeight = refs.offsetHeight;
     ad4m = await getAd4mClient();
     async function update() {
-      perspectives = await ad4m.perspective.all();
+      perspectives = await ad4m!.perspective.all();
     }
     
     ad4m.perspective.addPerspectiveUpdatedListener(update)
@@ -41,28 +60,31 @@
     ad4m.perspective.addPerspectiveRemovedListener(update)
 
     update()
-    console.log(perspectives);
+    await ensureProfilePerspective()
   });
 </script>
 
 <div class="nav-container">
-  <ul bind:this={refs} class="nav">
+  <ul class="nav">
+    <j-avatar class="nav-item {selected === profile?.uuid ? 'selected' : ''}" on:click={() => handleSelect(profile.uuid)} src={profileSrc}></j-avatar>
     {#each perspectives as p}
-      {@const displayText = p.name.length > 0 ? p.name : p.uuid}
-      <j-tooltip title={displayText}>
-        <j-avatar hash={p.uuid}
-          class="nav-item {selected === p.uuid ? 'selected' : ''}"
-          on:click={() => handleSelect(p.uuid)}
-        >
-          <span class="nav-item-text">
-            {#if displayText.length > 10}
-              {displayText.slice(0, 5)}...
-            {:else}
-              {displayText}
-            {/if}
-          </span>
-        </j-avatar>
-      </j-tooltip>
+      {#if p.name !== PROFILE_NAME}
+        {@const displayText = p.name.length > 0 ? p.name : p.uuid}
+        <j-tooltip title={displayText}>
+          <j-avatar hash={p.uuid}
+            class="nav-item {selected === p.uuid ? 'selected' : ''}"
+            on:click={() => handleSelect(p.uuid)}
+          >
+            <span class="nav-item-text">
+              {#if displayText.length > 10}
+                {displayText.slice(0, 5)}...
+              {:else}
+                {displayText}
+              {/if}
+            </span>
+          </j-avatar>
+        </j-tooltip>
+      {/if}
     {/each}
   </ul>
   <div class="nav-controls">
