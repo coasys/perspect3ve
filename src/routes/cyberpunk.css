@@ -30,6 +30,7 @@ html.cyberpunk j-button::part(base) {
     20px 100%,
     -15px calc(100% - 35px)
   );
+  padding: 5px;
 }
 
 html.cyberpunk j-button:hover {
