@@ -111,19 +111,30 @@
         }
     }
 
-    async function checkBackgroundImage() {
-        if(!expression) return
-        const results = perspective.get(new LinkQuery({source: expression, predicate: BACKGROUND_PREDICATE}))
+    interface BagroundImageOptions {
+        predicate: string
+        sourceOverride?: string
+        name?: string
+    }
+
+    async function checkBackgroundImage(options: BackgroundImageOptions) {
+        let { predicate, sourceOverride, name } = options
+        let source = expression
+        if(sourceOverride) source = sourceOverride
+        if(!source) return
+        if(!name) name = "Background Image"
+        const results = await perspective.get(new LinkQuery({source, predicate}))
         let bgImage
         if(results.length > 0) {
-            bgImage = results[0].target
+            bgImage = results[0].data.target
         }
 
         properties = [...properties, {
-            name: "Background Image", 
+            name, 
             value: bgImage || "<not set>",
             onEdit: () => {
-                console.log(cropDialog)
+                backgroundSource = source
+                backgroundPredicate = predicate
                 cropDialog.open = true
             }
         }]
@@ -148,6 +159,9 @@
         });
     }
 
+    let backgroundSource
+    let backgroundPredicate
+
     async function handleSetBackgroundImage(blob) {
         const base64 = await blobUriToBase64(blob)
         console.log("base64", base64)
@@ -161,8 +175,8 @@
         console.log("fileExprAddr", fileExprAddr)
         if(!expression) throw "Couldn't set background image - File Store Language returned null"
         await perspective.setSingleTarget(new Link({
-            source: expression!, 
-            predicate: BACKGROUND_PREDICATE, 
+            source: backgroundSource!, 
+            predicate: backgroundPredicate, 
             target: fileExprAddr
         }))
         update()
@@ -267,6 +281,12 @@
                 }))
             }]
 
+            checkBackgroundImage({
+                predicate: "sioc://has_profile_image", 
+                sourceOverride: "flux://profile",
+                name: "Profile image"
+            })
+
             return true
         } else {
             return false
@@ -280,7 +300,7 @@
         expressionData = null
         
         if(await checkProfilePerspective()) return
-        checkBackgroundImage()
+        await checkBackgroundImage(BACKGROUND_PREDICATE)
         if(await checkSdnaClasses()) return
         if(await checkSmartLiteral()) return
         if(checkLiteral()) {
