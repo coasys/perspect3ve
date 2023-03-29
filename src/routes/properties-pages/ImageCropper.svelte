@@ -80,6 +80,7 @@
 			size="lg" 
 			on:click={async () => {
                 const croppedImage = await cropImage();
+				image = null;
                 console.log("croppedImage", croppedImage)
                 dispatch('cropped', croppedImage);
             }}

@@ -111,7 +111,7 @@
         }
     }
 
-    interface BagroundImageOptions {
+    interface BackgroundImageOptions {
         predicate: string
         sourceOverride?: string
         name?: string
@@ -123,6 +123,7 @@
         if(sourceOverride) source = sourceOverride
         if(!source) return
         if(!name) name = "Background Image"
+        if(!predicate) predicate = BACKGROUND_PREDICATE
         const results = await perspective.get(new LinkQuery({source, predicate}))
         let bgImage
         if(results.length > 0) {
