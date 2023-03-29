@@ -5,6 +5,7 @@
     import { FILE_STORAGE_LANG } from '../../config';
     import { flattenPrologList } from '../../util';
     import { BACKGROUND_PREDICATE } from '../ExpressionWidget';
+    import { PROFILE_NAME } from '../config';
     import ImageCropper from './ImageCropper.svelte';
     import ExpressionChat from './ExpressionChat.svelte';
 
@@ -15,6 +16,8 @@
     export let header: boolean = true
 
     let title: string
+    let subHeading: string
+    let showDetails: boolean = true
     let expressionData
     let expressionAuthor: string
     let expressionTimestamp: string
@@ -212,9 +215,71 @@
         }
     }
 
+    async function checkProfilePerspective() {
+        if(perspective.name == PROFILE_NAME && (expression == "flux://profile" || expression == "ad4m://self")) {
+            title = "Me"
+            const me = await ad4m.agent.me()
+            subHeading = me.did
+            showDetails = false
+            expressionType = "Public Agent Profile"
+
+            let props = {}
+            props['username'] = await perspective.get(new LinkQuery({source: me.did, predicate: "sioc://has_username"}))
+            props['firstname'] = await perspective.get(new LinkQuery({source: me.did, predicate: "sioc://has_firstname"}))
+            props['lastname'] = await perspective.get(new LinkQuery({source: me.did, predicate: "sioc://has_lastname"}))
+
+            for(const prop in props) {
+                try {
+                    props[prop] = Literal.fromUrl(props[prop]?.[0]?.data.target).get()
+                } catch(e) {
+                    props[prop] = "<not set>"
+                }
+            }
+            
+
+            properties = [...properties, {
+                name: "Username", 
+                value: props['username'],
+                onChange: (value) => perspective.setSingleTarget(new Link({
+                    source: me.did, 
+                    predicate: "sioc://has_username", 
+                    target: Literal.from(value).toUrl()
+                }))
+            }]
+
+            properties = [...properties, {
+                name: "First name", 
+                value: props['firstname'],
+                onChange: (value) => perspective.setSingleTarget(new Link({
+                    source: me.did, 
+                    predicate: "sioc://has_firstname", 
+                    target: Literal.from(value).toUrl()
+                }))
+            }]
+
+            properties = [...properties, {
+                name: "Last name", 
+                value: props['lastname'],
+                onChange: (value) => perspective.setSingleTarget(new Link({
+                    source: me.did, 
+                    predicate: "sioc://has_lastname", 
+                    target: Literal.from(value).toUrl()
+                }))
+            }]
+
+            return true
+        } else {
+            return false
+        }
+    }
+
     async function populateFromExpression() {
-        expressionData = null
         title = "<no title>"
+        subHeading = null
+        showDetails = true
+        expressionData = null
+        
+        if(await checkProfilePerspective()) return
         checkBackgroundImage()
         if(await checkSdnaClasses()) return
         if(await checkSmartLiteral()) return
@@ -252,12 +317,11 @@
 
     async function update() {
         properties = []
+        tab = "properties"
 
         if(expression) {
             populateFromExpression()
         }
-
-        tab = "properties"
     }
 
     onMount(async () => {
@@ -293,11 +357,18 @@
                 {/if}
             {/if}
         {/if}
-        <j-text variant="label">Type/Language:</j-text>
-        <j-text variant="label" weight="bold">{expressionType}</j-text>
-        <j-text variant="label">{expressionTimestamp}</j-text>
-        <j-text variant="label">{expressionAuthor}</j-text>
-        <j-text variant="label">{expression}</j-text>
+
+        {#if subHeading}
+            <j-text class="did" variant="ingress" size="400" weight="bold">{subHeading}</j-text>
+        {/if}
+
+        {#if showDetails}
+            <j-text variant="label">Type/Language:</j-text>
+            <j-text variant="label" weight="bold">{expressionType}</j-text>
+            <j-text variant="label">{expressionTimestamp}</j-text>
+            <j-text variant="label">{expressionAuthor}</j-text>
+            <j-text variant="label">{expression}</j-text>
+        {/if}
     </div>
 {/if}
 
@@ -445,6 +516,10 @@
       font-size: 14px;
       color: #888888;
       margin-bottom: 10px;
+    }
+
+    .did {
+        word-wrap: break-word;
     }
   
     .tabs-content {
