@@ -8,10 +8,11 @@
   import { BACKGROUND_PREDICATE } from './ExpressionWidget';
   import ImageCropper from './ImageCropper.svelte';
   
-  import AgentCache, { type AgentLoaded } from './AgentCache';
+  
   import { PROFILE_NAME } from './config';
 
   import PerspectiveProperties from './properties-pages/PerspectiveProperties.svelte';
+  import ExpressionChat from './properties-pages/ExpressionChat.svelte';
 
   export let perspectiveID
   export let expression
@@ -33,22 +34,12 @@
 
   let tab="properties"
   let tabs
-  let tabsContent
-
-  let agentCache
 
   async function ensuerAd4mClient() {
 	if (!ad4m) {
 		ad4m = await getAd4mClient()
 	}
   }
-
-  async function ensureAgentCache() {
-	await ensuerAd4mClient()
-	if(!agentCache) {
-		agentCache = new AgentCache(ad4m)
-	}
-  }	
 
   async function ensurePerspective() {
 	if (!perspective || perspective.uuid != perspectiveID) {
@@ -272,15 +263,6 @@
 	if(expression && expression != "ad4m://self") {
 		populateFromExpression()
 	} 
-
-	showNumChatMessages = 10
-	getChatMessages()
-
-	perspective.addListener("link-added", (link: LinkExpression) => {
-		if(link.data.source == expression && link.data.predicate == "flux://has_message") {
-			getChatMessages()
-		}
-	})
   }
 
   onMount(async () => {
@@ -303,55 +285,6 @@
 
   
   let propertySelect
-
-  let chatMessages
-  let chatInput
-  let showNumChatMessages = 10
-
-  async function getChatMessages() {
-	await ensuerAd4mClient()
-	await ensurePerspective()
-	const links = await perspective.get(new LinkQuery({source: expression, predicate: "flux://has_message"}))
-	links.sort((a, b) => a.timestamp - b.timestamp)
-	links.reverse()
-	links.splice(showNumChatMessages)
-	links.reverse()
-	await ensureAgentCache()
-	chatMessages = await Promise.all(links.map(async link => {
-		const chatExpression = Literal.fromUrl(link.data.target).get()
-		let agent: AgentLoaded = await agentCache.getAgent(chatExpression.author)
-
-		return {
-			content: chatExpression.data,
-			timestamp: chatExpression.timestamp,
-			author: agent.username,
-			profile_base64: agent.profile_base64,
-			mime_type: agent.profile_mime_type
-		}
-	}))
-  }
-
-  afterUpdate(async () => {
-	if(tabsContent)
-		tabsContent.scrollTop = tabsContent.scrollHeight
-  })
-
-  async function handleSendMessage() {
-	const message = chatInput.value
-	const messageExpression = await perspective.createExpression(message, 'literal')
-	console.log("messageExpression", messageExpression)
-	await perspective.add(new Link({source: expression, predicate: "flux://has_message", target: messageExpression}))
-	chatInput.value = ""
-	await getChatMessages()
-  }
-
-  async function loadMoreChatMessages() {
-	showNumChatMessages += 10
-	await getChatMessages()
-  }
-
-  getChatMessages()
-
 </script>
 
 <div class="properties-container">
@@ -394,7 +327,7 @@
 			<j-tab-item value="chat" checked={tab=="chat"}><j-icon name="chat-left-dots"/></j-tab-item>
 		</j-tabs>
 
-		<div class="tabs-content" bind:this={tabsContent}>
+		<div class="tabs-content">
 
 			{#if tab=="actions"}
 				{#if expression}
@@ -484,37 +417,7 @@
 			{/if}
 
 			{#if tab=="chat"}
-				<div class="chat">
-					<div class="chat-load-more">
-						<j-button variant="link" class="chat-load-more" on:click={loadMoreChatMessages}>Load more...</j-button>
-					</div>
-					{#each chatMessages as message}
-						<div class="chat-message">
-							{#if message.profile_base64}
-								<j-avatar src={`data:${message.mime_type};base64,${message.profile_base64}`} />
-							{:else}
-								<j-avatar />
-							{/if}
-							<div class="chat-message-content">{@html message.content}</div>
-							<div class="chat-message-author">{message.author}</div>
-						</div>
-					{/each}
-					<j-input 
-						bind:this={chatInput}
-						type="text"
-						full="true"
-						on:keydown={(event) => {
-							if(event.key === 'Enter') {
-								const content = event.srcElement.value
-								if(content.length > 0) {
-									handleSendMessage(content)
-									event.srcElement.value = ''
-								}
-							}
-							event.stopPropagation()
-						}}
-					/>
-				</div>
+				<ExpressionChat ad4m={ad4m} perspective={perspective} expression={expression}></ExpressionChat>
 			{/if}
 		</div>
 	{/if}
@@ -605,31 +508,6 @@
 
   .footer {
 	float: right;
-  }
-
-  .chat-message {
-	margin: 10px;
-  }
-
-  .chat-message-content {
-	border: #888888 1px solid;
-	border-radius: 5px;
-	padding: 10px;
-  }
-
-  .chat-avatar {
-	width: 40px;
-	height: 40px;
-	float: left;
-	margin: 5px;
-  }
-
-  .chat-message-author {
-	font-size: 12px;
-  }
-
-  .chat-load-more {
-	text-align: center;
   }
   
 </style>
