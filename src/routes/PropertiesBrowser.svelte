@@ -1,23 +1,18 @@
 <script lang="ts">
-  import { Agent, Link, LinkExpression, parseExprUrl, Perspective, PerspectiveProxy, SmartLiteral, type Ad4mClient } from '@perspect3vism/ad4m';
-  import { Literal, LinkQuery } from '@perspect3vism/ad4m';
+  import type { PerspectiveProxy, Ad4mClient } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
-  import { onMount, createEventDispatcher, afterUpdate, getContext } from 'svelte';
-  
-  import { PROFILE_NAME } from './config';
+  import { onMount } from 'svelte';
 
   import PerspectiveProperties from './properties-pages/PerspectiveProperties.svelte';
   import ExpressionProperties from './properties-pages/ExpressionProperties.svelte';
 
-  export let perspectiveID
-  export let expression
-  export let parent
+  export let perspectiveID: string
+  export let expression: string
+  export let parent: string
   
 
   let ad4m: Ad4mClient
-  let perspective: PerspectiveProxy
-
-
+  let perspective: PerspectiveProxy|null = null
 
   async function ensuerAd4mClient() {
 	if (!ad4m) {
@@ -36,18 +31,11 @@
   async function update() {
 	if(!perspectiveID) {
 		perspective = null
-		linkLanguageMeta = null
 		return 
 	}
 
 	await ensuerAd4mClient()
 	await ensurePerspective()
-
-	properties = []
-
-	if(expression && expression != "ad4m://self") {
-		populateFromExpression()
-	} 
   }
 
   onMount(async () => {
@@ -78,6 +66,5 @@
 
 <style>
   .properties-container {
-	
   }
 </style>
