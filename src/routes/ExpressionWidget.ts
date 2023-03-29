@@ -135,7 +135,7 @@ export class ExpressionWidget {
 
         const pointerup = (event) => {
             // filter out events that are not over graphic of this
-            if(event.target == this.#container) {
+            if(event.target == this.#container || event.target == this.#backgroundContainer) {
                 console.log("root pointerup", event)
                 if(!this.#draggingWidget) {
                     this.setSelected(true)
