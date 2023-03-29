@@ -292,26 +292,23 @@ export class ExpressionWidget {
         }
 
         if(!background_file_expression && !background_url) {
-            let background_links = await this.#perspective.get(new LinkQuery({ 
-                source: this.#base, 
-                predicate: BACKGROUND_PREDICATE
-            }))
+            const background_predicates = [
+                BACKGROUND_PREDICATE, 
+                "sioc://has_profile_image", 
+                "flux://image"
+            ]
 
-            if(background_links.length > 0) {
-                const background_link = background_links[0]
-                background_url = background_link.data.target
-            }
-        }
-
-        if(!background_file_expression && !background_url) {
-            let background_links = await this.#perspective.get(new LinkQuery({ 
-                source: this.#base, 
-                predicate: "sioc://has_profile_image"
-            }))
-
-            if(background_links.length > 0) {
-                const background_link = background_links[0]
-                background_url = background_link.data.target
+            for(const predicate of background_predicates) {
+                let background_links = await this.#perspective.get(new LinkQuery({ 
+                    source: this.#base, 
+                    predicate: predicate
+                }))
+    
+                if(background_links.length > 0) {
+                    const background_link = background_links[0]
+                    background_url = background_link.data.target
+                    break
+                }
             }
         }
 
