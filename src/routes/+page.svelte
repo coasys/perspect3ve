@@ -8,21 +8,64 @@
   //import '../themes/dark.css';
   //import '../themes/default.css';
   //import '../themes/light.css';
-  import Ad4mConnectUI from '@perspect3vism/ad4m-connect';
+  import Ad4mConnectUI, { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import Nav from './Nav.svelte';
   import MainView from './MainView.svelte';
   import { onMount, setContext } from 'svelte';
   import { Literal, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
   import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
   import { PROFILE_NAME } from './config';
+  import stringify from 'json-stable-stringify';
 
   let selectedPerspective = null;
   let selectedExpression = "ad4m://self";
+  let perspective: PerspectiveProxy|null = null
+
+  let settingsDialog
+  let openaiKey
+  let openaiKeyInput
+
+  let addressInput
+  let perspectiveAddress
+
+  let sharingDialog
+  let neighbourhoodJoinDialog
+  let joinNeighbourhoodExpression
+  let joinNeighbourhoodAddress
+
+  let agentProfileStatus
 
   let ad4m: Ad4mClient
 
+  async function checkAgentProfileStatus() {
+    ad4m = await getAd4mClient()
+    const me = await ad4m.agent.me()
+    const published = await ad4m.expression.get(me.did)
+    const publishedString = stringify((JSON.parse(published.data)).perspective)
+    const snapshot = await perspective?.snapshot()
+    for(let link of snapshot.links) {
+      delete link.proof.valid
+      delete link.proof.invalid
+    }
+    const localString = stringify(snapshot)
+
+    if(publishedString === localString) {
+      agentProfileStatus = "same"
+    } else {
+      agentProfileStatus = "different"
+    }
+  }
+
+  async function publishAgentProfile() {
+    agentProfileStatus = "updating"
+    const snapshot = await perspective?.snapshot()
+    await ad4m.agent.updatePublicPerspective(snapshot)
+    await checkAgentProfileStatus()
+  }
+
   async function setPerspective(event) {
     selectedPerspective = event.detail;
+    agentProfileStatus = null
 
     if(selectedPerspective) {
       perspective = await ad4m.perspective.byUUID(selectedPerspective)
@@ -32,6 +75,10 @@
       }
       if(perspective.name == PROFILE_NAME) {
         perspectiveAddress = "Me"  
+        await checkAgentProfileStatus()
+        perspective.addListener("link-added", checkAgentProfileStatus)
+        perspective.addListener("link-removed", checkAgentProfileStatus)
+        perspective.addListener("link-updated", checkAgentProfileStatus)
       } else if(perspective.sharedUrl) {
         perspectiveAddress = perspective.sharedUrl
       } else if(perspective.name) {
@@ -74,7 +121,8 @@
 
   onMount(async () => {
     ui.connect();
-    ad4m = await ui.getAd4mClient()
+    ad4m = await getAd4mClient()
+    openaiKey = localStorage.getItem('openaiKey')
   });
 
   ui.addEventListener('authstatechange', async (e) => {
@@ -82,23 +130,6 @@
     if (e.detail === 'authenticated') {
       connected = true;
     }
-  });
-
-  let settingsDialog
-  let openaiKey
-  let openaiKeyInput
-
-  let addressInput
-  let perspectiveAddress
-  let perspective: PerspectiveProxy|null
-
-  let sharingDialog
-  let neighbourhoodJoinDialog
-  let joinNeighbourhoodExpression
-  let joinNeighbourhoodAddress
-
-  onMount(async () => {
-    openaiKey = localStorage.getItem('openaiKey')
   });
 
   async function lookupAddress() {
@@ -173,10 +204,7 @@
     neighbourhoodJoinDialog.open = false
     selectedPerspective = neighbourhood.uuid
     setPerspective({detail: neighbourhood.uuid})
-    
   }
-
-
 </script>
 
 <div class="header-bar">
@@ -208,15 +236,31 @@
         }}
       />
       
-      <j-button class="header-button" variant="link" on:click={()=>{sharingDialog.open=true}}>
-
-        {#if perspective && perspective.sharedUrl}
-          <j-icon name="share-fill"/>
-        {:else}
-          <j-icon name="share"/>
-        {/if}
-        
-      </j-button>
+      {#if agentProfileStatus}
+        <j-button 
+          class="header-button" 
+          variant="link" 
+          disabled={agentProfileStatus != "different"}
+          on:click={publishAgentProfile}>
+          {#if agentProfileStatus == "different"}
+            <j-icon name="cloud-arrow-up"/>
+          {:else if agentProfileStatus == "same"}
+            <j-icon name="cloud-check"/>
+          {:else if agentProfileStatus == "updating"}
+            <j-icon name="arrow-repeat"/>
+          {:else}
+            <j-icon name="patch-question"/>
+          {/if}
+        </j-button>
+      {:else}
+        <j-button class="header-button" variant="link" on:click={()=>{sharingDialog.open=true}}>
+          {#if perspective && perspective.sharedUrl}
+            <j-icon name="share-fill"/>
+          {:else}
+            <j-icon name="share"/>
+          {/if}
+        </j-button>
+      {/if}
       
     </j-flex>
     
