@@ -5,7 +5,7 @@
     import { FILE_STORAGE_LANG } from '../../config';
     import { flattenPrologList } from '../../util';
     import { BACKGROUND_PREDICATE } from '../ExpressionWidget';
-    import ImageCropper from '../ImageCropper.svelte';
+    import ImageCropper from './ImageCropper.svelte';
     import ExpressionChat from './ExpressionChat.svelte';
 
     export let ad4m: Ad4mClient
