@@ -237,20 +237,19 @@ export class ExpressionWidget {
             this.#createPerspectiveBackground().then((sprite) => {
                 this.#backgroundContainer.addChild(sprite)
             })
-        } else {
-            if(this.#base.startsWith("flux://")) {
-                this.#createBlobBackground(0x44bb33).then((sprite) => {
-                    this.#backgroundContainer.addChild(sprite)
-                })
-            }
-            if(this.#base.startsWith("flux_entry://")) {
-                this.#createBlobBackground(0xffffff).then((sprite) => {
-                    this.#backgroundContainer.addChild(sprite)
-                })
-            }
-            this.updateDisplayText()
-            this.updateBackground()
-        }        
+        } 
+        if(this.#base.startsWith("flux://")) {
+            this.#createBlobBackground(0x44bb33).then((sprite) => {
+                this.#backgroundContainer.addChild(sprite)
+            })
+        }
+        if(this.#base.startsWith("flux_entry://")) {
+            this.#createBlobBackground(0xffffff).then((sprite) => {
+                this.#backgroundContainer.addChild(sprite)
+            })
+        }
+        this.updateDisplayText()
+        this.updateBackground()
     }
 
     async updateDisplayText() {
