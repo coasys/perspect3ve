@@ -225,8 +225,6 @@
     <j-button variant="link" on:click="{() => settingsDialog.open = true}" class="system-button">
       <j-icon class="system-button" name="gear"/>
     </j-button>
-    
-    <j-icon class="system-button" name="person-circle"/>
   </div>
 </div>
 
