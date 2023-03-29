@@ -1,17 +1,15 @@
 <script lang="ts">
-    import { Agent, Link, LinkExpression, parseExprUrl, Perspective, PerspectiveProxy, SmartLiteral, type Ad4mClient } from '@perspect3vism/ad4m';
+    import { PerspectiveProxy, type Ad4mClient } from '@perspect3vism/ad4m';
     import { getAd4mClient } from '@perspect3vism/ad4m-connect';
-    import { onMount, createEventDispatcher, afterUpdate, getContext } from 'svelte';
+    import { onMount } from 'svelte';
     import NeighbourhoodSharing from '../NeighbourhoodSharing.svelte';
     export let perspectiveID: string = ""
 
     let ad4m: Ad4mClient
     let perspective: PerspectiveProxy|null = null
-    let title: string
 
     let isEditingPerspectiveName = false
     let nameInput
-    let linkLanguageMeta
 
     async function ensuerAd4mClient() {
         if (!ad4m) ad4m = await getAd4mClient()
@@ -27,16 +25,12 @@
         if(perspective!.sharedUrl) {
             let nh = await ad4m.expression.get(perspective!.sharedUrl)
             nh = JSON.parse(nh.data)
-            linkLanguageMeta = await ad4m.languages.meta(nh.linkLanguage)
-        } else {
-            linkLanguageMeta = null
         }
     }
 
     async function update() {
         if(!perspectiveID) {
             perspective = null
-            linkLanguageMeta = null
             return 
         }
 
@@ -50,7 +44,7 @@
         update()
     })
 
-    $: if (perspectiveID || !perspectiveID || expression) {
+    $: if (perspectiveID || !perspectiveID) {
         update()
     }
 
