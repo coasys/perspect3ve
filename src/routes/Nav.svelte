@@ -2,13 +2,14 @@
   import { LinkQuery, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
-  import { PROFILE_NAME } from './config';
+  import { BACKGROUND_PREDICATES, PROFILE_NAME } from './config';
 
   let ad4m: Ad4mClient|undefined;
   let perspectives: PerspectiveProxy[] = [];
   let profile: PerspectiveProxy|undefined;
 
-  
+  let profileSrc
+  let perspectiveThumbnails = {}
 
   const navItems = [
     { id: 'home', label: 'Home' },
@@ -29,8 +30,6 @@
     ad4m!.perspective.add("New Perspective")
   }
 
-  let profileSrc
-
   async function ensureProfilePerspective() {
     profile = perspectives.find(p => p.name === PROFILE_NAME)
     
@@ -50,12 +49,25 @@
     }
   }
 
+  async function update() {
+      perspectives = await ad4m!.perspective.all();
+
+      for(const p of perspectives) {
+        for(const predicate of BACKGROUND_PREDICATES) {
+          const links = await p.get(new LinkQuery({source: "ad4m://self", predicate}))
+          if(links && links.length>0) {
+            const imageURI = links[0].data.target
+            const imageExpr = await ad4m!.expression.get(imageURI)
+            const imageData = JSON.parse(imageExpr.data)
+            perspectiveThumbnails[p.uuid] = `data:${imageData.file_type};base64,${imageData.data_base64}`
+          }
+        }
+        
+      }
+    }
+
   onMount(async () => {
     ad4m = await getAd4mClient();
-    async function update() {
-      perspectives = await ad4m!.perspective.all();
-    }
-    
     ad4m.perspective.addPerspectiveUpdatedListener(update)
     ad4m.perspective.addPerspectiveAddedListener(update)
     ad4m.perspective.addPerspectiveRemovedListener(update)
@@ -72,7 +84,9 @@
       {#if p.name !== PROFILE_NAME}
         {@const displayText = p.name.length > 0 ? p.name : p.uuid}
         <j-tooltip title={displayText}>
-          <j-avatar hash={p.uuid}
+          <j-avatar 
+            hash={p.uuid}
+            src={perspectiveThumbnails[p.uuid]}
             class="nav-item {selected === p.uuid ? 'selected' : ''}"
             on:click={() => handleSelect(p.uuid)}
           >
