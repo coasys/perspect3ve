@@ -254,7 +254,9 @@
 
         if(expression) {
             populateFromExpression()
-        } 
+        }
+
+        tab = "properties"
     }
 
     onMount(async () => {
