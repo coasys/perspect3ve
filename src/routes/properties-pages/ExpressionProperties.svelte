@@ -12,6 +12,7 @@
     export let perspective: PerspectiveProxy
     export let expression: string
     export let parent
+    export let header: boolean = true
 
     let title: string
     let expressionData
@@ -269,34 +270,36 @@
 </script>
 
 
-<div class="header">
-    {#if title}
-        {#if title.length > 50}
-            <j-text variant="subheading" size="800" weight="bold">{title.slice(0, 50)}...</j-text>
-        {:else}
-            <j-text variant="subheading" size="800" weight="bold">{title}</j-text>
-        {/if}
-    {:else if expressionData}
-        {#if typeof expressionData == 'string'}
-            <j-text variant="heading" size="800" weight="bold">{expressionData}</j-text>
-        {:else if typeof expressionData == 'object' && expressionData.name}
-            <j-text variant="heading" size="800" weight="bold">{expressionData.name}</j-text>
-        {:else if typeof expressionData == 'object' && expressionData.data}
-            <j-text variant="heading" size="800" weight="bold">{expressionData.data}</j-text>
-        {:else}
-            {#if expression.length > 50}
-                <j-text variant="heading" size="800" weight="bold">{expression.slice(0, 50)}...</j-text>
+{#if header}
+    <div class="header">
+        {#if title}
+            {#if title.length > 50}
+                <j-text variant="subheading" size="800" weight="bold">{title.slice(0, 50)}...</j-text>
             {:else}
-                <j-text variant="heading" size="800" weight="bold">{expression}</j-text>
+                <j-text variant="subheading" size="800" weight="bold">{title}</j-text>
+            {/if}
+        {:else if expressionData}
+            {#if typeof expressionData == 'string'}
+                <j-text variant="heading" size="800" weight="bold">{expressionData}</j-text>
+            {:else if typeof expressionData == 'object' && expressionData.name}
+                <j-text variant="heading" size="800" weight="bold">{expressionData.name}</j-text>
+            {:else if typeof expressionData == 'object' && expressionData.data}
+                <j-text variant="heading" size="800" weight="bold">{expressionData.data}</j-text>
+            {:else}
+                {#if expression.length > 50}
+                    <j-text variant="heading" size="800" weight="bold">{expression.slice(0, 50)}...</j-text>
+                {:else}
+                    <j-text variant="heading" size="800" weight="bold">{expression}</j-text>
+                {/if}
             {/if}
         {/if}
-    {/if}
-    <j-text variant="label">Type/Language:</j-text>
-    <j-text variant="label" weight="bold">{expressionType}</j-text>
-    <j-text variant="label">{expressionTimestamp}</j-text>
-    <j-text variant="label">{expressionAuthor}</j-text>
-    <j-text variant="label">{expression}</j-text>
-</div>
+        <j-text variant="label">Type/Language:</j-text>
+        <j-text variant="label" weight="bold">{expressionType}</j-text>
+        <j-text variant="label">{expressionTimestamp}</j-text>
+        <j-text variant="label">{expressionAuthor}</j-text>
+        <j-text variant="label">{expression}</j-text>
+    </div>
+{/if}
 
 <j-tabs bind:this={tabs} on:change={(e)=>{tab=tabs.value; console.log('tab', tab)}}>
     <j-tab-item value="properties" checked={tab=="properties"}>Props.</j-tab-item>

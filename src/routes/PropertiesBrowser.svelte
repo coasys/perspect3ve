@@ -52,13 +52,13 @@
   {#if perspective}
 	{#if expression == "ad4m://self"}
 		<PerspectiveProperties perspectiveID={perspectiveID} />
-	{:else}
-		<ExpressionProperties 
-			ad4m={ad4m}
-			perspective={perspective}
-			expression={expression} 
-			parent={parent} />
 	{/if}
+	<ExpressionProperties 
+		ad4m={ad4m}
+		perspective={perspective}
+		expression={expression} 
+		parent={parent}
+		header={expression !== "ad4m://self"} />
   {:else}
 	<j-spinner></j-spinner>
   {/if}
