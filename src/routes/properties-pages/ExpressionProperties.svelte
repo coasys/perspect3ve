@@ -24,6 +24,19 @@
     let tabs
     let propertySelect
 
+    async function setAuthorTimestampFromLink() {
+        const links = await perspective.get(new LinkQuery({source: parent, target: expression}))
+
+        if(links && links.length>0) {
+            const first = links[0]
+            expressionAuthor = first.author
+            expressionTimestamp = first.timestamp
+        } else {
+            expressionAuthor = "unknown"
+            expressionTimestamp = "unknown"
+        }
+    }
+
     async function checkSmartLiteral() {
         if(!expression) return
         if(await SmartLiteral.isSmartLiteralBase(perspective, expression)) {
@@ -37,6 +50,7 @@
                 onChange: (value) => smartLiteral.set(value)
             }]
             title = data
+            await setAuthorTimestampFromLink()
             return true
         } else {
             return false
@@ -86,7 +100,7 @@
                 }]
                 
             }
-
+            await setAuthorTimestampFromLink()
             return true
         } else {
             return false
