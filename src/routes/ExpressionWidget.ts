@@ -434,7 +434,7 @@ export class ExpressionWidget {
             if(members.includes(link.data.target)) continue
             if(messages.includes(link.data.target)) continue
             const child = link.data.target  
-            if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
+            if(link.data.predicate?.startsWith(COORDS_PRED_PREFIX)) {
                 const point = decodeCoords(link.data.predicate)
                 this.#childrenCoords.set(child, point)
             } else {
