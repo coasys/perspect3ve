@@ -160,17 +160,26 @@
     // add subject classes to toolbar
     for(const sClass of sClasses) {
       console.log("add subject class", sClass, "to toolbar")
-      let sdnaResult
+
+      let iconResult, colorResult
       try {
-        sdnaResult = await perspective!.infer(`subject_class("${sClass}", Class), p3_class_color(Class, Color), p3_class_icon(Class, Icon).`)
+        iconResult = await perspective!.infer(`subject_class("${sClass}", Class), p3_class_icon(Class, Icon).`)
+      }catch(e) {
+        console.log("error", e)
+      }
+
+      try {
+        colorResult = await perspective!.infer(`subject_class("${sClass}", Class), p3_class_color(Class, Color).`)
       }catch(e) {
         console.log("error", e)
       }
       let color
       let icon
-      if(sdnaResult && sdnaResult.length > 0) {
-        color = sdnaResult[0].Color
-        icon = sdnaResult[0].Icon
+      if(iconResult && iconResult.length > 0) {
+        icon = iconResult[0].Icon
+      }
+      if(colorResult && colorResult.length > 0) {
+        color = colorResult[0].Color
       }
       toolbarItems = [...toolbarItems, {
         icon: icon?icon:'plus',

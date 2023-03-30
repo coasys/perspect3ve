@@ -8,7 +8,7 @@
     <li class="item">
         <j-button on:click={item.onClick}>
             {#if item.icon}
-                <j-icon name="{item.icon}" size="xs" />
+                <j-icon style="color: {item.color};" name="{item.icon}" size="xs" />
             {/if}
             {item.label}
         </j-button>
