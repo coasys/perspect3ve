@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import '@pixi/math-extras';
 import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral, SMART_LITERAL_CONTENT_PREDICATE, Link } from '@perspect3vism/ad4m';
+import { BACKGROUND_PREDICATES } from './config';
 
 export const COORDS_PRED_PREFIX = "p3://child_coords_2d"
 export const BACKGROUND_PREDICATE = "p3://bg_image"
@@ -292,13 +293,7 @@ export class ExpressionWidget {
         }
 
         if(!background_file_expression && !background_url) {
-            const background_predicates = [
-                BACKGROUND_PREDICATE, 
-                "sioc://has_profile_image", 
-                "flux://image"
-            ]
-
-            for(const predicate of background_predicates) {
+            for(const predicate of BACKGROUND_PREDICATES) {
                 let background_links = await this.#perspective.get(new LinkQuery({ 
                     source: this.#base, 
                     predicate: predicate
