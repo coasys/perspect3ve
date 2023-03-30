@@ -2,8 +2,8 @@ import * as PIXI from 'pixi.js';
 import '@pixi/math-extras';
 import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral, SMART_LITERAL_CONTENT_PREDICATE, Link } from '@perspect3vism/ad4m';
 import { BACKGROUND_PREDICATES } from './config';
+import { decodeCoords, encodeCoords, COORDS_PRED_PREFIX } from './coordinates';
 
-export const COORDS_PRED_PREFIX = "p3://child_coords_2d"
 export const BACKGROUND_PREDICATE = "p3://bg_image"
 export const LEVEL_SCALE = 0.16;
 
@@ -78,8 +78,7 @@ export class ExpressionWidget {
         this.addGraphAndText()
 
         const updateChildFromLink = async (link: LinkExpression) => {
-            const payload = link.data.predicate.substring(COORDS_PRED_PREFIX.length)
-            const point = JSON.parse(payload)
+            const point = decodeCoords(link.data.predicate)
             this.#childrenCoords.set(link.data.target, point)
             let widget = this.#childrenWidgets.get(link.data.target)
             let layer
@@ -423,8 +422,7 @@ export class ExpressionWidget {
             if(messages.includes(link.data.target)) continue
             const child = link.data.target  
             if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
-                const payload = link.data.predicate.substring(COORDS_PRED_PREFIX.length)
-                const point = JSON.parse(payload)
+                const point = decodeCoords(link.data.predicate)
                 this.#childrenCoords.set(child, point)
             } else {
                 if(!this.#childrenCoords.get(child)) {
@@ -681,8 +679,8 @@ export class ExpressionWidget {
     }
 
     #createCoordsLink(expr: string, point: {x: number, y: number}) {
-        const payload = JSON.stringify({x: point.x, y: point.y})
-        const predicate = `${COORDS_PRED_PREFIX}${payload}`
+        const { x, y } = point
+        const predicate = encodeCoords(x, y)
         return new Link({ source: this.#base, target: expr, predicate })
     }
 

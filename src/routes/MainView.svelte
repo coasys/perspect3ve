@@ -6,7 +6,8 @@
   import type { HistoryElement } from './History';
   import { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';  
-  import { COORDS_PRED_PREFIX, ExpressionWidget, LEVEL_SCALE } from './ExpressionWidget';
+  import { ExpressionWidget, LEVEL_SCALE } from './ExpressionWidget';
+  import { COORDS_PRED_PREFIX, encodeCoords } from './coordinates';
   import Toolbar from './Toolbar.svelte';
   import PropertiesBrowser from './PropertiesBrowser.svelte';
   import MiniWindow from './MiniWindow.svelte';
@@ -147,7 +148,7 @@
 
           perspective?.add(new Link({
             source: currentWidget?.base,
-            predicate: `${COORDS_PRED_PREFIX}{"x": 0, "y": 0}`,
+            predicate: encodeCoords(0, 0),
             target: literal.base
           }))
         },
@@ -193,7 +194,7 @@
 
           perspective?.add(new Link({
             source: currentWidget?.base,
-            predicate: `${COORDS_PRED_PREFIX}{"x": 0, "y": 0}`,
+            predicate: encodeCoords(0, 0),
             target: literal.base
           }))
         },
