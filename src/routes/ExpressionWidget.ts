@@ -339,23 +339,36 @@ export class ExpressionWidget {
                 this.#subjectColor = null
                 this.#subjectShape = null
 
-                const shapeResults = await this.#perspective.infer(`subject_class("${className}", C), (p3_instance_shape(C, "${this.base}", Shape);p3_instance_color(C, "${this.base}", Color)).`)
 
-                const tryExtractColorAndShape = (result) => {
-                    if(result.Color && typeof result.Color == "string" && result.Color != "none")
-                        this.#subjectColor = parseInt(result.Color.substring(1), 16)
-
-                    if(result.Shape && typeof result.Shape == "string"  && result.Shape != "none")
-                        this.#subjectShape = result.Shape
+                const extractShape = (shapeResults) => {
+                    if(shapeResults.Shape && typeof shapeResults.Shape == "string"  && shapeResults.Shape != "none")
+                        this.#subjectShape = shapeResults.Shape
                 }
-
-                if(shapeResults.length) {
-                    shapeResults.forEach(tryExtractColorAndShape)
-                } else {
-                    tryExtractColorAndShape(shapeResults)
+                try {
+                    const shapeResults = await this.#perspective.infer(`subject_class("${className}", C), p3_instance_shape(C, "${this.base}", Shape).`)
+                    if(shapeResults.length) {
+                        shapeResults.forEach(extractShape)
+                    } else {
+                        extractShape(shapeResults)
+                    }
+                } catch(e){}
+                
+                const extractColor = (colorResults) => {
+                    if(colorResults.Color && typeof colorResults.Color == "string" && colorResults.Color != "none"){
+                        console.log("setting color", colorResults.Color)
+                        this.#subjectColor = parseInt(colorResults.Color.substring(1), 16)
+                    }
+                        
                 }
-                
-                
+                try {
+                    const colorResults = await this.#perspective.infer(`subject_class("${className}", C), p3_instance_color(C, "${this.base}", Color).`)
+                    console.log(colorResults)
+                    if(colorResults.length) {
+                        colorResults.forEach(extractColor)
+                    } else {
+                        extractColor(colorResults)
+                    }
+                }catch(e){}
                 
                 if(this.#subjectShape || this.#subjectColor)
                     this.#updateExpressionGraphic()
@@ -698,15 +711,15 @@ export class ExpressionWidget {
         if(this.#graphic) {
             await this.#drawExpressionGraphic(this.#graphic)
             this.updateBitmap()
-        }
+        }   
     }
 
     async #drawExpressionGraphic(graphic: PIXI.Graphics) {
-        if(this.#isInstanceOfSubjectClass && this.#subjectShape) {
+        if(this.#isInstanceOfSubjectClass && (this.#subjectShape||this.#subjectColor)) {
             if(this.#subjectShape === 'circle') {
-                this.#drawExpressionCircle(graphic, this.#subjectColor)
+                this.#drawExpressionCircle(graphic, this.#subjectColor!)
             } else {
-                this.#drawExpressionSticky(graphic, this.#subjectColor)
+                this.#drawExpressionSticky(graphic, this.#subjectColor!)
             }
             return
         }
