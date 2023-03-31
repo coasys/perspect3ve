@@ -357,7 +357,7 @@ export class ExpressionWidget {
                 this.#subjectColor = null
                 this.#subjectShape = null
 
-                tryForEachMatch(
+                await tryForEachMatch(
                     this.#perspective, 
                     `subject_class("${className}", C), p3_instance_shape(C, "${this.base}", Shape).`,
                     (shapeResults) => {
@@ -366,7 +366,7 @@ export class ExpressionWidget {
                     }
                 )
 
-                tryForEachMatch(
+                await tryForEachMatch(
                     this.#perspective,
                     `subject_class("${className}", C), p3_instance_color(C, "${this.base}", Color).`,
                     (colorResults) => {
@@ -377,7 +377,7 @@ export class ExpressionWidget {
                     }
                 )
                         
-                tryForEachMatch(
+                await tryForEachMatch(
                     this.#perspective,
                     `subject_class("${className}", C), p3_instance_redraw_policy(C, Policy).`,
                     (policyResults) => {
@@ -390,7 +390,7 @@ export class ExpressionWidget {
                 )
                 
                 if(this.#subjectShape || this.#subjectColor)
-                    this.#updateExpressionGraphic()
+                    await this.#updateExpressionGraphic()
                 
             } else {
                 this.#isInstanceOfSubjectClass = null
