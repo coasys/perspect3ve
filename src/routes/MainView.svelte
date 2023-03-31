@@ -338,7 +338,7 @@
         app!.ticker.remove(animateZoom);
         //app!.stage.removeChildren();
         if(!history.includes(parent)){
-          history.push(parent);
+          history = [...history, parent];
           parent.extractChildWidget(child);
           setMainExpressionWidget(child, parent);
         }
@@ -391,7 +391,7 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
         app!.ticker.remove(animateZoom);
         //app!.stage.removeChildren();
         if(history.includes(parentWidget)) {
-          history.pop();
+          history = history.slice(0,-1)
           childWidget.container.scale.set(LEVEL_SCALE)
           childWidget.clearAllInteractionHandlers()
           childWidget.makeNonInteractiveRecursive()
@@ -417,19 +417,25 @@ function perspectiveDeleted(event) {
   
 
   <div bind:this={canvas} class="canvas">
-    <ul class="breadcrumbs">
+    <ul class="breadcrumbs interactive-breadcrumb"
+      on:click={()=>{
+        if(history.length) {
+          zoomOut(history[history.length - 1], currentWidget)
+        }
+      }}>
       {#each history as he, i}
-        <li class="breadcrumb {i == (history.length - 1) ? 'interactive-breadcrumb' : ''}"
-            on:click={()=>{
-              if(i == history.length - 1)
-                zoomOut(he, currentWidget)
-            }}
-          >
+        <li class="breadcrumb">
+          {#if he.base == 'ad4m://self' || he.base == 'flux://profile'}
+            <j-icon name="sign-turn-slight-left" size="sm" class="breadcrumb-icon"/>
+          {:else if he.title}
+            {he.title}
+          {:else}
             {he.base}
-            {#if i < history.length - 1}
-              <span class="breadcrumb-separator">/</span>
-            {/if}
-          </li>
+          {/if}
+          {#if i < history.length - 1}
+          <span class="breadcrumb-separator">/</span>
+        {/if}
+        </li>
       {/each}
     </ul>
   </div>
@@ -477,6 +483,9 @@ function perspectiveDeleted(event) {
     align-items: center;
     user-select: none;
     z-index: 1;
+    background: white;
+    border-radius: 5px;
+    cursor: pointer;
   }
 
   .breadcrumb {
@@ -484,7 +493,7 @@ function perspectiveDeleted(event) {
     margin: 0;
     padding: 0;
     font-size: 14px;
-    color: #757575;
+    color: #3f51b5;
   }
 
   .breadcrumb-separator {
@@ -492,8 +501,4 @@ function perspectiveDeleted(event) {
     color: #bdbdbd;
   }
 
-  .interactive-breadcrumb {
-    cursor: pointer;
-    color: #3f51b5;
-  }
 </style>
