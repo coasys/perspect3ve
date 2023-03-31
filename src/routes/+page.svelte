@@ -1,7 +1,7 @@
 <script lang="ts">
   import '@junto-foundation/junto-elements';
   import '@junto-foundation/junto-elements/dist/main.css';
-  import './90s.css';
+  //import './90s.css';
   //import '../themes/black.css';
   //import '../themes/cyberpunk.css';
   import './cyberpunk.css';
