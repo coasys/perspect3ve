@@ -347,7 +347,10 @@
   app!.ticker.add(animateZoom);
 };
 
+let isZoomingOut = false;
 const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) => {
+    if(isZoomingOut) return;
+    isZoomingOut = true;
     const startScale = 1/LEVEL_SCALE;
     const endScale = 1;
 
@@ -390,6 +393,7 @@ const zoomOut = (parentWidget: ExpressionWidget, childWidget: ExpressionWidget) 
         done = true;
         app!.ticker.remove(animateZoom);
         //app!.stage.removeChildren();
+        isZoomingOut = false;
         if(history.includes(parentWidget)) {
           history = history.slice(0,-1)
           childWidget.container.scale.set(LEVEL_SCALE)
