@@ -17,7 +17,7 @@ property_named_option(sokjdpau, "is_implemented", "ad4m://false", "false").
 
 collection(sokjdpau, "children").
 collection_getter(sokjdpau, Base, "children", List) :-
-    findall(C, (triple(Base, _, C), instance(sokjdpau, C)), Children).
+    findall(C, (triple(Base, _, C), instance(sokjdpau, C)), List).
 collection_adder(sokjdpau, "children", '[{action: "addLink", source: "this", predicate: "SoA://child", target: "value"}]').
 
 property(sokjdpau, "is_leaf").
