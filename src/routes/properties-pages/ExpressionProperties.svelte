@@ -90,11 +90,17 @@
 
                 }
 
-                const value = await proxy[prop]
+                let value
+                try {
+                    value = await proxy[prop]
 
-                if(prop == "title" || prop == "Title" || prop == "name" || prop == "Name") {
-                    title = value
+                    if(prop == "title" || prop == "Title" || prop == "name" || prop == "Name") {
+                        title = value
+                    }
+                }catch(e) {
+                    console.error("Error getting value for", prop, e)
                 }
+                
 
                 properties = [...properties, {
                     name: prop, 
