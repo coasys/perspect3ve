@@ -3,6 +3,7 @@ import '@pixi/math-extras';
 import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral, SMART_LITERAL_CONTENT_PREDICATE, Link } from '@perspect3vism/ad4m';
 import { BACKGROUND_PREDICATES } from './config';
 import { decodeCoords, encodeCoords, COORDS_PRED_PREFIX } from './coordinates';
+import { tryForEachMatch } from './prologUtils';
 
 export const BACKGROUND_PREDICATE = "p3://bg_image"
 export const LEVEL_SCALE = 0.16;
@@ -43,6 +44,7 @@ export class ExpressionWidget {
     #subjectProxy: any|null = null
     #subjectColor: number|null = null
     #subjectShape: string|null = null
+    #subjectRedrawPolicy: string|null = null
 
     
 
@@ -105,6 +107,12 @@ export class ExpressionWidget {
                 await this.#drawExpressionGraphic(this.#graphic!)
                 this.updateDisplayText()
             }
+
+            if(this.#subjectRedrawPolicy == "always") {
+                await this.#updateSubjectClass()
+                await this.#drawExpressionGraphic(this.#graphic!)
+                this.updateDisplayText()
+            }
             return null
         })
 
@@ -119,6 +127,11 @@ export class ExpressionWidget {
                     }
                 }
             }
+            if(this.#subjectRedrawPolicy == "always") {
+                await this.#updateSubjectClass()
+                await this.#drawExpressionGraphic(this.#graphic!)
+                this.updateDisplayText()
+            }
             return null
         })
 
@@ -129,6 +142,11 @@ export class ExpressionWidget {
                 if(link.data.predicate.startsWith(COORDS_PRED_PREFIX)) {
                     updateChildFromLink(link)
                 }
+            }
+            if(this.#subjectRedrawPolicy == "always") {
+                await this.#updateSubjectClass()
+                await this.#drawExpressionGraphic(this.#graphic!)
+                this.updateDisplayText()
             }
         })
 
@@ -339,36 +357,37 @@ export class ExpressionWidget {
                 this.#subjectColor = null
                 this.#subjectShape = null
 
-
-                const extractShape = (shapeResults) => {
-                    if(shapeResults.Shape && typeof shapeResults.Shape == "string"  && shapeResults.Shape != "none")
+                tryForEachMatch(
+                    this.#perspective, 
+                    `subject_class("${className}", C), p3_instance_shape(C, "${this.base}", Shape).`,
+                    (shapeResults) => {
+                        if(shapeResults.Shape && typeof shapeResults.Shape == "string"  && shapeResults.Shape != "none")
                         this.#subjectShape = shapeResults.Shape
-                }
-                try {
-                    const shapeResults = await this.#perspective.infer(`subject_class("${className}", C), p3_instance_shape(C, "${this.base}", Shape).`)
-                    if(shapeResults.length) {
-                        shapeResults.forEach(extractShape)
-                    } else {
-                        extractShape(shapeResults)
                     }
-                } catch(e){}
-                
-                const extractColor = (colorResults) => {
-                    if(colorResults.Color && typeof colorResults.Color == "string" && colorResults.Color != "none"){
-                        console.log("setting color", colorResults.Color)
-                        this.#subjectColor = parseInt(colorResults.Color.substring(1), 16)
+                )
+
+                tryForEachMatch(
+                    this.#perspective,
+                    `subject_class("${className}", C), p3_instance_color(C, "${this.base}", Color).`,
+                    (colorResults) => {
+                        if(colorResults.Color && typeof colorResults.Color == "string" && colorResults.Color != "none"){
+                            console.log("setting color", colorResults.Color)
+                            this.#subjectColor = parseInt(colorResults.Color.substring(1), 16)
+                        }
                     }
+                )
                         
-                }
-                try {
-                    const colorResults = await this.#perspective.infer(`subject_class("${className}", C), p3_instance_color(C, "${this.base}", Color).`)
-                    console.log(colorResults)
-                    if(colorResults.length) {
-                        colorResults.forEach(extractColor)
-                    } else {
-                        extractColor(colorResults)
+                tryForEachMatch(
+                    this.#perspective,
+                    `subject_class("${className}", C), p3_instance_redraw_policy(C, Policy).`,
+                    (policyResults) => {
+                        console.log("policyResults", policyResults)
+                        if(policyResults.Policy) {
+                            console.log("setting redraw policy:", policyResults.Policy)
+                            this.#subjectRedrawPolicy = policyResults.Policy
+                        }
                     }
-                }catch(e){}
+                )
                 
                 if(this.#subjectShape || this.#subjectColor)
                     this.#updateExpressionGraphic()

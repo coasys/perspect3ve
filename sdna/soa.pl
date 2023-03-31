@@ -59,6 +59,8 @@ all_have_known_complexity([Head|Tail]) :-
 p3_class_icon(sokjdpau, "diagram-3").
 p3_class_color(sokjdpau, "#00FA00").
 
+p3_instance_redraw_policy(sokjdpau, "always").
+
 % red if unknown and not implemented
 p3_instance_color(sokjdpau, Instance, "#FF0000") :- 
     property_getter(sokjdpau, Instance, "size", "SoA://unknown"), 
