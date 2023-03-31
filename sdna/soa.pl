@@ -58,10 +58,25 @@ all_have_known_complexity([Head|Tail]) :-
 
 p3_class_icon(sokjdpau, "diagram-3").
 p3_class_color(sokjdpau, "#00FA00").
-p3_instance_color(sokjdpau, Instance, "#FF0000") :- property_getter(sokjdpau, Instance, "size", "SoA://unknown"), not(property_getter(c, Instance, "is_implemented", "ad4m://true")).
-p3_instance_color(sokjdpau, Instance, "#00FF00") :- property_getter(sokjdpau, Instance, "is_implemented", "ad4m://true").
-p3_instance_color(sokjdpau, Instance, "#FFFF00") :- property_getter(sokjdpau, Instance, "size", "SoA://big"), not(property_getter(c, Instance, "is_implemented", "ad4m://true")).
-p3_instance_color(sokjdpau, Instance, "#BBFF77") :- property_getter(c, Instance, "is_implemented", "ad4m://true") -> fail ; property_getter(sokjdpau, Instance, "size", "SoA://small").
+
+% red if unknown and not implemented
+p3_instance_color(sokjdpau, Instance, "#FF0000") :- 
+    property_getter(sokjdpau, Instance, "size", "SoA://unknown"), 
+    not(once(property_getter(c, Instance, "is_implemented", "ad4m://true"))).
+
+% green if implemented
+p3_instance_color(sokjdpau, Instance, "#00FF00") :- 
+    property_getter(sokjdpau, Instance, "is_implemented", "ad4m://true").
+
+% yellow if big and not implemented
+p3_instance_color(sokjdpau, Instance, "#FFFF00") :- 
+    property_getter(sokjdpau, Instance, "size", "SoA://big"), 
+    not(once(property_getter(c, Instance, "is_implemented", "ad4m://true"))).
+
+% light-green if small and not implemented
+p3_instance_color(sokjdpau, Instance, "#BBFF77") :- 
+    not(once(property_getter(c, Instance, "is_implemented", "ad4m://true"))), 
+    property_getter(sokjdpau, Instance, "size", "SoA://small").
 
 
 
