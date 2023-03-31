@@ -16,6 +16,14 @@ const OUTLINE_WIDTH_SELECTED = 8;
 let perspectiveBackground = PIXI.Assets.load('/perspective_background.png')
 let blobBackground = PIXI.Assets.load('/FluxBlob.png')
 
+const HIDDEN_PREDICATES = [
+    "flux://has_member",
+    "flux://has_message",
+    "p3://bg_image",
+    "ad4m://has_zome",
+    "smart_literal://content"
+]
+
 export class ExpressionWidget {
     #base: string
     #perspective: PerspectiveProxy
@@ -45,6 +53,8 @@ export class ExpressionWidget {
     #subjectColor: number|null = null
     #subjectShape: string|null = null
     #subjectRedrawPolicy: string|null = null
+    #subjectInstanceChecks: Promise<void>
+    #subjectInstanceChecksResolve: () => void
 
     
 
@@ -58,6 +68,11 @@ export class ExpressionWidget {
         this.#perspective = perspective;
         this.#container = container
         this.#canvasSize = canvasSize
+
+        const that = this
+        this.#subjectInstanceChecks = new Promise((resolve) => {
+            that.#subjectInstanceChecksResolve = resolve
+        })
 
         this.#backgroundContainer = new PIXI.Container()
         this.#childrenContainer = new PIXI.Container()
@@ -174,6 +189,8 @@ export class ExpressionWidget {
         }
 
         this.#container.on('pointermove', pointermove)
+
+        this.#updateSubjectClass()
     }
 
     get base() {
@@ -344,7 +361,6 @@ export class ExpressionWidget {
     }
 
     async #updateSubjectClass() {
-        if(this.#base == "ad4m://self") return
         try {        
             const classResults = await this.#perspective.infer(`subject_class(ClassName, C), instance(C, "${this.base}").`)
             if(classResults && classResults.length > 0) {
@@ -401,6 +417,7 @@ export class ExpressionWidget {
         } catch(e) {
             console.error(e)
         }
+        this.#subjectInstanceChecksResolve()
     }
 
     async getDisplayText(): Promise<string> {
@@ -443,15 +460,34 @@ export class ExpressionWidget {
         }
     }
 
+    async getSubjectPropertyExpressions(): Promise<string[]> {
+        const result = await this.#perspective.infer(`subject_class("${this.#isInstanceOfSubjectClass}", C), property_getter(C, "${this.base}", _, Property).`)
+        return result.map((r: any) => r.Property)
+    }
+
     async updateChildrenCoords() {
-        const memberLinks = await this.#perspective.get(new LinkQuery({ source: this.#base, predicate: "flux://has_member" }));        
-        const members = memberLinks.map((link) => link.data.target)
-        const messageLinks = await this.#perspective.get(new LinkQuery({ source: this.#base, predicate: "flux://has_message" }));        
-        const messages = messageLinks.map((link) => link.data.target)
+        let hiddenExpressions = new Set<string>()
+        for(const predicate of HIDDEN_PREDICATES) {
+            const hiddenLinks = await this.#perspective.get(new LinkQuery({
+                source: this.#base,
+                predicate: predicate
+            }))
+            for(const link of hiddenLinks) {
+                hiddenExpressions.add(link.data.target)
+            }
+        }
+        
+        await this.#subjectInstanceChecks
+        if(this.#isInstanceOfSubjectClass) {
+            const properties = await this.getSubjectPropertyExpressions()
+            for(const property of properties) {
+                hiddenExpressions.add(property)
+            }
+        }
+        
         const result: LinkExpression[] = await this.#perspective.get(new LinkQuery({ source: this.#base }));        
         for(const link of result) {
-            if(members.includes(link.data.target)) continue
-            if(messages.includes(link.data.target)) continue
+            if(hiddenExpressions.has(link.data.target)) continue
             const child = link.data.target  
             if(link.data.predicate?.startsWith(COORDS_PRED_PREFIX)) {
                 const point = decodeCoords(link.data.predicate)
