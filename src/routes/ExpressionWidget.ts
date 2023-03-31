@@ -56,7 +56,7 @@ export class ExpressionWidget {
     #subjectInstanceChecks: Promise<void>
     #subjectInstanceChecksResolve: () => void
 
-    
+    #title: string|null = null
 
     constructor(
         expression: string, 
@@ -253,6 +253,10 @@ export class ExpressionWidget {
         this.#overlayContainer.visible = true
     }
 
+    get title() {
+        return this.#title
+    }
+
 
     async addGraphAndText() {
         await this.#updateSubjectClass()
@@ -290,6 +294,7 @@ export class ExpressionWidget {
     async updateDisplayText() {
         if(this.#base == "ad4m://self") return
         const text = await this.getDisplayText()
+        this.#title = text
         if(this.#text) {
             this.#overlayContainer.removeChild(this.#text)
             this.#text.destroy()
