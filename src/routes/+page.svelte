@@ -211,6 +211,7 @@
   <img class="title-logo" src="/perspect3ve-logo-header.png" alt="Perspect3ve" />
   <div class="address-bar">
     <j-flex>
+      {#if false}
       <j-button class="header-button" variant="link" disabled>
         <j-icon name="chevron-left"/>
       </j-button>
@@ -221,6 +222,7 @@
       <j-button class="header-button" variant="link" disabled>
         <j-icon name="arrow-up-circle"/>
       </j-button>
+      {/if}
       
       <j-input 
         class="address-input" 
