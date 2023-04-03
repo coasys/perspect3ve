@@ -4,6 +4,8 @@
   import { onMount, createEventDispatcher } from 'svelte';
   import { BACKGROUND_PREDICATES, PROFILE_NAME } from './config';
 
+  export let selectedPerspective:string
+
   let ad4m: Ad4mClient|undefined;
   let perspectives: PerspectiveProxy[] = [];
   let profile: PerspectiveProxy|undefined;
@@ -18,6 +20,8 @@
   ];
 
   let selected = navItems[0].id;
+
+  $:if(selectedPerspective) selected = selectedPerspective
 
   const dispatch = createEventDispatcher();
 
