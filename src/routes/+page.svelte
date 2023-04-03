@@ -249,7 +249,7 @@
 </script>
 
 <div class="header-bar">
-  <img class="title-logo" src="/perspect3ve-logo-header.png" alt="Perspect3ve" />
+  <img class="title-logo" src="/perspect3ve-logo-header-2.png" alt="Perspect3ve" />
   <div class="address-bar">
     <j-flex>
       {#if false}
