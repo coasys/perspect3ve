@@ -52,6 +52,11 @@
   async function update() {
       perspectives = await ad4m!.perspective.all();
 
+      perspectives = perspectives.filter(p=>
+        p.name !== PROFILE_NAME &&
+        !p.name.startsWith("did:") 
+      )
+
       for(const p of perspectives) {
         for(const predicate of BACKGROUND_PREDICATES) {
           const links = await p.get(new LinkQuery({source: "ad4m://self", predicate}))
@@ -62,7 +67,6 @@
             perspectiveThumbnails[p.uuid] = `data:${imageData.file_type};base64,${imageData.data_base64}`
           }
         }
-        
       }
     }
 

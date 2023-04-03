@@ -12,7 +12,7 @@
   import Nav from './Nav.svelte';
   import MainView from './MainView.svelte';
   import { onMount, setContext } from 'svelte';
-  import { Literal, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
+  import { Literal, parseExprUrl, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
   import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
   import { PROFILE_NAME } from './config';
   import stringify from 'json-stable-stringify';
@@ -133,13 +133,54 @@
   });
 
   async function lookupAddress() {
-    const perspectiveAddress = addressInput.value
-    const allPerspectives = await ad4m.perspective.all()
-    const perspective = allPerspectives.find(p => {
-      return p.name === perspectiveAddress ||
-        p.sharedUrl === perspectiveAddress ||
-        p.uuid === perspectiveAddress
-    })
+    const address = addressInput.value
+    let perspective: PerspectiveProxy|undefined
+
+    async function lookupAgentPerspective(did: string): Promise<PerspectiveProxy> {
+      console.log("1")
+      const allPerspectives = await ad4m.perspective.all()
+      let oldAgentPerspective = allPerspectives.find(p=>p.name==did)
+      if(oldAgentPerspective) {
+        ad4m.perspective.remove(oldAgentPerspective.uuid)
+      }
+
+      console.log("2")
+      const newAgentPerspective = await ad4m.perspective.add(did)
+      console.log("3")
+      const otherAgent = await ad4m.agent.byDID(did)
+      console.log("4")
+      console.log("got agent", otherAgent)
+      if(otherAgent.perspective) {
+        console.log("loading snapshot", otherAgent.perspective)
+        await newAgentPerspective.loadSnapshot(otherAgent.perspective)
+      }
+
+      console.log("5")
+
+      return newAgentPerspective
+    }
+
+    try {
+      const exprRef = parseExprUrl(address)
+      console.log("exprRef language", exprRef.language)
+      if(exprRef.language.address === "did") {
+        console.log("got did")
+        perspective = await lookupAgentPerspective(address)
+      }
+    }catch(e){
+      console.debug("Error parsing address as DID:", e)
+    }
+    
+    if(!perspective) {
+      const perspectiveAddress = address
+      const allPerspectives = await ad4m.perspective.all()
+      perspective = allPerspectives.find(p => {
+        return p.name === perspectiveAddress ||
+          p.sharedUrl === perspectiveAddress ||
+          p.uuid === perspectiveAddress
+      })
+    }
+    
 
     function tryParsingLiteral(input: string): string {
       try {
@@ -155,10 +196,10 @@
       return input
     }
 
-    if(!perspective && perspectiveAddress.startsWith("neighbourhood://")) {
-      console.log("Try NH", perspectiveAddress)
+    if(!perspective && address.startsWith("neighbourhood://")) {
+      console.log("Try NH", address)
       ad4m = await ui.getAd4mClient()
-      const nh = await ad4m.expression.get(perspectiveAddress)
+      const nh = await ad4m.expression.get(address)
       console.log(nh)
       if(nh) {
         joinNeighbourhoodExpression = nh
@@ -170,7 +211,7 @@
             link.data.target = tryParsingLiteral(link.data.target)
           }
         }
-        joinNeighbourhoodAddress = perspectiveAddress
+        joinNeighbourhoodAddress = address
         neighbourhoodJoinDialog.open = true
       }
     } else {

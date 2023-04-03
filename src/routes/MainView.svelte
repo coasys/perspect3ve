@@ -125,7 +125,7 @@
       app?.stage.addChild(gradientBackground)
 
       let rootWidget
-      if(perspective.name == PROFILE_NAME) {
+      if(perspective.name == PROFILE_NAME || perspective?.name.startsWith("did:")) {
         rootWidget = getOrCreateWidget('flux://profile');
       } else {
         rootWidget = getOrCreateWidget('ad4m://self');
