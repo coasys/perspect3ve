@@ -1,13 +1,10 @@
 <script lang="ts">
   import '@junto-foundation/junto-elements';
   import '@junto-foundation/junto-elements/dist/main.css';
-  //import './90s.css';
-  //import '../themes/black.css';
-  //import '../themes/cyberpunk.css';
-  import './cyberpunk.css';
-  //import '../themes/dark.css';
-  //import '../themes/default.css';
-  //import '../themes/light.css';
+  import '../themes/cyberpunk.css';
+  import '../themes/dark.css';
+  import '../themes/retro.css';
+  import '../themes/black.css';
   import Ad4mConnectUI, { getAd4mClient } from '@perspect3vism/ad4m-connect';
   import Nav from './Nav.svelte';
   import MainView from './MainView.svelte';
@@ -16,6 +13,8 @@
   import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
   import { PROFILE_NAME } from './config';
   import stringify from 'json-stable-stringify';
+
+  import '../main.css';
 
   let selectedPerspective = null;
   let selectedExpression = "ad4m://self";
@@ -249,7 +248,10 @@
 </script>
 
 <div class="header-bar">
-  <img class="title-logo" src="/perspect3ve-logo-header-2.png" alt="Perspect3ve" />
+  <div class="header-logo">
+    <img class="title-logo" src="/logo.png" alt="Perspect3ve" />
+    <j-text color="--j-color-black" variant="heading-sm" nomargin tag="h1" weight="regular">Perspect3ve</j-text>
+  </div>
   <div class="address-bar">
     <j-flex>
       {#if false}
@@ -316,14 +318,12 @@
 </div>
 
 {#if connected}
-  <div class="container">
-    <div class="nav">
-      <Nav {selectedPerspective} on:select={setPerspective} />
-    </div>
-    <main>
-      <MainView perspectiveID={selectedPerspective} on:selectionChanged={setExpression} on:perspectiveDeleted={perspectiveDeleted} />
-    </main>
+  <div class="nav">
+    <Nav {selectedPerspective} on:select={setPerspective} />
   </div>
+  <main>
+    <MainView perspectiveID={selectedPerspective} on:selectionChanged={setExpression} on:perspectiveDeleted={perspectiveDeleted} />
+  </main>
 {/if}
 
 
@@ -381,31 +381,32 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--j-color-ui-100);
-    padding: 0 16px;
-    height: 64px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px 40px;
+    height: 80px;
     position: relative;
     top: 0;
     left: 0;
     right: 0;
+    z-index: 1;
+  }
+
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .title-logo {
-    height: 100%;
-    padding-left: 1px;
-  }
-  .container {
-    display: grid;
-    grid-template-columns: 100px 1fr;
-    grid-template-rows: 1fr;
-    height: calc(100vh - 58px);
-    overflow: hidden;
+    width: 60px;
   }
 
   .nav {
-    overflow: scroll;
-    height: calc(100vh - 58px);
+    position: fixed;
+    display: block;
+    left: 0;
+    top: 160px;
+    bottom: 0;
+    z-index: 1;
   }
 
   .properties-browser {
@@ -413,10 +414,7 @@
   }
 
   main {
-    height: calc(100vh - 58px);
-    width: 100%-460px;
-    background-color: #ffffff;
-    margin-left: -6px;
+    width: 100%;
   }
 
   .header-button {

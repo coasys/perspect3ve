@@ -801,7 +801,7 @@ export class ExpressionWidget {
 
 
     #minCanvasLength() {
-        return Math.min(this.#canvasSize.width, this.#canvasSize.height)
+        return Math.min(this.#canvasSize.width, this.#canvasSize.height) * 0.8
     }
 
     #drawExpressionSticky(graphic: PIXI.Graphics, color: number = 0xffffcc) {
