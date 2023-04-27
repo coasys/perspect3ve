@@ -887,8 +887,8 @@ export class ExpressionWidget {
         }
         textString = textString.split("://").join("\n://\n")
         const text = new PIXI.Text(textString, {
-            fontSize: 126,
-            fill: 0x0000ff,
+            fontSize: 120,
+            fill: 0xffffff,
             //@ts-ignores
             align,
             wordWrap: true,
