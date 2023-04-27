@@ -926,7 +926,7 @@ export class ExpressionWidget {
         backgroundImage.position.set(-this.#graphic!.width/2, -this.#graphic!.height/2);
         backgroundImage.width = this.#graphic!.width;
         backgroundImage.height = this.#graphic!.height;
-        backgroundImage.alpha = 0.6;
+        backgroundImage.alpha = 0.1;
         backgroundImage.tint = tint;
         backgroundImage.zIndex = 7;
         backgroundImage.mask = this.#graphicMask
