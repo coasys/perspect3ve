@@ -36,6 +36,8 @@
 
   let ad4m: Ad4mClient
 
+  let theme: string|null = null
+
   async function checkAgentProfileStatus() {
     ad4m = await getAd4mClient()
     const me = await ad4m.agent.me()
@@ -122,6 +124,9 @@
     ui.connect();
     ad4m = await getAd4mClient()
     openaiKey = localStorage.getItem('openaiKey')
+    theme = localStorage.getItem('theme')
+    console.log("theme found in localstorage", theme)
+    document.documentElement.setAttribute('class', theme)
   });
 
   ui.addEventListener('authstatechange', async (e) => {
@@ -330,6 +335,19 @@
 <j-modal bind:this={settingsDialog} class="modal">
 	<header class="header" slot="header">
 	  <j-text variant="heading">Settings</j-text>
+    <j-text variant="label">Theme</j-text>
+    <j-select value={theme} on:change={(event) => {
+      theme = event.target.value
+      if(!theme) return
+      localStorage.setItem('theme', theme)
+      document.documentElement.setAttribute('class', theme)
+    }}>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+      <option value="black">Black</option>
+      <option value="cyberpunk">Cyberpunk</option>
+      <option value="retro">Retro</option>
+    </j-select>
     <j-text variant="label">OpenAI API KEY:</j-text>
     <j-input type="text"  bind:this={openaiKeyInput} value={openaiKey}/>
     <j-button variant="primary" on:click={()=>{
