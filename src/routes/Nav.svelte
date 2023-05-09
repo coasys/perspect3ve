@@ -93,6 +93,7 @@
         {@const displayText = p.name.length > 0 ? p.name : p.uuid}
         <j-tooltip title={displayText}>
           <j-avatar 
+            size="l"
             hash={p.uuid}
             src={perspectiveThumbnails[p.uuid]}
             class="nav-item {selected === p.uuid ? 'selected' : ''}"
@@ -112,11 +113,14 @@
   </ul>
   <div class="nav-controls">
     <j-button 
+      square
+      circle
       variant="transparent" 
+      size="xl"
       style="padding-bottom: 3px"
 			on:click={addNewPerspective} 
 		>
-      <j-icon name="plus" />
+      <j-icon name="plus" size="l" />
     </j-button>
   </div>
 </div>
@@ -126,11 +130,9 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow: scroll;
-    width: 80px;
+    width: 60px;
     height: 100%;
-    padding: 10px;
-    background-color: var(--j-color-ui-80);
+    padding: 0 40px;
   }
 
   .nav {
@@ -172,17 +174,8 @@
     align-items: center;
   }
 
-  .nav-circle {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #b9bbbe;
-    margin-right: 10px;
+  .nav-controls {
+    margin-top: 10px;
   }
 
-  .nav-label {
-    font-size: 14px;
-    color: #b9bbbe;
-    text-align: center;
-  }
 </style>

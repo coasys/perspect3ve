@@ -1,0 +1,6 @@
+body {
+    overflow: hidden !important;
+    color: var(--j-color-ui-800);
+    font-family: var(--j-font-family);
+    background-color: var(--j-color-white);
+}

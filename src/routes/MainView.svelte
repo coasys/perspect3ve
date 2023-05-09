@@ -122,7 +122,7 @@
       sdnaUpdateListener()
 
       app?.stage.removeChildren()
-      app?.stage.addChild(gradientBackground)
+      // app?.stage.addChild(gradientBackground)
 
       let rootWidget
       if(perspective.name == PROFILE_NAME || perspective?.name.startsWith("did:")) {
@@ -236,8 +236,8 @@
     app = new PIXI.Application({
       width,
       height,
-      //backgroundColor: 0x000011,
       antialias: true,
+      backgroundAlpha: 0
     });
 
     globalThis.__PIXI_APP__ = app;
@@ -250,10 +250,10 @@
     const color3 = "#8f7998"
     const color4 = "#1b2e4e"
 
-    const gradientTexture = createGradientTexture(app.screen.width, app.screen.height, 
-      color1, color2, color3, color4);
-    gradientBackground = new PIXI.Sprite(gradientTexture);
-    app.stage.addChild(gradientBackground);
+    // const gradientTexture = createGradientTexture(app.screen.width, app.screen.height, 
+    //   color1, color2, color3, color4);
+    // gradientBackground = new PIXI.Sprite(gradientTexture);
+    // app.stage.addChild(gradientBackground);
 
     // Create a PixiJS renderer
     //@ts-ignore
@@ -444,11 +444,18 @@ function perspectiveDeleted(event) {
     </ul>
   </div>
 
+  {#if !perspectiveID}
+    <div class="placeholder">
+      <j-text variant="heading">Welcome to Perspect3ve!</j-text>
+      <j-text variant="body">Select a perspective to view</j-text>
+    </div>
+  {/if}
+
   {#if perspective}
-    <MiniWindow title="Tools" left="90" background="var(--j-color-ui-300)" width="190">
+    <MiniWindow title="Tools" left="160" top="170" background="var(--j-color-ui-300)" width="220">
       <Toolbar title="Perspect3ve" items={toolbarItems} />
     </MiniWindow>
-    <MiniWindow title="Properties" left="{canvas.clientWidth - 200}" width="320" dockposition="right">
+    <MiniWindow title="Properties" left="{canvas.clientWidth - 380}" top="170" width="320" dockposition="right">
       <PropertiesBrowser perspectiveID={perspectiveID} expression={selectedExpression} parent={selectionParent} on:perspectiveDeleted={perspectiveDeleted}/>  
     </MiniWindow>
     <MiniWindow title="3ve" width="350" left="{canvas.clientWidth/2}" minified dockposition="center">
@@ -470,16 +477,28 @@ function perspectiveDeleted(event) {
   }
 
   .canvas {
-    position: relative;
-    display: block;
-    height: calc(100vh - 64px);
-    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  .placeholder {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
   }
 
   .breadcrumbs {
     position: absolute;
-    top: 0;
-    left: 0;
+    top: 110px;
+    left: 160px;
     margin: 0;
     padding: 10px;
     list-style: none;
@@ -490,6 +509,9 @@ function perspectiveDeleted(event) {
     background: white;
     border-radius: 5px;
     cursor: pointer;
+  }
+  .breadcrumbs:empty {
+    display: none;
   }
 
   .breadcrumb {

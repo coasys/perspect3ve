@@ -33,31 +33,31 @@
 <svelte:window on:mouseup={stop} on:mousemove={move}/>
 <div 
   class="mini-window {minified?'minified':''} {dockposition?'dock-'+dockposition:''}"  
-  style="width: {width}px; {!minified?'left: '+left+'px; top: '+top+'px; ':''} {background?`background-color: ${background}`:''}" 
+  style="width: {width}px; {!minified?'left: '+left+'px; top: '+top+'px; ':''}" 
   on:mousedown={start}>
     <span class="title">
-        <j-text variant="heading">{title}</j-text>
+        <j-text variant="heading" size="sm">{title}</j-text>
 		<div class="window-controls">
             {#if minified}
-                <j-button variant="link"
+                <j-button variant="link" square size="sm"
                     on:click={()=>minified = false}>
-                    <j-icon style="color: var(--j-color-black)" name="window"/>
+                    <j-icon style="color: var(--j-color-black)" name="window" size="sm"/>
                 </j-button>
             {:else}
-                <j-button variant="link"
+                <j-button variant="link" square size="sm"
                     on:click={()=>minified = true}>
-                    <j-icon style="color: var(--j-color-black)" name="dash-square"/>
+                    <j-icon style="color: var(--j-color-black)" name="dash-square" size="sm"/>
                 </j-button>
             {/if}
 			{#if collapsed}
-				<j-button variant="link"
+				<j-button variant="link" square size="sm"
 					on:click={()=>collapsed = false}>
-					<j-icon style="color: var(--j-color-black)" name="arrows-angle-expand"/>
+					<j-icon style="color: var(--j-color-black)" name="arrows-angle-expand" size="sm"/>
 				</j-button>
 			{:else}
-				<j-button variant="link"
+				<j-button variant="link" square size="sm"
 					on:click={()=>collapsed = true}>
-					<j-icon style="color: var(--j-color-black)" name="arrows-angle-contract"/>
+					<j-icon style="color: var(--j-color-black)" name="arrows-angle-contract" size="sm"/>
 				</j-button>
 			{/if}
 		</div>
@@ -76,7 +76,16 @@
         cursor: move;
         display: flex;
         flex-direction: column;
-        background-color: var(--j-color-ui-100);
+        z-index: 2;
+    }
+    .mini-window:hover .content {
+        background: var(--j-color-ui-100);
+    }
+
+    .content {
+        border: 1px solid #ffffff33;
+        background: #ffffff0a;
+        transition: background 0.2s ease;
     }
 
     .minified {
@@ -100,20 +109,14 @@
     }
 
     .title {
-      display: block;
-      margin: 0;
-	  user-select: none;
-      font-size: 24px;
-      color: var(--j-color-black);
-      background-color: var(--j-color-white);
-      padding: 8px 5px;
-	  line-height: 38px;
+        border-bottom: 1px solid #ffffff80;
+        margin-bottom: 20px;
+        user-select: none;
     }
 
     .window-controls {
         position: absolute;
-        right: 5px;
-        top: 14px;
-        color: var(--j-color-black);
+        right: 0;
+        top: -10px;
     } 
 </style>

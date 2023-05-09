@@ -801,7 +801,7 @@ export class ExpressionWidget {
 
 
     #minCanvasLength() {
-        return Math.min(this.#canvasSize.width, this.#canvasSize.height)
+        return Math.min(this.#canvasSize.width, this.#canvasSize.height) * 0.8
     }
 
     #drawExpressionSticky(graphic: PIXI.Graphics, color: number = 0xffffcc) {
@@ -887,8 +887,8 @@ export class ExpressionWidget {
         }
         textString = textString.split("://").join("\n://\n")
         const text = new PIXI.Text(textString, {
-            fontSize: 126,
-            fill: 0x0000ff,
+            fontSize: 120,
+            fill: 0xffffff,
             //@ts-ignores
             align,
             wordWrap: true,
@@ -926,7 +926,7 @@ export class ExpressionWidget {
         backgroundImage.position.set(-this.#graphic!.width/2, -this.#graphic!.height/2);
         backgroundImage.width = this.#graphic!.width;
         backgroundImage.height = this.#graphic!.height;
-        backgroundImage.alpha = 0.6;
+        backgroundImage.alpha = 0.1;
         backgroundImage.tint = tint;
         backgroundImage.zIndex = 7;
         backgroundImage.mask = this.#graphicMask
