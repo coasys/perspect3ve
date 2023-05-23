@@ -8,6 +8,7 @@
 
   let ad4m: Ad4mClient|undefined;
   let perspectives: PerspectiveProxy[] = [];
+  let perspectivesToRender: PerspectiveProxy[] = [];
   let profile: PerspectiveProxy|undefined;
 
   let profileSrc
@@ -56,12 +57,12 @@
   async function update() {
       perspectives = await ad4m!.perspective.all();
 
-      perspectives = perspectives.filter(p=>
+      perspectivesToRender = perspectives.filter(p=>
         p.name !== PROFILE_NAME &&
         !p.name.startsWith("did:") 
       )
 
-      for(const p of perspectives) {
+      for(const p of perspectivesToRender) {
         for(const predicate of BACKGROUND_PREDICATES) {
           const links = await p.get(new LinkQuery({source: "ad4m://self", predicate}))
           if(links && links.length>0) {
@@ -88,7 +89,7 @@
 <div class="nav-container">
   <ul class="nav">
     <j-avatar class="nav-item {selected === profile?.uuid ? 'selected' : ''}" on:click={() => handleSelect(profile.uuid)} src={profileSrc}></j-avatar>
-    {#each perspectives as p}
+    {#each perspectivesToRender as p}
       {#if p.name !== PROFILE_NAME}
         {@const displayText = p.name.length > 0 ? p.name : p.uuid}
         <j-tooltip title={displayText}>
