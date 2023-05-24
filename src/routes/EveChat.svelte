@@ -1,5 +1,8 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
+    import hljs from 'highlight.js';
+    import 'highlight.js/styles/github.css'; // choose your preferred style
+
     let inputElement
     let thinking = false
 
@@ -233,6 +236,10 @@ Done.`
             postfix = split2[1]
         }
 
+        if(code) {
+            code = hljs.highlight(code, {language: "prolog"}).value
+        }
+
         return {prefix, code, postfix}
     }
 </script>
@@ -255,8 +262,8 @@ Done.`
                         {code(item.content).prefix}
                         {#if code(item.content).code}
                             <pre class="code">
-                                <code class="language-prolog">
-                                    {code(item.content).code}
+                                <code class="hljs language-prolog">
+                                    {@html code(item.content).code}
                                 </code>
                             </pre>
                             {code(item.content).postfix}
