@@ -97,7 +97,7 @@ collection(cjdotdng, "comments").
 collection_getter(cjdotdng, Base, "comments", List) :- findall(C, triple(Base, "todo://comment", C), List).
 collection_adder(cjdotdng, "comments", '[{action: "addLink", source: "this", predicate: "todo://comment", target: "value"}]').
 collection_setter(cjdotdng, "comments", '[{action: "collectionSetter", source: "this", predicate: "todo://comment", target: "value"}]').
-:ADNS
+:ANDS
 
 What icon should it have in the toolbar? (You can choose from the "Bootstrap" icon set)` 
   },
@@ -139,7 +139,7 @@ p3_instance_shape(cjdotdng, Instance, "circle").
 p3_instance_color(cjdotdng, Instance, "#000055") :- property_getter(c, Instance, "state", "todo://ready").
 p3_instance_color(cjdotdng, Instance, "#FFFF00") :- property_getter(c, Instance, "state", "todo://doing").
 p3_instance_color(cjdotdng, Instance, "#00FF00") :- property_getter(c, Instance, "state", "todo://done").
-:ADNS
+:ANDS
 
 Anything else?`
     },
