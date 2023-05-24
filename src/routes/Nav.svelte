@@ -134,6 +134,7 @@
     width: 60px;
     height: 100%;
     padding: 0 40px;
+    overflow: scroll;
   }
 
   .nav {
