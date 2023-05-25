@@ -236,11 +236,12 @@ Done.`
             postfix = split2[1]
         }
 
+        let highlightedCode
         if(code) {
-            code = hljs.highlight(code, {language: "prolog"}).value
+            highlightedCode = hljs.highlight(code, {language: "prolog"}).value
         }
 
-        return {prefix, code, postfix}
+        return {prefix, code, postfix, highlightedCode}
     }
 </script>
 
@@ -263,7 +264,7 @@ Done.`
                         {#if code(item.content).code}
                             <pre class="code">
                                 <code class="hljs language-prolog">
-                                    {@html code(item.content).code}
+                                    {@html code(item.content).highlightedCode}
                                 </code>
                             </pre>
                             {code(item.content).postfix}
