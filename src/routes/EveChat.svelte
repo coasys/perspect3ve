@@ -29,7 +29,7 @@
                     max_tokens: 1024,
                     n: 1,
                     stop: null,
-                    temperature: 0.8,
+                    temperature: 0.2,
                     top_p: 1,
                     frequency_penalty: 0,
                     presence_penalty: 0,
@@ -184,7 +184,7 @@ Done.`
     },
     { 
         role: "user", 
-        content: `Thank you. Let's pretend I just entered the chat.`
+        content: `Who are you?.`
     },
 
 ];
