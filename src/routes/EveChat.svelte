@@ -5,6 +5,8 @@
 
     let inputElement
     let thinking = false
+    let incomingCompletion = ""
+    let incomingSplit = {}
 
     const dispatch = createEventDispatcher()
 
@@ -12,6 +14,7 @@
 
     async function chat_with_gpt_3_5(promptMessages) {
         thinking = true
+        incomingCompletion = ""
         //const model = "text-davinci-003"; // Replace this with "gpt-3.5-turbo" once it's available.
         const model = "gpt-3.5-turbo"
 
@@ -33,22 +36,94 @@
                     top_p: 1,
                     frequency_penalty: 0,
                     presence_penalty: 0,
+                    stream: true,
                 }),
             });
 
-            console.log(response)
-            const data = await response.json()
-            console.log(data)
+            console.log("after fetch")
 
-            thinking = false
-            // Extract the assistant's reply
-            const assistantReply = data.choices[0].message.content;
-            return assistantReply;
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+
+
+            const reader = response.body.getReader();
+            let decoder = new TextDecoder();
+
+            let fullResponse = ""
+
+            while (true) {
+                const { done, value } = await reader.read();
+                console.log(value)
+                if (done) {
+                    break;
+                }
+                // Massage and parse the chunk of data
+                const chunk = decoder.decode(value);
+                console.log("chunk:", chunk)
+                const lines = chunk.split("\n");
+                console.log("lines:", lines)
+                const parsedLines = lines
+                    .map((line) => line.replace("data: ", "").trim()) // Remove the "data: " prefix
+                    .filter((line) => line !== "" && line !== "[DONE]") // Remove empty lines and "[DONE]"
+                    .map((line) => {
+                        try{
+                            console.log("line:", line)
+                            console.log("line finished")
+                            return JSON.parse(line)
+                        } catch(e) {
+                            console.log("error:", e)
+                            return [{delta: {content: ""}}]
+                        }
+                    }); // Parse the JSON string
+
+                console.log("parsedLines:", parsedLines)
+
+                for (const parsedLine of parsedLines) {
+                    const { choices } = parsedLine;
+                    const { delta } = choices[0];
+                    const { content } = delta;
+                    // Update the UI with the new content
+                    if (content) {
+                        incomingCompletion += content;
+                        fullResponse += content;
+                        incomingSplit = split(incomingCompletion, "SDNA:")
+                    }
+                }
+            }
+
+            console.log("after while")
+            console.log(incomingCompletion)
+            console.log(fullResponse)
+/*
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                //thinkingChunks.push(value);
+                const text = decoder.decode(value);
+                console.log(text);
+                // Extract the assistant's reply
+                const assistantReply = JSON.parse(text).choices[0].message.content;
+                // Display the words of the model as they come in
+                console.log(assistantReply);
+                thinkingChunks.push(assistantReply)
+                fullResponse += assistantReply
+            }
+*/
+            thinking = false;
+            incomingCompletion = "";
+            incomingSplit = {};
+
+
+            return fullResponse;
         } catch (error) {
             console.error("Error calling the OpenAI API:", error);
             thinking = false
         }
     }
+
+
+
 
 // Example usage
 let promptMessages = [
@@ -278,7 +353,19 @@ Done.`
         <li class="chat-message">
             <j-icon class="avatar" name="robot" size="1.5rem" color="green"></j-icon>
             <div class="assistant">
-                Thinking...
+                {#if incomingSplit && incomingSplit.prefix}
+                    {incomingSplit.prefix}
+                    {#if incomingSplit.code}
+                            <pre class="code">
+                                <code class="hljs language-prolog">
+                                    {@html incomingSplit.highlightedCode}
+                                </code>
+                            </pre>
+                            {incomingSplit.postfix}
+                        {/if}
+                {:else}
+                    {incomingCompletion}
+                {/if}
             </div>
             <j-spinner size="1.5rem" color="green"></j-spinner>
         </li>
