@@ -79,10 +79,10 @@ export class ExpressionWidget {
     this.#container = container;
     this.#canvasSize = canvasSize;
 
-    const that = this;
-    this.#subjectInstanceChecks = new Promise((resolve) => {
-      that.#subjectInstanceChecksResolve = resolve;
-    });
+    this.#subjectInstanceChecksResolve = () => null;
+    this.#subjectInstanceChecks = new Promise(
+      (resolve) => (this.#subjectInstanceChecksResolve = resolve)
+    );
 
     this.#backgroundContainer = new PIXI.Container();
     this.#childrenContainer = new PIXI.Container();
@@ -98,7 +98,6 @@ export class ExpressionWidget {
 
     this.#backgroundContainer.interactive = true;
     this.#overlayContainer.interactive = true;
-
     this.#container.sortableChildren = true;
 
     this.addGraphAndText();
@@ -108,13 +107,15 @@ export class ExpressionWidget {
       this.#childrenCoords.set(link.data.target, point);
       let widget = this.#childrenWidgets.get(link.data.target);
       let layer;
-      if (!widget) {
+
+      if (widget) {
+        layer = widget.#container;
+        layer.position.set(point.x, point.y);
+      } else {
         widget = this.addChild(link.data.target, point);
         widget.addChildrenLeafs();
         this.#makeChildInteractive(widget);
       }
-      layer = widget.#container;
-      layer.position.set(point.x, point.y);
     };
 
     this.#perspective.addListener('link-added', async (link: LinkExpression) => {
@@ -128,15 +129,16 @@ export class ExpressionWidget {
         }
 
         await this.#updateSubjectClass();
-        await this.#drawExpressionGraphic(this.#graphic!);
+        if (this.#graphic) await this.#drawExpressionGraphic(this.#graphic);
         this.updateDisplayText();
       }
 
       if (this.#subjectRedrawPolicy == 'always') {
         await this.#updateSubjectClass();
-        await this.#drawExpressionGraphic(this.#graphic!);
+        if (this.#graphic) await this.#drawExpressionGraphic(this.#graphic);
         this.updateDisplayText();
       }
+
       return null;
     });
 
