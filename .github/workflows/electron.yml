@@ -3,7 +3,7 @@ name: Build/electron
 on:
   push:
     branches:
-      - electron
+      - main
 
 
 jobs:

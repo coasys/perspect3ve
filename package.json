@@ -18,7 +18,12 @@
     "lint": "prettier --plugin-search-dir . --check . && eslint .",
     "format": "prettier --plugin-search-dir . --write .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "make": "electron-forge make",
+    "make-linux": "electron-forge make --platform linux",
+    "make-windows": "electron-forge make --platform win32",
+    "package": "electron-forge package",
+    "package-x64": "electron-forge package --arch=x64"
   },
   "devDependencies": {
     "@playwright/test": "^1.28.1",
@@ -28,6 +33,12 @@
     "@types/json-stable-stringify": "^1.0.34",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
+    "@electron-forge/cli": "^6.1.1",
+    "@electron-forge/maker-deb": "^6.1.1",
+    "@electron-forge/maker-dmg": "^6.2.1",
+    "@electron-forge/maker-rpm": "^6.1.1",
+    "@electron-forge/maker-squirrel": "^6.1.1",
+    "@electron-forge/maker-zip": "^6.1.1",
     "electron-builder": "^24.4.0",
     "electron": "^24.6.0",
     "eslint": "^8.28.0",
