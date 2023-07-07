@@ -154,7 +154,7 @@
         },
       }]
     
-    const sClasses = await perspective!.subjectClasses()
+    const sClasses = [... new Set(await perspective!.subjectClasses())]
 
     console.log("subject classes", sClasses)
 
