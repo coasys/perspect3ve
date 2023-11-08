@@ -346,9 +346,12 @@ Done.`
                             <pre class="code">
                                 <code class="hljs language-prolog">
                                     {@html code(item.content).highlightedCode}
-                                </code>
+                                </code>  
                             </pre>
-                            {code(item.content).postfix}
+                            <div>
+                                <j-button variant="primary" on:click={() => {dispatch("sdnacreated", code(item.content).code)}}>Save</j-button>
+                            </div>                            
+                            {code(item.content).postfix || ""}
                         {/if}
                     </div>
                 </li>
@@ -367,7 +370,7 @@ Done.`
                                     {@html incomingSplit.highlightedCode}
                                 </code>
                             </pre>
-                            {incomingSplit.postfix}
+                            {incomingSplit.postfix || ""}
                         {/if}
                 {:else}
                     {incomingCompletion}
