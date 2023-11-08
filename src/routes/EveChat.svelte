@@ -281,12 +281,18 @@ Done.`
 
         const completion = await chat_with_gpt_3_5(promptMessages);
 
-        console.log(completion);
-        const writeSplit = split(completion, "WRITE-SDNA:")
-        if(writeSplit.code) {
-            dispatch("sdnacreated", writeSplit.code)
+        if(completion) {
+            console.log(completion);
+            const writeSplit = split(completion, "WRITE-SDNA:")
+            if(writeSplit.code) {
+                dispatch("sdnacreated", writeSplit.code)
+            }
+            promptMessages = [...promptMessages, {role: "assistant", content: completion}]
+        } else {
+            promptMessages = [...promptMessages, {role: "assistant", content: "<OpenAI API error - empty response>"}]
         }
-        promptMessages = [...promptMessages, {role: "assistant", content: completion}]
+
+        
     }
 
     function code(content) {
