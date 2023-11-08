@@ -1,1 +1,1 @@
-export const FILE_STORAGE_LANG = "QmcnQU29z8DhfCrzEVEQ43okojB5AGMwqyG1gad8gojfZn";
+export const FILE_STORAGE_LANG = "QmzSYwdksetRyyi2sk1URTbTDPY7Hj7BrzVZpk9T2u7hvy9u7v2";
