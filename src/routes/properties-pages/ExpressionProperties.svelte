@@ -74,7 +74,7 @@
         console.log(classResults)
         if(classResults.length > 0) {
             const className = classResults[0].ClassName
-            const classProps = flattenPrologList(classResults[0].PropList)
+            const classProps = classResults[0].PropList
             console.log(className, classProps)
 
             expressionType = className
