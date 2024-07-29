@@ -1,4 +1,4 @@
-import type { PerspectiveProxy } from "@perspect3vism/ad4m";
+import type { PerspectiveProxy } from "@coasys/ad4m";
 
 export async function tryForEachMatch(perspective: PerspectiveProxy, query: string, callback: (result: any) => void) {
     try {

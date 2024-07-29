@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { Agent, Link, LinkExpression, parseExprUrl, Perspective, PerspectiveProxy, SmartLiteral, type Ad4mClient } from '@perspect3vism/ad4m';
-    import { Literal, LinkQuery } from '@perspect3vism/ad4m';
+    import { Agent, Link, LinkExpression, parseExprUrl, Perspective, PerspectiveProxy, SmartLiteral, type Ad4mClient } from '@coasys/ad4m';
+    import { Literal, LinkQuery } from '@coasys/ad4m';
     import { onMount, createEventDispatcher, afterUpdate, getContext } from 'svelte';
     import { FILE_STORAGE_LANG } from '../../config';
     import { flattenPrologList } from '../../util';

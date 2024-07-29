@@ -4,8 +4,8 @@
   import '@pixi/math-extras';
   import * as TWEEN from '@tweenjs/tween.js';
   import type { HistoryElement } from './History';
-  import { getAd4mClient } from '@perspect3vism/ad4m-connect';
-  import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@perspect3vism/ad4m';  
+  import { getAd4mClient } from '@coasys/ad4m-connect';
+  import { PerspectiveProxy, LinkExpression, Literal, SmartLiteral, Link } from '@coasys/ad4m';  
   import { ExpressionWidget, LEVEL_SCALE } from './ExpressionWidget';
   import { COORDS_PRED_PREFIX, encodeCoords } from './coordinates';
   import Toolbar from './Toolbar.svelte';

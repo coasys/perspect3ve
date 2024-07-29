@@ -1,4 +1,4 @@
-import { LinkQuery, Literal, Perspective, type Ad4mClient, type Agent } from "@perspect3vism/ad4m";
+import { LinkQuery, Literal, Perspective, type Ad4mClient, type Agent } from "@coasys/ad4m";
 
 export class AgentLoaded {
     profile_base64: string;

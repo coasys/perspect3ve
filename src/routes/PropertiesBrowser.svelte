@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { PerspectiveProxy, Ad4mClient } from '@perspect3vism/ad4m';
-  import { getAd4mClient } from '@perspect3vism/ad4m-connect';
+  import type { PerspectiveProxy, Ad4mClient } from '@coasys/ad4m';
+  import { getAd4mClient } from '@coasys/ad4m-connect';
   import { onMount } from 'svelte';
 
   import PerspectiveProperties from './properties-pages/PerspectiveProperties.svelte';

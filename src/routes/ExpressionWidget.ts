@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import '@pixi/math-extras';
-import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral, SMART_LITERAL_CONTENT_PREDICATE, Link } from '@perspect3vism/ad4m';
+import { LinkQuery, type LinkExpression, type PerspectiveProxy, Literal, SmartLiteral, SMART_LITERAL_CONTENT_PREDICATE, Link } from '@coasys/ad4m';
 import { BACKGROUND_PREDICATES } from './config';
 import { decodeCoords, encodeCoords, COORDS_PRED_PREFIX } from './coordinates';
 import { tryForEachMatch } from './prologUtils';

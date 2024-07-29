@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { LinkQuery, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
-  import { getAd4mClient } from '@perspect3vism/ad4m-connect';
+  import { LinkQuery, type Ad4mClient, type PerspectiveProxy } from '@coasys/ad4m';
+  import { getAd4mClient } from '@coasys/ad4m-connect';
   import { onMount, createEventDispatcher } from 'svelte';
   import { BACKGROUND_PREDICATES, PROFILE_NAME } from './config';
 

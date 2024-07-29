@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { LanguageMeta, Perspective, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
-    import { getAd4mClient } from '@perspect3vism/ad4m-connect';
+    import { LanguageMeta, Perspective, type Ad4mClient, type PerspectiveProxy } from '@coasys/ad4m';
+    import { getAd4mClient } from '@coasys/ad4m-connect';
     import { onMount } from 'svelte/internal';
     import { v4 as uuidv4 } from 'uuid';
 

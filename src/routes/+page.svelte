@@ -5,11 +5,11 @@
   import '../themes/dark.css';
   import '../themes/retro.css';
   import '../themes/black.css';
-  import Ad4mConnectUI, { getAd4mClient } from '@perspect3vism/ad4m-connect';
+  import Ad4mConnectUI, { getAd4mClient } from '@coasys/ad4m-connect';
   import Nav from './Nav.svelte';
   import MainView from './MainView.svelte';
   import { onMount, setContext } from 'svelte';
-  import { Literal, parseExprUrl, type Ad4mClient, type PerspectiveProxy } from '@perspect3vism/ad4m';
+  import { Literal, parseExprUrl, type Ad4mClient, type PerspectiveProxy } from '@coasys/ad4m';
   import NeighbourhoodSharing from './NeighbourhoodSharing.svelte';
   import { PROFILE_NAME } from './config';
   import stringify from 'json-stable-stringify';

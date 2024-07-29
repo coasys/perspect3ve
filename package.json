@@ -56,8 +56,8 @@
   "type": "module",
   "dependencies": {
     "@junto-foundation/junto-elements": "^0.4.5",
-    "@perspect3vism/ad4m": "^0.7.1",
-    "@perspect3vism/ad4m-connect": "0.7.1",
+    "@coasys/ad4m": "^0.10.0-rc2",
+    "@coasys/ad4m-connect": "0.10.0-rc2",
     "patch-package": "^8.0",
     "@pixi/app": "^7.1.4",
     "@pixi/core": "^7.1.4",

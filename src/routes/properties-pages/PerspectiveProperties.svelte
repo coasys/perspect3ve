@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { PerspectiveProxy, type Ad4mClient } from '@perspect3vism/ad4m';
-    import { getAd4mClient } from '@perspect3vism/ad4m-connect';
+    import { PerspectiveProxy, type Ad4mClient } from '@coasys/ad4m';
+    import { getAd4mClient } from '@coasys/ad4m-connect';
     import { onMount } from 'svelte';
     import NeighbourhoodSharing from '../NeighbourhoodSharing.svelte';
     export let perspectiveID: string = ""
