@@ -110,7 +110,7 @@
     appDesc: 'Browser for AD4M Perspectives',
     appDomain: 'dev.ad4m.perspect3ve',
     appUrl: 'https://perspect3ve.app',
-
+    hosting: true,
     appIconPath: 'https://perspect3ve.app/Perspect3veLogo.png',
     capabilities: [
       {
